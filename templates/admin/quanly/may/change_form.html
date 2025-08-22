@@ -1,0 +1,93 @@
+<!-- templates/admin/quanly/may/change_form.html -->
+
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_field_sets %}
+  {{ block.super }}
+
+  {% if phien_hien_tai %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h4 class="card-title">{% trans "Thông Tin Phiên Hiện Tại" %}</h4>
+      </div>
+      <div class="card-body">
+        
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>{% trans "Bắt đầu lúc:" %}</strong> {{ phien_hien_tai.thoi_gian_bat_dau }}</p>
+            <p><strong>{% trans "Hình thức:" %}</strong> {{ phien_hien_tai.get_hinh_thuc_display }}</p>
+            {% if phien_hien_tai.khach_hang %}
+              <p><strong>{% trans "Khách hàng:" %}</strong> {{ phien_hien_tai.khach_hang }}</p>
+            {% endif %}
+          </div>
+          <div class="col-md-6 text-center">
+            <h5><strong>{% trans "Thời Gian Sử Dụng" %}</strong></h5>
+            <div id="timer-display"
+               style="font-size: 2.5rem; font-weight: bold; color: #17a2b8;"
+               data-start-time="{{ phien_hien_tai.thoi_gian_bat_dau.isoformat }}"
+               data-hinh-thuc="{{ phien_hien_tai.hinh_thuc }}"
+               data-don-gia-gio="{{ phien_hien_tai.may.loai_may.don_gia_gio }}"
+               data-so-du="{{ phien_hien_tai.khach_hang.so_du|default:'0' }}">
+              <div class="spinner-border text-info" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+            <div id="cost-display" class="mt-2" style="font-size: 1.2rem;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+  {{ block.super }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const timerDisplay = document.getElementById('timer-display');
+      if (!timerDisplay) return;
+
+      const costDisplay = document.getElementById('cost-display');
+      const startTimeStr = timerDisplay.dataset.startTime;
+      const hinhThuc = timerDisplay.dataset.hinhThuc;
+      const donGiaGio = parseFloat(timerDisplay.dataset.donGiaGio);
+      const soDu = parseFloat(timerDisplay.dataset.soDu);
+
+      const startTime = new Date(startTimeStr);
+
+      function formatTime(totalSeconds) {
+        if (totalSeconds < 0) totalSeconds = 0;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+
+      setInterval(function() {
+        const now = new Date();
+        const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+        if (hinhThuc === 'TRA_TRUOC') {
+          const totalPlayableSeconds = (soDu / (donGiaGio / 3600));
+          const remainingSeconds = totalPlayableSeconds - elapsedSeconds;
+          
+          if (remainingSeconds <= 0) {
+            timerDisplay.textContent = `00:00:00`;
+            costDisplay.textContent = `(Hết giờ!)`;
+            timerDisplay.style.color = '#dc3545'; // Màu đỏ Bootstrap
+            costDisplay.style.color = '#dc3545';
+          } else {
+            timerDisplay.textContent = formatTime(remainingSeconds);
+            costDisplay.textContent = `(còn lại)`;
+          }
+        } else { // TRA_SAU
+          const currentCost = (elapsedSeconds / 3600) * donGiaGio;
+          timerDisplay.textContent = formatTime(elapsedSeconds);
+          costDisplay.innerHTML = `(Tạm tính: <strong>${Math.ceil(currentCost).toLocaleString('vi-VN')} VNĐ</strong>)`;
+        }
+      }, 1000);
+    });
+  </script>
+{% endblock %}
