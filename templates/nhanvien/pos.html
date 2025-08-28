@@ -39,6 +39,10 @@
     </div>
 </nav>
 
+<div id="shift-status-bar" class="bg-secondary text-white text-center p-2" style="display: none;">
+    Đang kiểm tra trạng thái ca...
+</div>
+
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Sơ Đồ Phòng Máy</h3>
@@ -54,17 +58,15 @@
     </div>
 </div>
 
-<!-- Modal Chi Tiết Phiên (ẩn mặc định) -->
+<!-- Modal Chi Tiết Phiên -->
 <div class="modal fade" id="sessionDetailModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="sessionModalTitle">Chi Tiết Phiên</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="sessionModalBody">
-        <p>Đang tải thông tin phiên...</p>
-      </div>
+      <div class="modal-body" id="sessionModalBody">...</div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
         <button type="button" class="btn btn-success">Order Dịch Vụ</button>
@@ -74,86 +76,131 @@
   </div>
 </div>
 
-<!-- ======================= PHẦN SỬA LỖI ======================= -->
-<!-- Bước 1: Tải thư viện Bootstrap JavaScript TRƯỚC -->
-<!-- Tải Bootstrap JS TRƯỚC -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal Bắt Đầu Ca -->
+<div class="modal fade" id="startShiftModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Bắt Đầu Ca Làm Việc Mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="shiftTypeSelect" class="form-label">Chọn loại ca:</label>
+          <select class="form-select" id="shiftTypeSelect" required>
+            <option selected disabled value="">Đang tải...</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="initialCash" class="form-label">Số tiền mặt ban đầu:</label>
+          <input type="number" class="form-control" id="initialCash" value="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="confirmStartShift">Bắt Đầu</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- Code tùy chỉnh của bạn -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM Loaded. Initializing POS script.");
-
     // --- KHAI BÁO BIẾN ---
     const machineGrid = document.getElementById('machine-grid');
     const lastUpdatedDiv = document.getElementById('last-updated');
     const sessionDetailModalEl = document.getElementById('sessionDetailModal');
-    if (!machineGrid || !lastUpdatedDiv || !sessionDetailModalEl) {
-        console.error("Critical Error: Cannot find required HTML elements.");
+    const startShiftModalEl = document.getElementById('startShiftModal');
+    if (!machineGrid || !lastUpdatedDiv || !sessionDetailModalEl || !startShiftModalEl) {
+        console.error("Lỗi nghiêm trọng: Thiếu các phần tử HTML cần thiết.");
         return;
     }
     const sessionDetailModal = new bootstrap.Modal(sessionDetailModalEl);
+    const startShiftModal = new bootstrap.Modal(startShiftModalEl);
+    const shiftStatusBar = document.getElementById('shift-status-bar');
+    const shiftTypeSelect = document.getElementById('shiftTypeSelect');
     const API_URL = '/api/may/';
     let activeTimers = {};
+    let currentShift = null;
 
     // --- CÁC HÀM TIỆN ÍCH ---
-    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
     const csrftoken = getCookie('csrftoken');
-    function formatTime(s) { if (s < 0) s = 0; const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; }
-    function formatCurrency(v) { return Math.ceil(v).toLocaleString('vi-VN') + ' VNĐ'; }
 
-    // --- CÁC HÀM RENDER ---
+    function formatTime(totalSeconds) {
+        if (totalSeconds < 0) totalSeconds = 0;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function formatCurrency(value) {
+        return Math.ceil(value).toLocaleString('vi-VN') + ' VNĐ';
+    }
+
+    // --- CÁC HÀM RENDER GIAO DIỆN ---
     function createMachineCard(may) {
         if (!may || !may.trang_thai) {
-             console.warn("Invalid 'may' object received:", may);
-             return ''; // Trả về chuỗi rỗng để không gây lỗi
+             console.warn("Invalid 'may' object received from API:", may);
+             return '';
         }
-
         const trangThai = may.trang_thai;
         const tenMay = may.ten_may || 'Máy Lỗi';
         const tenLoaiMay = (may.loai_may && may.loai_may.ten_loai) ? may.loai_may.ten_loai : 'Không rõ';
         let statusClass = `status-${trangThai.toLowerCase()}`;
         let timerHTML = '';
-        
         if (trangThai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
-            timerHTML = `<div class="timer" id="timer-${may.id}" 
-                data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}"
-                data-don-gia-gio="${may.loai_may.don_gia_gio}"
-                data-session-id="${may.phien_dang_chay.id}"></div>`;
+            timerHTML = `<div class="timer" id="timer-${may.id}" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}" data-don-gia-gio="${may.loai_may.don_gia_gio}" data-session-id="${may.phien_dang_chay.id}"></div>`;
         } else if (trangThai === 'TRONG') {
             timerHTML = `<div class="timer text-success">Sẵn sàng</div>`;
         } else {
             timerHTML = `<div class="timer text-danger">Bảo trì</div>`;
         }
-
-        return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}">
-                    <div class="card-body">
-                        <h5 class="card-title">${tenMay}</h5>
-                        <p class="status-text">${tenLoaiMay}</p>
-                        ${timerHTML}
-                    </div>
-                </div>`;
+        return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}"><div class="card-body"><h5 class="card-title">${tenMay}</h5><p class="status-text">${tenLoaiMay}</p>${timerHTML}</div></div>`;
     }
 
-    function startAllTimers() { /* Giữ nguyên như cũ */ }
+    function startAllTimers() {
+        Object.values(activeTimers).forEach(clearInterval);
+        activeTimers = {};
+        document.querySelectorAll('.timer[data-start-time]').forEach(timerEl => {
+            const mayId = timerEl.id.split('-')[1];
+            const startTime = new Date(timerEl.dataset.startTime);
+            const donGiaGio = parseFloat(timerEl.dataset.donGiaGio);
+            const intervalId = setInterval(() => {
+                const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
+                const currentCost = (elapsedSeconds / 3600) * donGiaGio;
+                timerEl.innerHTML = `<strong>${formatTime(elapsedSeconds)}</strong><div style="font-size: 0.8em;">${formatCurrency(currentCost)}</div>`;
+            }, 1000);
+            activeTimers[mayId] = intervalId;
+        });
+    }
     
     async function updateMachineGrid() {
         try {
             const response = await fetch(API_URL);
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
             const data = await response.json();
-            
-            machineGrid.innerHTML = ''; // Xóa spinner
+            machineGrid.innerHTML = '';
             if (Array.isArray(data) && data.length > 0) {
-                data.forEach(may => {
-                    machineGrid.innerHTML += createMachineCard(may);
-                });
+                data.forEach(may => { machineGrid.innerHTML += createMachineCard(may); });
             } else {
                 machineGrid.innerHTML = '<p>Không có máy nào được cấu hình.</p>';
             }
-            
             startAllTimers();
             lastUpdatedDiv.textContent = `Cập nhật lần cuối: ${new Date().toLocaleTimeString()}`;
         } catch (error) {
@@ -162,11 +209,221 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- CÁC HÀM XỬ LÝ HÀNH ĐỘNG ---
-    // (Toàn bộ các hàm handle... giữ nguyên như cũ)
+    function updateShiftStatusUI() {
+        if (currentShift) {
+            const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te).toLocaleTimeString('vi-VN');
+            shiftStatusBar.innerHTML = `Đang trong ca của <strong>${currentShift.nhan_vien}</strong>, bắt đầu lúc ${startTime}. <button class="btn btn-sm btn-warning ms-3" id="endShiftBtn">Kết Thúc Ca</button>`;
+            shiftStatusBar.style.display = 'block';
+            document.getElementById('endShiftBtn').addEventListener('click', handleEndShift);
+        } else {
+            shiftStatusBar.innerHTML = `Bạn chưa bắt đầu ca làm việc. <button class="btn btn-sm btn-success ms-3" id="startShiftBtn">Bắt Đầu Ca Mới</button>`;
+            shiftStatusBar.style.display = 'block';
+            document.getElementById('startShiftBtn').addEventListener('click', () => {
+                loadShiftTypes();
+                startShiftModal.show();
+            });
+        }
+    }
     
-    // --- GẮN SỰ KIỆN VÀ KHỞI CHẠY ---
-    // (Toàn bộ phần gắn sự kiện và khởi chạy giữ nguyên như cũ)
+    async function loadShiftTypes() {
+        try {
+            const response = await fetch('/api/loai-ca/');
+            if (!response.ok) throw new Error('Không thể tải danh sách loại ca.');
+            const data = await response.json();
+            shiftTypeSelect.innerHTML = '<option selected disabled value="">-- Vui lòng chọn --</option>';
+            if (data.length === 0) {
+                shiftTypeSelect.innerHTML = '<option disabled>Chưa có loại ca nào được tạo.</option>';
+            } else {
+                data.forEach(loaiCa => {
+                    const option = document.createElement('option');
+                    option.value = loaiCa.id;
+                    option.textContent = loaiCa.ten_ca;
+                    shiftTypeSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            shiftTypeSelect.innerHTML = '<option disabled>Lỗi khi tải loại ca.</option>';
+        }
+    }
+
+    // --- CÁC HÀM XỬ LÝ HÀNH ĐỘNG ---
+    async function handleStartShift() {
+        const initialCash = document.getElementById('initialCash').value;
+        const loaiCaId = shiftTypeSelect.value;
+        try {
+            const response = await fetch('/api/ca/bat-dau/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ tien_mat_ban_dau: initialCash, loai_ca_id: loaiCaId })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
+            currentShift = data;
+            updateShiftStatusUI();
+            startShiftModal.hide();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    }
+
+    async function handleEndShift() {
+        const finalCash = prompt("Vui lòng nhập tổng số tiền mặt cuối ca:", "0");
+        if (finalCash === null) return;
+        if (confirm('Bạn có chắc muốn kết thúc ca làm việc?')) {
+            try {
+                const response = await fetch('/api/ca/ket-thuc/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ tien_mat_cuoi_ca: finalCash })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
+                alert('Đã kết thúc ca. Hệ thống sẽ đăng xuất.');
+                document.querySelector('form[action*="logout"]').submit();
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
+        }
+    }
+
+    async function handleOpenMachine(mayId, mayName) {
+        if (!currentShift) {
+            alert('Vui lòng bắt đầu ca làm việc trước khi mở máy!');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn mở máy ${mayName} cho khách vãng lai?`)) {
+            try {
+                const response = await fetch(`/api/may/${mayId}/mo-may/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
+                alert(result.success);
+                await updateMachineGrid();
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
+        }
+    }
+    
+    async function handleShowSessionDetails(mayId, mayName, sessionId) {
+        const modalTitle = document.getElementById('sessionModalTitle');
+        const modalBody = document.getElementById('sessionModalBody');
+        const endButton = sessionDetailModalEl.querySelector('.btn-danger');
+        modalTitle.textContent = `Chi Tiết Phiên - Máy ${mayName}`;
+        modalBody.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+        endButton.disabled = true;
+        sessionDetailModal.show();
+        try {
+            const response = await fetch(`/api/phien/${sessionId}/`);
+            if (!response.ok) throw new Error('Không thể tải chi tiết phiên.');
+            const data = await response.json();
+            const startTime = new Date(data.thoi_gian_bat_dau);
+            const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
+            const tienGio = (elapsedSeconds / 3600) * parseFloat(data.loai_may.don_gia_gio);
+            let servicesHTML = '<p>Chưa order dịch vụ.</p>';
+            let tienDichVu = 0;
+            const services = data.cac_don_hang.filter(order => !order.da_thanh_toan);
+            if (services.length > 0) {
+                servicesHTML = '<ul class="list-group">';
+                services.forEach(order => {
+                    tienDichVu += parseFloat(order.tong_tien);
+                    order.chi_tiet.forEach(item => {
+                        servicesHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${item.mon.ten_mon} (x${item.so_luong}) <span>${formatCurrency(item.thanh_tien)}</span></li>`;
+                    });
+                });
+                servicesHTML += '</ul>';
+            }
+            const tongTien = tienGio + tienDichVu;
+            modalBody.innerHTML = `
+                <p><strong>Bắt đầu lúc:</strong> ${startTime.toLocaleTimeString()}</p>
+                <p><strong>Thời gian chơi:</strong> <span id="modal-timer">${formatTime(elapsedSeconds)}</span></p>
+                <hr>
+                <h6>Dịch vụ chưa thanh toán</h6>
+                ${servicesHTML}
+                <hr>
+                <div class="d-flex justify-content-between fs-5">
+                    <span>Tiền giờ (tạm tính):</span>
+                    <strong>${formatCurrency(tienGio)}</strong>
+                </div>
+                <div class="d-flex justify-content-between fs-5">
+                    <span>Tiền dịch vụ:</span>
+                    <strong>${formatCurrency(tienDichVu)}</strong>
+                </div>
+                <div class="d-flex justify-content-between fs-4 text-danger mt-2">
+                    <span>TỔNG CỘNG:</span>
+                    <strong>${formatCurrency(tongTien)}</strong>
+                </div>
+            `;
+            endButton.dataset.sessionId = sessionId;
+            endButton.disabled = false;
+        } catch(error) {
+            modalBody.innerHTML = `<p class="text-danger">${error.message}</p>`;
+        }
+    }
+
+    async function handleEndSession(sessionId) {
+        if (!sessionId) {
+            alert('Lỗi: Không tìm thấy ID phiên.');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn kết thúc và thanh toán cho phiên này?`)) {
+            try {
+                const response = await fetch(`/api/phien/${sessionId}/ket-thuc/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
+                alert(`Thanh toán thành công!\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}`);
+                sessionDetailModal.hide();
+                await updateMachineGrid();
+            } catch (error) {
+                alert(`Lỗi: ${error.message}`);
+            }
+        }
+    }
+
+    // --- HÀM KHỞI TẠO CHÍNH ---
+    async function initializePOS() {
+        try {
+            const shiftResponse = await fetch('/api/ca/hien-tai/');
+            if (shiftResponse.ok) {
+                currentShift = await shiftResponse.json();
+            } else {
+                currentShift = null;
+            }
+            updateShiftStatusUI();
+            await updateMachineGrid();
+            setInterval(updateMachineGrid, 15000);
+            machineGrid.addEventListener('click', function(event) {
+                const card = event.target.closest('.machine-card');
+                if (!card) return;
+                const mayId = card.dataset.id;
+                const mayStatus = card.dataset.status;
+                const mayName = card.querySelector('.card-title').textContent;
+                const timerEl = card.querySelector('.timer');
+                if (mayStatus === 'TRONG') {
+                    handleOpenMachine(mayId, mayName);
+                } else if (mayStatus === 'DANG_SU_DUNG' && timerEl && timerEl.dataset.sessionId) {
+                    handleShowSessionDetails(mayId, mayName, timerEl.dataset.sessionId);
+                }
+            });
+            sessionDetailModalEl.querySelector('.btn-danger').addEventListener('click', function(event) {
+                handleEndSession(event.target.dataset.sessionId);
+            });
+            document.getElementById('confirmStartShift').addEventListener('click', handleStartShift);
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            shiftStatusBar.innerHTML = `<div class="alert alert-danger m-0">Không thể khởi tạo giao diện POS. Lỗi: ${error.message}</div>`;
+            shiftStatusBar.style.display = 'block';
+        }
+    }
+
+    // --- KHỞI CHẠY ---
+    initializePOS();
 });
 </script>
 
