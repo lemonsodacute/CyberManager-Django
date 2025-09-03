@@ -53,7 +53,6 @@
         </div>
     </div>
 
-<<<<<<< HEAD
     <div class="page-content">
         <div class="content-area">
             <div class="machine-view">
@@ -86,22 +85,6 @@
                         <div id="session-actions" class="d-grid gap-2"><p class="text-muted text-center small">Chọn một máy đang sử dụng để xem tác vụ.</p></div>
                     </div>
                 </div>
-=======
-<div id="shift-status-bar" class="bg-secondary text-white text-center p-2" style="display: none;">
-    Đang kiểm tra trạng thái ca...
-</div>
-
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Sơ Đồ Phòng Máy</h3>
-        <div id="last-updated"></div>
-    </div>
-    
-    <div id="machine-grid" class="machine-grid">
-        <div class="d-flex justify-content-center align-items-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Đang tải dữ liệu...</span>
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
             </div>
         </div>
     </div>
@@ -127,11 +110,7 @@
 
 <!-- Modal Bắt Đầu Ca -->
 <div class="modal fade" id="startShiftModal" tabindex="-1">
-<<<<<<< HEAD
   <div class="modal-dialog modal-dialog-centered">
-=======
-  <div class="modal-dialog">
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Bắt Đầu Ca Làm Việc Mới</h5>
@@ -156,11 +135,7 @@
     </div>
   </div>
 </div>
-<<<<<<< HEAD
 <!-- Xóa toàn bộ thẻ <script> cũ và thay bằng thẻ này -->
-=======
-
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -168,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const machineGrid = document.getElementById('machine-grid');
     const sessionDetailModalEl = document.getElementById('sessionDetailModal');
     const startShiftModalEl = document.getElementById('startShiftModal');
-<<<<<<< HEAD
     const shiftStatusBar = document.getElementById('shift-status-bar');
     const shiftInfoDetails = document.getElementById('shift-info-details');
     const sessionActions = document.getElementById('session-actions');
@@ -176,15 +150,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const endShiftBtn = document.getElementById('endShiftBtn');
 
     if (!machineGrid || !sessionDetailModalEl || !startShiftModalEl) {
-=======
-    if (!machineGrid || !lastUpdatedDiv || !sessionDetailModalEl || !startShiftModalEl) {
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         console.error("Lỗi nghiêm trọng: Thiếu các phần tử HTML cần thiết.");
         return;
     }
     const sessionDetailModal = new bootstrap.Modal(sessionDetailModalEl);
     const startShiftModal = new bootstrap.Modal(startShiftModalEl);
-<<<<<<< HEAD
     const API_URLS = {
         may: '/api/may/',
         caHienTai: '/api/ca/hien-tai/',
@@ -200,83 +170,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMachineData = [];
     let selectedMachineId = null;
     let refreshIntervalId = null;
-=======
-    const shiftStatusBar = document.getElementById('shift-status-bar');
-    const shiftTypeSelect = document.getElementById('shiftTypeSelect');
-    const API_URL = '/api/may/';
-    let activeTimers = {};
-    let currentShift = null;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
 
     // --- CÁC HÀM TIỆN ÍCH ---
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
     const csrftoken = getCookie('csrftoken');
+    function formatTime(s) { if (s < 0) s = 0; const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; }
+    function formatCurrency(v) { return Math.ceil(v).toLocaleString('vi-VN') + ' VNĐ'; }
 
-<<<<<<< HEAD
     // --- CÁC HÀM RENDER VÀ CẬP NHẬT GIAO DIỆN ---
     function createMachineCard(may) {
         if (!may || !may.trang_thai) { return ''; }
-=======
-    function formatTime(totalSeconds) {
-        if (totalSeconds < 0) totalSeconds = 0;
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-
-    function formatCurrency(value) {
-        return Math.ceil(value).toLocaleString('vi-VN') + ' VNĐ';
-    }
-
-    // --- CÁC HÀM RENDER GIAO DIỆN ---
-    function createMachineCard(may) {
-        if (!may || !may.trang_thai) {
-             console.warn("Invalid 'may' object received from API:", may);
-             return '';
-        }
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         const trangThai = may.trang_thai;
         const tenMay = may.ten_may || 'Máy Lỗi';
         const tenLoaiMay = (may.loai_may && may.loai_may.ten_loai) ? may.loai_may.ten_loai : 'Không rõ';
         let statusClass = `status-${trangThai.toLowerCase()}`;
         let timerHTML = '';
         if (trangThai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
-<<<<<<< HEAD
             timerHTML = `<div class="timer" id="timer-${may.id}" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}" data-don-gia-gio="${may.loai_may.don_gia_gio}" data-session-id="${may.phien_dang_chay.id}">Đang tính...</div>`;
-=======
-            timerHTML = `<div class="timer" id="timer-${may.id}" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}" data-don-gia-gio="${may.loai_may.don_gia_gio}" data-session-id="${may.phien_dang_chay.id}"></div>`;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         } else if (trangThai === 'TRONG') {
             timerHTML = `<div class="timer text-success small">Sẵn sàng</div>`;
         } else {
             timerHTML = `<div class="timer text-danger small">Bảo trì</div>`;
         }
-<<<<<<< HEAD
         return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}"><div class="card-body p-2"><h6 class="card-title mb-1">${tenMay}</h6><p class="status-text small mb-1">${tenLoaiMay}</p>${timerHTML}</div></div>`;
-=======
-        return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}"><div class="card-body"><h5 class="card-title">${tenMay}</h5><p class="status-text">${tenLoaiMay}</p>${timerHTML}</div></div>`;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
     }
 
     function startAllTimers() {
         Object.values(activeTimers).forEach(clearInterval);
         activeTimers = {};
         document.querySelectorAll('.timer[data-start-time]').forEach(timerEl => {
-<<<<<<< HEAD
             const startTime = new Date(timerEl.dataset.startTime);
             const donGiaGio = parseFloat(timerEl.dataset.donGiaGio);
             const updateTimer = () => {
@@ -354,39 +276,11 @@ function updateShiftUI(shiftData) {
             currentMachineData = await response.json();
             renderMachineGrid(currentMachineData);
             updateSessionActionsUI();
-=======
-            const mayId = timerEl.id.split('-')[1];
-            const startTime = new Date(timerEl.dataset.startTime);
-            const donGiaGio = parseFloat(timerEl.dataset.donGiaGio);
-            const intervalId = setInterval(() => {
-                const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
-                const currentCost = (elapsedSeconds / 3600) * donGiaGio;
-                timerEl.innerHTML = `<strong>${formatTime(elapsedSeconds)}</strong><div style="font-size: 0.8em;">${formatCurrency(currentCost)}</div>`;
-            }, 1000);
-            activeTimers[mayId] = intervalId;
-        });
-    }
-    
-    async function updateMachineGrid() {
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
-            const data = await response.json();
-            machineGrid.innerHTML = '';
-            if (Array.isArray(data) && data.length > 0) {
-                data.forEach(may => { machineGrid.innerHTML += createMachineCard(may); });
-            } else {
-                machineGrid.innerHTML = '<p>Không có máy nào được cấu hình.</p>';
-            }
-            startAllTimers();
-            lastUpdatedDiv.textContent = `Cập nhật lần cuối: ${new Date().toLocaleTimeString()}`;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         } catch (error) {
             console.error("Lỗi khi cập nhật lưới máy:", error);
         }
     }
 
-<<<<<<< HEAD
     async function initializePOS() {
         try {
             const shiftResponse = await fetch(API_URLS.caHienTai);
@@ -422,27 +316,6 @@ function updateShiftUI(shiftData) {
     async function loadShiftTypes() {
         try {
             const response = await fetch(API_URLS.loaiCa);
-=======
-    function updateShiftStatusUI() {
-        if (currentShift) {
-            const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te).toLocaleTimeString('vi-VN');
-            shiftStatusBar.innerHTML = `Đang trong ca của <strong>${currentShift.nhan_vien}</strong>, bắt đầu lúc ${startTime}. <button class="btn btn-sm btn-warning ms-3" id="endShiftBtn">Kết Thúc Ca</button>`;
-            shiftStatusBar.style.display = 'block';
-            document.getElementById('endShiftBtn').addEventListener('click', handleEndShift);
-        } else {
-            shiftStatusBar.innerHTML = `Bạn chưa bắt đầu ca làm việc. <button class="btn btn-sm btn-success ms-3" id="startShiftBtn">Bắt Đầu Ca Mới</button>`;
-            shiftStatusBar.style.display = 'block';
-            document.getElementById('startShiftBtn').addEventListener('click', () => {
-                loadShiftTypes();
-                startShiftModal.show();
-            });
-        }
-    }
-    
-    async function loadShiftTypes() {
-        try {
-            const response = await fetch('/api/loai-ca/');
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
             if (!response.ok) throw new Error('Không thể tải danh sách loại ca.');
             const data = await response.json();
             shiftTypeSelect.innerHTML = '<option selected disabled value="">-- Vui lòng chọn --</option>';
@@ -452,11 +325,7 @@ function updateShiftUI(shiftData) {
                 data.forEach(loaiCa => {
                     const option = document.createElement('option');
                     option.value = loaiCa.id;
-<<<<<<< HEAD
                     option.textContent = `${loaiCa.ten_ca} (${loaiCa.gio_bat_dau.slice(0,5)} - ${loaiCa.gio_ket_thuc.slice(0,5)})`;
-=======
-                    option.textContent = loaiCa.ten_ca;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
                     shiftTypeSelect.appendChild(option);
                 });
             }
@@ -466,7 +335,6 @@ function updateShiftUI(shiftData) {
         }
     }
 
-<<<<<<< HEAD
     async function handleStartShift() {
         const initialCash = document.getElementById('initialCash').value;
         const loaiCaId = shiftTypeSelect.value;
@@ -476,38 +344,21 @@ function updateShiftUI(shiftData) {
         }
         try {
             const response = await fetch(API_URLS.batDauCa, {
-=======
-    // --- CÁC HÀM XỬ LÝ HÀNH ĐỘNG ---
-    async function handleStartShift() {
-        const initialCash = document.getElementById('initialCash').value;
-        const loaiCaId = shiftTypeSelect.value;
-        try {
-            const response = await fetch('/api/ca/bat-dau/', {
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                 body: JSON.stringify({ tien_mat_ban_dau: initialCash, loai_ca_id: loaiCaId })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
-<<<<<<< HEAD
             updateShiftUI(data);
             startShiftModal.hide();
         } catch (error) {
             alert(`Lỗi khi bắt đầu ca: ${error.message}`);
-=======
-            currentShift = data;
-            updateShiftStatusUI();
-            startShiftModal.hide();
-        } catch (error) {
-            alert(`Lỗi: ${error.message}`);
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         }
     }
 
     async function handleEndShift() {
         const finalCash = prompt("Vui lòng nhập tổng số tiền mặt cuối ca:", "0");
-<<<<<<< HEAD
         if (finalCash === null) return; // Người dùng nhấn Hủy
         if (isNaN(parseFloat(finalCash))) {
             alert("Vui lòng nhập một số hợp lệ.");
@@ -516,19 +367,12 @@ function updateShiftUI(shiftData) {
         if (confirm('Bạn có chắc muốn kết thúc ca làm việc? Hành động này không thể hoàn tác.')) {
             try {
                 const response = await fetch(API_URLS.ketThucCa, {
-=======
-        if (finalCash === null) return;
-        if (confirm('Bạn có chắc muốn kết thúc ca làm việc?')) {
-            try {
-                const response = await fetch('/api/ca/ket-thuc/', {
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                     body: JSON.stringify({ tien_mat_cuoi_ca: finalCash })
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
-<<<<<<< HEAD
                 alert('Đã kết thúc ca thành công. Hệ thống sẽ tự động đăng xuất.');
                 document.querySelector('form[action*="logout"]').submit();
             } catch (error) {
@@ -558,12 +402,6 @@ function updateShiftUI(shiftData) {
                 handleShowSessionDetails(mayId, mayName, timerEl.dataset.sessionId);
             } else {
                 console.error(`Máy ${mayName} đang sử dụng nhưng không tìm thấy ID phiên.`);
-=======
-                alert('Đã kết thúc ca. Hệ thống sẽ đăng xuất.');
-                document.querySelector('form[action*="logout"]').submit();
-            } catch (error) {
-                alert(`Lỗi: ${error.message}`);
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
             }
         }
     }
@@ -575,41 +413,26 @@ function updateShiftUI(shiftData) {
         }
         if (confirm(`Bạn có chắc muốn mở máy ${mayName} cho khách vãng lai?`)) {
             try {
-<<<<<<< HEAD
                 const response = await fetch(API_URLS.moMay(mayId), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                     body: JSON.stringify({}) // Luôn gửi body, dù là rỗng, để đảm bảo header Content-Type được xử lý đúng
-=======
-                const response = await fetch(`/api/may/${mayId}/mo-may/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
                 alert(result.success);
                 await updateMachineGrid();
             } catch (error) {
-<<<<<<< HEAD
                 alert(`Lỗi khi mở máy: ${error.message}`);
             }
         }
     }
 
-=======
-                alert(`Lỗi: ${error.message}`);
-            }
-        }
-    }
-    
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
     async function handleShowSessionDetails(mayId, mayName, sessionId) {
         const modalTitle = document.getElementById('sessionModalTitle');
         const modalBody = document.getElementById('sessionModalBody');
         const endButton = sessionDetailModalEl.querySelector('.btn-danger');
         modalTitle.textContent = `Chi Tiết Phiên - Máy ${mayName}`;
-<<<<<<< HEAD
         modalBody.innerHTML = '<div class="text-center p-4"><div class="spinner-border"></div></div>';
         endButton.disabled = true;
         sessionDetailModal.show();
@@ -657,56 +480,6 @@ function updateShiftUI(shiftData) {
             endButton.disabled = false;
         } catch(error) {
             modalBody.innerHTML = `<p class="text-danger p-4">Lỗi: ${error.message}</p>`;
-=======
-        modalBody.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
-        endButton.disabled = true;
-        sessionDetailModal.show();
-        try {
-            const response = await fetch(`/api/phien/${sessionId}/`);
-            if (!response.ok) throw new Error('Không thể tải chi tiết phiên.');
-            const data = await response.json();
-            const startTime = new Date(data.thoi_gian_bat_dau);
-            const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
-            const tienGio = (elapsedSeconds / 3600) * parseFloat(data.loai_may.don_gia_gio);
-            let servicesHTML = '<p>Chưa order dịch vụ.</p>';
-            let tienDichVu = 0;
-            const services = data.cac_don_hang.filter(order => !order.da_thanh_toan);
-            if (services.length > 0) {
-                servicesHTML = '<ul class="list-group">';
-                services.forEach(order => {
-                    tienDichVu += parseFloat(order.tong_tien);
-                    order.chi_tiet.forEach(item => {
-                        servicesHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${item.mon.ten_mon} (x${item.so_luong}) <span>${formatCurrency(item.thanh_tien)}</span></li>`;
-                    });
-                });
-                servicesHTML += '</ul>';
-            }
-            const tongTien = tienGio + tienDichVu;
-            modalBody.innerHTML = `
-                <p><strong>Bắt đầu lúc:</strong> ${startTime.toLocaleTimeString()}</p>
-                <p><strong>Thời gian chơi:</strong> <span id="modal-timer">${formatTime(elapsedSeconds)}</span></p>
-                <hr>
-                <h6>Dịch vụ chưa thanh toán</h6>
-                ${servicesHTML}
-                <hr>
-                <div class="d-flex justify-content-between fs-5">
-                    <span>Tiền giờ (tạm tính):</span>
-                    <strong>${formatCurrency(tienGio)}</strong>
-                </div>
-                <div class="d-flex justify-content-between fs-5">
-                    <span>Tiền dịch vụ:</span>
-                    <strong>${formatCurrency(tienDichVu)}</strong>
-                </div>
-                <div class="d-flex justify-content-between fs-4 text-danger mt-2">
-                    <span>TỔNG CỘNG:</span>
-                    <strong>${formatCurrency(tongTien)}</strong>
-                </div>
-            `;
-            endButton.dataset.sessionId = sessionId;
-            endButton.disabled = false;
-        } catch(error) {
-            modalBody.innerHTML = `<p class="text-danger">${error.message}</p>`;
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
         }
     }
 
@@ -717,16 +490,10 @@ function updateShiftUI(shiftData) {
         }
         if (confirm(`Bạn có chắc muốn kết thúc và thanh toán cho phiên này?`)) {
             try {
-<<<<<<< HEAD
                 const response = await fetch(API_URLS.ketThucPhien(sessionId), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                     body: JSON.stringify({}) // Luôn gửi body, dù là rỗng
-=======
-                const response = await fetch(`/api/phien/${sessionId}/ket-thuc/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
@@ -734,54 +501,11 @@ function updateShiftUI(shiftData) {
                 sessionDetailModal.hide();
                 await updateMachineGrid();
             } catch (error) {
-<<<<<<< HEAD
                 alert(`Lỗi khi kết thúc phiên: ${error.message}`);
-=======
-                alert(`Lỗi: ${error.message}`);
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
             }
         }
     }
 
-<<<<<<< HEAD
-=======
-    // --- HÀM KHỞI TẠO CHÍNH ---
-    async function initializePOS() {
-        try {
-            const shiftResponse = await fetch('/api/ca/hien-tai/');
-            if (shiftResponse.ok) {
-                currentShift = await shiftResponse.json();
-            } else {
-                currentShift = null;
-            }
-            updateShiftStatusUI();
-            await updateMachineGrid();
-            setInterval(updateMachineGrid, 15000);
-            machineGrid.addEventListener('click', function(event) {
-                const card = event.target.closest('.machine-card');
-                if (!card) return;
-                const mayId = card.dataset.id;
-                const mayStatus = card.dataset.status;
-                const mayName = card.querySelector('.card-title').textContent;
-                const timerEl = card.querySelector('.timer');
-                if (mayStatus === 'TRONG') {
-                    handleOpenMachine(mayId, mayName);
-                } else if (mayStatus === 'DANG_SU_DUNG' && timerEl && timerEl.dataset.sessionId) {
-                    handleShowSessionDetails(mayId, mayName, timerEl.dataset.sessionId);
-                }
-            });
-            sessionDetailModalEl.querySelector('.btn-danger').addEventListener('click', function(event) {
-                handleEndSession(event.target.dataset.sessionId);
-            });
-            document.getElementById('confirmStartShift').addEventListener('click', handleStartShift);
-        } catch (error) {
-            console.error("Initialization failed:", error);
-            shiftStatusBar.innerHTML = `<div class="alert alert-danger m-0">Không thể khởi tạo giao diện POS. Lỗi: ${error.message}</div>`;
-            shiftStatusBar.style.display = 'block';
-        }
-    }
-
->>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
     // --- KHỞI CHẠY ---
     initializePOS();
 });
