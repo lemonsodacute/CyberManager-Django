@@ -1,12 +1,16 @@
 # quanly/admin.py
 
 from django.contrib import admin, messages
+from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum
 from .models import (
-    NhanVien, KhachHang, LoaiMay, May, DanhMucMenu, NguyenLieu, MenuItem,
-    PhieuNhapKho, ChiTietNhapKho, PhienSuDung, DonHangDichVu,
-    ChiTietDonHang, HoaDon, GiaoDichTaiChinh
+    NhanVien, KhachHang, LoaiMay, May,
+    DanhMucMenu, NguyenLieu, MenuItem,
+    PhieuNhapKho, ChiTietNhapKho,
+    PhienSuDung, DonHangDichVu, ChiTietDonHang, HoaDon,
+    GiaoDichTaiChinh,
+    LoaiCa, CaLamViec  # <-- THÊM LoaiCa VÀ CaLamViec VÀO ĐÂY
 )
 
 # ... (Các lớp Admin cho Kho & Menu giữ nguyên như file trước) ...
@@ -164,3 +168,18 @@ class GiaoDichTaiChinhAdmin(admin.ModelAdmin):
     list_display = ('thoi_gian_giao_dich', 'loai_giao_dich', 'so_tien', 'nhan_vien_thuc_hien', 'khach_hang')
     list_filter = ('loai_giao_dich', 'nhan_vien_thuc_hien')
     readonly_fields = [f.name for f in GiaoDichTaiChinh._meta.fields]
+    
+    
+@admin.register(LoaiCa)
+class LoaiCaAdmin(admin.ModelAdmin):
+    # --- THAY ĐỔI ---
+    # Hiển thị các cột mới thay vì chỉ mô tả
+    list_display = ('ten_ca', 'gio_bat_dau', 'gio_ket_thuc', 'mo_ta')
+    search_fields = ('ten_ca',)
+
+@admin.register(CaLamViec)
+class CaLamViecAdmin(admin.ModelAdmin):
+    list_display = ('nhan_vien', 'loai_ca', 'thoi_gian_bat_dau_thuc_te', 'thoi_gian_ket_thuc_thuc_te', 'trang_thai')
+    list_filter = ('trang_thai', 'loai_ca')
+    search_fields = ('nhan_vien__tai_khoan__username',)
+    raw_id_fields = ('nhan_vien', 'loai_ca') # Giúp chọn FK dễ hơn nếu có nhiều NV/LoaiCa

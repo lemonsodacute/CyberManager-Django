@@ -3,68 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giao Diện Thu Ngân - Quản Net Pro</title>
+    <title>Quản Lý Quán Net - POS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        body { background-color: #f8f9fa; }
-        .machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1.5rem; }
-        .machine-card { border-radius: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; cursor: pointer; }
-        .machine-card:hover { transform: translateY(-5px); }
-        .machine-card .card-body { padding: 1rem; text-align: center; }
-        .machine-card .card-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
-        .machine-card .timer, .machine-card .status-text { font-size: 0.9rem; color: #6c757d; }
-        .status-trong { background-color: #d1e7dd; border-left: 5px solid #198754; }
-        .status-dang_su_dung { background-color: #cff4fc; border-left: 5px solid #0dcaf0; }
-        .status-hong { background-color: #f8d7da; border-left: 5px solid #dc3545; }
+        :root { --sidebar-width: 260px; }
+        body { display: flex; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; height: 100vh; overflow: hidden; }
+        .sidebar { width: var(--sidebar-width); height: 100%; position: fixed; top: 0; left: 0; background-color: #343a40; color: #c2c7d0; padding-top: 1rem; display: flex; flex-direction: column; }
+        .sidebar-brand { color: #fff; font-weight: bold; font-size: 1.5rem; text-align: center; margin-bottom: 1.5rem; padding: 0 1rem; }
+        .sidebar-nav { flex-grow: 1; }
+        .sidebar a { color: #c2c7d0; text-decoration: none; display: flex; align-items: center; padding: 0.75rem 1.5rem; border-radius: 0.25rem; margin: 0.25rem 1rem; transition: all 0.2s; }
+        .sidebar a:hover, .sidebar a.active { background-color: #494e53; color: #fff; }
+        .main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); display: flex; flex-direction: column; height: 100vh; }
+        .top-bar { background-color: #ffffff; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; box-shadow: 0 1px 3px rgba(0,0,0,.05); flex-shrink: 0; }
+        .page-content { flex-grow: 1; padding: 1.5rem; overflow-y: auto; }
+        .content-area { display: flex; gap: 1.5rem; }
+        .machine-view { flex-grow: 1; }
+        .info-sidebar { width: 320px; flex-shrink: 0; }
+        .machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+        .machine-card { border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s; cursor: pointer; border: 1px solid #e3e6f0; }
+        .machine-card.selected { border-color: #0d6efd; transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .status-trong { background-color: #fff; border-left: 4px solid #1cc88a; }
+        .status-dang_su_dung { background-color: #fff; border-left: 4px solid #36b9cc; }
+        .status-hong { background-color: #fff; border-left: 4px solid #e74a3b; }
+        .card-title-small { font-size: 0.8rem; text-transform: uppercase; color: #858796; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Quản Net Pro - POS</a>
-        <div class="d-flex">
+<div class="sidebar">
+    <div class="sidebar-brand">Quản Net Pro</div>
+    <nav class="sidebar-nav nav flex-column">
+        <a href="#" class="nav-link active"><i class="bi bi-grid-fill me-2"></i> Tổng Quan</a>
+        <a href="#" class="nav-link"><i class="bi bi-cart-plus-fill me-2"></i> Order Dịch vụ / Bán Lẻ</a>
+        <a href="#" class="nav-link"><i class="bi bi-cash-coin me-2"></i> Nạp Tiền Khách Hàng</a>
+        <a href="#" class="nav-link"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho (Kiểm kê)</a>
+        <a href="#" class="nav-link"><i class="bi bi-clipboard-data-fill me-2"></i> Báo Cáo / Lịch Sử Ca</a>
+    </nav>
+</div>
+
+<div class="main-content">
+    <div class="top-bar d-flex justify-content-between align-items-center">
+        <div id="shift-status-bar" class="text-secondary small fw-bold">Đang tải thông tin ca...</div>
+        <div class="d-flex align-items-center">
             {% if user.is_authenticated %}
-                <span class="navbar-text me-3">
-                    Xin chào, {{ user.username }}
-                </span>
-               <form action="{% url 'logout' %}" method="post" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-light">Đăng xuất</button>
-            </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-primary">Đăng nhập</a>
+                <span class="me-3 small">Xin chào, <strong>{{ user.username }}</strong></span>
+                <form action="{% url 'logout' %}" method="post" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary">Đăng xuất</button></form>
             {% endif %}
         </div>
     </div>
-</nav>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Sơ Đồ Phòng Máy</h3>
-        <div id="last-updated"></div>
-    </div>
-    
-    <div id="machine-grid" class="machine-grid">
-        <div class="d-flex justify-content-center align-items-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Đang tải dữ liệu...</span>
+    <div class="page-content">
+        <div class="content-area">
+            <div class="machine-view">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light py-3">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active">Tất cả</button>
+                            <button type="button" class="btn btn-sm btn-outline-info">Đang sử dụng</button>
+                            <button type="button" class="btn btn-sm btn-outline-success">Trống</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger">Hỏng</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="machine-grid" class="machine-grid"><div class="text-center p-5"><div class="spinner-border"></div></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-sidebar">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title-small mb-3">Thông Tin Ca Làm Việc</h6>
+                        <div id="shift-info-details"><p class="text-muted small">Chưa có ca nào diễn ra.</p></div>
+                        <div class="d-grid mt-3"><button class="btn btn-danger btn-sm" id="endShiftBtn" style="display: none;">Kết Thúc Ca</button></div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title-small mb-3">Tác Vụ Phiên Chạy</h6>
+                        <div id="session-actions" class="d-grid gap-2"><p class="text-muted text-center small">Chọn một máy đang sử dụng để xem tác vụ.</p></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Chi Tiết Phiên (ẩn mặc định) -->
+<!-- Modal Chi Tiết Phiên -->
 <div class="modal fade" id="sessionDetailModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="sessionModalTitle">Chi Tiết Phiên</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="sessionModalBody">
-        <p>Đang tải thông tin phiên...</p>
-      </div>
+      <div class="modal-body" id="sessionModalBody">...</div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
         <button type="button" class="btn btn-success">Order Dịch Vụ</button>
@@ -74,27 +108,68 @@
   </div>
 </div>
 
-<!-- ======================= PHẦN SỬA LỖI ======================= -->
-<!-- Bước 1: Tải thư viện Bootstrap JavaScript TRƯỚC -->
-<!-- Tải Bootstrap JS TRƯỚC -->
+<!-- Modal Bắt Đầu Ca -->
+<div class="modal fade" id="startShiftModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Bắt Đầu Ca Làm Việc Mới</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="shiftTypeSelect" class="form-label">Chọn loại ca:</label>
+          <select class="form-select" id="shiftTypeSelect" required>
+            <option selected disabled value="">Đang tải...</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="initialCash" class="form-label">Số tiền mặt ban đầu:</label>
+          <input type="number" class="form-control" id="initialCash" value="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" id="confirmStartShift">Bắt Đầu</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Xóa toàn bộ thẻ <script> cũ và thay bằng thẻ này -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- Code tùy chỉnh của bạn -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM Loaded. Initializing POS script.");
-
     // --- KHAI BÁO BIẾN ---
     const machineGrid = document.getElementById('machine-grid');
-    const lastUpdatedDiv = document.getElementById('last-updated');
     const sessionDetailModalEl = document.getElementById('sessionDetailModal');
-    if (!machineGrid || !lastUpdatedDiv || !sessionDetailModalEl) {
-        console.error("Critical Error: Cannot find required HTML elements.");
+    const startShiftModalEl = document.getElementById('startShiftModal');
+    const shiftStatusBar = document.getElementById('shift-status-bar');
+    const shiftInfoDetails = document.getElementById('shift-info-details');
+    const sessionActions = document.getElementById('session-actions');
+    const shiftTypeSelect = document.getElementById('shiftTypeSelect');
+    const endShiftBtn = document.getElementById('endShiftBtn');
+
+    if (!machineGrid || !sessionDetailModalEl || !startShiftModalEl) {
+        console.error("Lỗi nghiêm trọng: Thiếu các phần tử HTML cần thiết.");
         return;
     }
     const sessionDetailModal = new bootstrap.Modal(sessionDetailModalEl);
-    const API_URL = '/api/may/';
+    const startShiftModal = new bootstrap.Modal(startShiftModalEl);
+    const API_URLS = {
+        may: '/api/may/',
+        caHienTai: '/api/ca/hien-tai/',
+        batDauCa: '/api/ca/bat-dau/',
+        ketThucCa: '/api/ca/ket-thuc/',
+        loaiCa: '/api/loai-ca/',
+        moMay: (id) => `/api/may/${id}/mo-may/`,
+        chiTietPhien: (id) => `/api/phien/${id}/`,
+        ketThucPhien: (id) => `/api/phien/${id}/ket-thuc/`,
+    };
     let activeTimers = {};
+    let currentShift = null;
+    let currentMachineData = [];
+    let selectedMachineId = null;
+    let refreshIntervalId = null;
 
     // --- CÁC HÀM TIỆN ÍCH ---
     function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
@@ -102,71 +177,337 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatTime(s) { if (s < 0) s = 0; const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; }
     function formatCurrency(v) { return Math.ceil(v).toLocaleString('vi-VN') + ' VNĐ'; }
 
-    // --- CÁC HÀM RENDER ---
+    // --- CÁC HÀM RENDER VÀ CẬP NHẬT GIAO DIỆN ---
     function createMachineCard(may) {
-        if (!may || !may.trang_thai) {
-             console.warn("Invalid 'may' object received:", may);
-             return ''; // Trả về chuỗi rỗng để không gây lỗi
-        }
-
+        if (!may || !may.trang_thai) { return ''; }
         const trangThai = may.trang_thai;
         const tenMay = may.ten_may || 'Máy Lỗi';
         const tenLoaiMay = (may.loai_may && may.loai_may.ten_loai) ? may.loai_may.ten_loai : 'Không rõ';
         let statusClass = `status-${trangThai.toLowerCase()}`;
         let timerHTML = '';
-        
         if (trangThai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
-            timerHTML = `<div class="timer" id="timer-${may.id}" 
-                data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}"
-                data-don-gia-gio="${may.loai_may.don_gia_gio}"
-                data-session-id="${may.phien_dang_chay.id}"></div>`;
+            timerHTML = `<div class="timer" id="timer-${may.id}" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}" data-don-gia-gio="${may.loai_may.don_gia_gio}" data-session-id="${may.phien_dang_chay.id}">Đang tính...</div>`;
         } else if (trangThai === 'TRONG') {
-            timerHTML = `<div class="timer text-success">Sẵn sàng</div>`;
+            timerHTML = `<div class="timer text-success small">Sẵn sàng</div>`;
         } else {
-            timerHTML = `<div class="timer text-danger">Bảo trì</div>`;
+            timerHTML = `<div class="timer text-danger small">Bảo trì</div>`;
         }
-
-        return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}">
-                    <div class="card-body">
-                        <h5 class="card-title">${tenMay}</h5>
-                        <p class="status-text">${tenLoaiMay}</p>
-                        ${timerHTML}
-                    </div>
-                </div>`;
+        return `<div class="card machine-card ${statusClass}" data-id="${may.id}" data-status="${trangThai}"><div class="card-body p-2"><h6 class="card-title mb-1">${tenMay}</h6><p class="status-text small mb-1">${tenLoaiMay}</p>${timerHTML}</div></div>`;
     }
 
-    function startAllTimers() { /* Giữ nguyên như cũ */ }
-    
+    function startAllTimers() {
+        Object.values(activeTimers).forEach(clearInterval);
+        activeTimers = {};
+        document.querySelectorAll('.timer[data-start-time]').forEach(timerEl => {
+            const startTime = new Date(timerEl.dataset.startTime);
+            const donGiaGio = parseFloat(timerEl.dataset.donGiaGio);
+            const updateTimer = () => {
+                const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
+                const currentCost = (elapsedSeconds / 3600) * donGiaGio;
+                timerEl.innerHTML = `<strong class="small">${formatTime(elapsedSeconds)}</strong><div class="small">${formatCurrency(currentCost)}</div>`;
+            };
+            updateTimer(); // Gọi ngay lần đầu để không bị trễ 1 giây
+            const intervalId = setInterval(updateTimer, 1000);
+            activeTimers[timerEl.id] = intervalId;
+        });
+    }
+
+    function renderMachineGrid(data) {
+        machineGrid.innerHTML = '';
+        if (Array.isArray(data) && data.length > 0) {
+            data.forEach(may => { machineGrid.innerHTML += createMachineCard(may); });
+        } else {
+            machineGrid.innerHTML = '<p class="text-muted">Không có máy nào được cấu hình.</p>';
+        }
+        // Sau khi render, chọn lại máy đã được chọn trước đó nếu có
+        if (selectedMachineId) {
+            const selectedCard = machineGrid.querySelector(`.machine-card[data-id='${selectedMachineId}']`);
+            if (selectedCard) selectedCard.classList.add('selected');
+        }
+        startAllTimers();
+    }
+
+
+    // templates/nhanvien/pos.html -> trong thẻ <script>
+function updateShiftUI(shiftData) {
+    currentShift = shiftData;
+    if (shiftData) {
+        const startTime = new Date(shiftData.thoi_gian_bat_dau_thuc_te).toLocaleTimeString('vi-VN');
+        const nhanVienUsername = (shiftData.nhan_vien && shiftData.nhan_vien.tai_khoan) ? shiftData.nhan_vien.tai_khoan : 'Không rõ';
+        
+        // Dòng quan trọng
+        const tongThuHienTaiHTML = formatCurrency(shiftData.tong_thu_hien_tai || 0);
+        
+        shiftStatusBar.innerHTML = `Ca làm việc: <strong>${shiftData.loai_ca.ten_ca}</strong> - NV: <strong>${nhanVienUsername}</strong> - Bắt đầu lúc: <strong>${startTime}</strong>`;
+        
+        // Dòng quan trọng
+        shiftInfoDetails.innerHTML = `<p class="mb-1"><small>NV:</small> <strong>${nhanVienUsername}</strong></p>
+                                  <p class="mb-1"><small>Ca:</small> <strong>${shiftData.loai_ca.ten_ca}</strong></p>
+                                  <p class="mb-1"><small>Tiền mặt ban đầu:</small> <strong>${formatCurrency(shiftData.tien_mat_ban_dau)}</strong></p>
+                                  <p class="mb-1"><small>Tổng thu hiện tại:</small> <strong class="text-success">${tongThuHienTaiHTML}</strong></p>`;
+        
+        endShiftBtn.style.display = 'block';
+    } else {
+            shiftStatusBar.innerHTML = `<button class="btn btn-sm btn-success" id="startShiftBtn">Bắt Đầu Ca Mới</button>`;
+            shiftInfoDetails.innerHTML = '<p class="text-muted small">Chưa có ca nào diễn ra.</p>';
+            endShiftBtn.style.display = 'none';
+            document.getElementById('startShiftBtn').addEventListener('click', () => {
+                loadShiftTypes();
+                startShiftModal.show();
+            });
+        }
+}
+
+    function updateSessionActionsUI() {
+        const selectedMachine = currentMachineData.find(m => m.id == selectedMachineId);
+        if (selectedMachine && selectedMachine.trang_thai === 'DANG_SU_DUNG') {
+            sessionActions.innerHTML = `<button class="btn btn-primary btn-sm">Order Món</button><button class="btn btn-info btn-sm text-white">Nạp Tiền</button><button class="btn btn-warning btn-sm text-dark">Thanh Toán</button><button class="btn btn-secondary btn-sm">Kiểm Tra Lịch Sử</button><button class="btn btn-danger btn-sm">Chuyển Máy</button>`;
+        } else {
+            sessionActions.innerHTML = '<p class="text-muted text-center small">Chọn một máy để xem tác vụ.</p>';
+        }
+    }
+
+    // --- CÁC HÀM GỌI API VÀ XỬ LÝ HÀNH ĐỘNG ---
+
     async function updateMachineGrid() {
         try {
-            const response = await fetch(API_URL);
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
-            const data = await response.json();
-            
-            machineGrid.innerHTML = ''; // Xóa spinner
-            if (Array.isArray(data) && data.length > 0) {
-                data.forEach(may => {
-                    machineGrid.innerHTML += createMachineCard(may);
-                });
-            } else {
-                machineGrid.innerHTML = '<p>Không có máy nào được cấu hình.</p>';
-            }
-            
-            startAllTimers();
-            lastUpdatedDiv.textContent = `Cập nhật lần cuối: ${new Date().toLocaleTimeString()}`;
+            const response = await fetch(API_URLS.may);
+            if (!response.ok) throw new Error('Không thể tải dữ liệu máy.');
+            currentMachineData = await response.json();
+            renderMachineGrid(currentMachineData);
+            updateSessionActionsUI();
         } catch (error) {
-            console.error('Lỗi khi cập nhật sơ đồ:', error);
-            machineGrid.innerHTML = `<div class="alert alert-danger">Lỗi: ${error.message}</div>`;
+            console.error("Lỗi khi cập nhật lưới máy:", error);
         }
     }
 
-    // --- CÁC HÀM XỬ LÝ HÀNH ĐỘNG ---
-    // (Toàn bộ các hàm handle... giữ nguyên như cũ)
-    
-    // --- GẮN SỰ KIỆN VÀ KHỞI CHẠY ---
-    // (Toàn bộ phần gắn sự kiện và khởi chạy giữ nguyên như cũ)
+    async function initializePOS() {
+        try {
+            const shiftResponse = await fetch(API_URLS.caHienTai);
+            updateShiftUI(shiftResponse.ok ? await shiftResponse.json() : null);
+
+            await updateMachineGrid(); // Gọi hàm cập nhật lần đầu
+
+            // Bắt đầu tự động làm mới sau khi khởi tạo thành công
+            if (refreshIntervalId) clearInterval(refreshIntervalId);
+            refreshIntervalId = setInterval(updateMachineGrid, 15000);
+
+            // Gắn sự kiện cho các nút tĩnh
+            document.getElementById('confirmStartShift').addEventListener('click', handleStartShift);
+            machineGrid.addEventListener('click', handleMachineClick);
+            endShiftBtn.addEventListener('click', handleEndShift);
+
+            // *** SỬA LỖI QUAN TRỌNG: Gắn sự kiện cho nút kết thúc phiên trong modal ***
+            sessionDetailModalEl.querySelector('.btn-danger').addEventListener('click', (event) => {
+                const sessionId = event.target.dataset.sessionId;
+                if (sessionId) {
+                    handleEndSession(sessionId);
+                } else {
+                    alert('Lỗi: Không tìm thấy ID phiên để kết thúc.');
+                }
+            });
+
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            shiftStatusBar.innerHTML = `<div class="alert alert-danger m-0 p-2 small">Không thể khởi tạo. Vui lòng kiểm tra lại kết nối và thử lại.</div>`;
+        }
+    }
+
+    async function loadShiftTypes() {
+        try {
+            const response = await fetch(API_URLS.loaiCa);
+            if (!response.ok) throw new Error('Không thể tải danh sách loại ca.');
+            const data = await response.json();
+            shiftTypeSelect.innerHTML = '<option selected disabled value="">-- Vui lòng chọn --</option>';
+            if (data.length === 0) {
+                shiftTypeSelect.innerHTML = '<option disabled>Chưa có loại ca nào được tạo.</option>';
+            } else {
+                data.forEach(loaiCa => {
+                    const option = document.createElement('option');
+                    option.value = loaiCa.id;
+                    option.textContent = `${loaiCa.ten_ca} (${loaiCa.gio_bat_dau.slice(0,5)} - ${loaiCa.gio_ket_thuc.slice(0,5)})`;
+                    shiftTypeSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            shiftTypeSelect.innerHTML = '<option disabled>Lỗi khi tải loại ca.</option>';
+        }
+    }
+
+    async function handleStartShift() {
+        const initialCash = document.getElementById('initialCash').value;
+        const loaiCaId = shiftTypeSelect.value;
+        if (!loaiCaId) {
+            alert('Lỗi: Vui lòng chọn một loại ca trước khi bắt đầu.');
+            return;
+        }
+        try {
+            const response = await fetch(API_URLS.batDauCa, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ tien_mat_ban_dau: initialCash, loai_ca_id: loaiCaId })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
+            updateShiftUI(data);
+            startShiftModal.hide();
+        } catch (error) {
+            alert(`Lỗi khi bắt đầu ca: ${error.message}`);
+        }
+    }
+
+    async function handleEndShift() {
+        const finalCash = prompt("Vui lòng nhập tổng số tiền mặt cuối ca:", "0");
+        if (finalCash === null) return; // Người dùng nhấn Hủy
+        if (isNaN(parseFloat(finalCash))) {
+            alert("Vui lòng nhập một số hợp lệ.");
+            return;
+        }
+        if (confirm('Bạn có chắc muốn kết thúc ca làm việc? Hành động này không thể hoàn tác.')) {
+            try {
+                const response = await fetch(API_URLS.ketThucCa, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({ tien_mat_cuoi_ca: finalCash })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra');
+                alert('Đã kết thúc ca thành công. Hệ thống sẽ tự động đăng xuất.');
+                document.querySelector('form[action*="logout"]').submit();
+            } catch (error) {
+                alert(`Lỗi khi kết thúc ca: ${error.message}`);
+            }
+        }
+    }
+
+    function handleMachineClick(event) {
+        const card = event.target.closest('.machine-card');
+        if (!card) return;
+
+        document.querySelectorAll('.machine-card.selected').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        const mayId = card.dataset.id;
+        const mayStatus = card.dataset.status;
+        const mayName = card.querySelector('.card-title').textContent;
+        selectedMachineId = mayId;
+        updateSessionActionsUI();
+
+        if (mayStatus === 'TRONG') {
+            handleOpenMachine(mayId, mayName);
+        } else if (mayStatus === 'DANG_SU_DUNG') {
+            const timerEl = card.querySelector('.timer');
+            if (timerEl && timerEl.dataset.sessionId) {
+                handleShowSessionDetails(mayId, mayName, timerEl.dataset.sessionId);
+            } else {
+                console.error(`Máy ${mayName} đang sử dụng nhưng không tìm thấy ID phiên.`);
+            }
+        }
+    }
+
+    async function handleOpenMachine(mayId, mayName) {
+        if (!currentShift) {
+            alert('Vui lòng bắt đầu ca làm việc trước khi mở máy!');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn mở máy ${mayName} cho khách vãng lai?`)) {
+            try {
+                const response = await fetch(API_URLS.moMay(mayId), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({}) // Luôn gửi body, dù là rỗng, để đảm bảo header Content-Type được xử lý đúng
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
+                alert(result.success);
+                await updateMachineGrid();
+            } catch (error) {
+                alert(`Lỗi khi mở máy: ${error.message}`);
+            }
+        }
+    }
+
+    async function handleShowSessionDetails(mayId, mayName, sessionId) {
+        const modalTitle = document.getElementById('sessionModalTitle');
+        const modalBody = document.getElementById('sessionModalBody');
+        const endButton = sessionDetailModalEl.querySelector('.btn-danger');
+        modalTitle.textContent = `Chi Tiết Phiên - Máy ${mayName}`;
+        modalBody.innerHTML = '<div class="text-center p-4"><div class="spinner-border"></div></div>';
+        endButton.disabled = true;
+        sessionDetailModal.show();
+        try {
+            const response = await fetch(API_URLS.chiTietPhien(sessionId));
+            if (!response.ok) throw new Error('Không thể tải chi tiết phiên.');
+            const data = await response.json();
+            const startTime = new Date(data.thoi_gian_bat_dau);
+
+            const updateModalContent = () => {
+                const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
+                const tienGio = (elapsedSeconds / 3600) * parseFloat(data.loai_may.don_gia_gio);
+                let servicesHTML = '<p class="text-muted small">Chưa order dịch vụ.</p>';
+                let tienDichVu = 0;
+                // API mới có thể trả về `cac_don_hang`
+                const services = data.cac_don_hang || [];
+                if (services.length > 0) {
+                    servicesHTML = '<ul class="list-group list-group-flush">';
+                    services.forEach(order => {
+                        tienDichVu += parseFloat(order.tong_tien);
+                        (order.chi_tiet || []).forEach(item => {
+                            servicesHTML += `<li class="list-group-item d-flex justify-content-between align-items-center p-1">${item.mon.ten_mon} (x${item.so_luong}) <span>${formatCurrency(item.thanh_tien)}</span></li>`;
+                        });
+                    });
+                    servicesHTML += '</ul>';
+                }
+                const tongTien = tienGio + tienDichVu;
+                modalBody.innerHTML = `
+                    <p class="mb-1"><small>Bắt đầu:</small> <strong>${startTime.toLocaleTimeString('vi-VN')}</strong></p>
+                    <p><small>Thời gian chơi:</small> <strong>${formatTime(elapsedSeconds)}</strong></p><hr class="my-2">
+                    <h6>Dịch vụ chưa thanh toán</h6>${servicesHTML}<hr class="my-2">
+                    <div class="d-flex justify-content-between"><span>Tiền giờ (tạm tính):</span><strong>${formatCurrency(tienGio)}</strong></div>
+                    <div class="d-flex justify-content-between"><span>Tiền dịch vụ:</span><strong>${formatCurrency(tienDichVu)}</strong></div>
+                    <div class="d-flex justify-content-between fs-4 text-danger mt-2"><span>TỔNG CỘNG:</span><strong>${formatCurrency(tongTien)}</strong></div>
+                `;
+            };
+
+            updateModalContent(); // Cập nhật ngay lập tức
+            const modalInterval = setInterval(updateModalContent, 1000); // Cập nhật mỗi giây
+            sessionDetailModalEl.addEventListener('hidden.bs.modal', () => {
+                clearInterval(modalInterval); // Dọn dẹp interval khi modal đóng
+            }, { once: true });
+
+            endButton.dataset.sessionId = sessionId;
+            endButton.disabled = false;
+        } catch(error) {
+            modalBody.innerHTML = `<p class="text-danger p-4">Lỗi: ${error.message}</p>`;
+        }
+    }
+
+    async function handleEndSession(sessionId) {
+        if (!sessionId) {
+            alert('Lỗi: Không tìm thấy ID phiên.');
+            return;
+        }
+        if (confirm(`Bạn có chắc muốn kết thúc và thanh toán cho phiên này?`)) {
+            try {
+                const response = await fetch(API_URLS.ketThucPhien(sessionId), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify({}) // Luôn gửi body, dù là rỗng
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Có lỗi xảy ra');
+                alert(`Thanh toán thành công!\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}`);
+                sessionDetailModal.hide();
+                await updateMachineGrid();
+            } catch (error) {
+                alert(`Lỗi khi kết thúc phiên: ${error.message}`);
+            }
+        }
+    }
+
+    // --- KHỞI CHẠY ---
+    initializePOS();
 });
 </script>
 

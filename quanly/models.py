@@ -4,6 +4,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+
+
 # -----------------------------------------------------------------------------
 # KHU VỰC 1: CÁC MODEL NỀN TẢNG (Người dùng, Máy) - Ít thay đổi
 # -----------------------------------------------------------------------------
@@ -143,3 +145,64 @@ class GiaoDichTaiChinh(models.Model):
     so_tien = models.DecimalField(max_digits=12, decimal_places=2)
     thoi_gian_giao_dich = models.DateTimeField(default=timezone.now)
     def __str__(self): return f"[{self.get_loai_giao_dich_display()}] {self.so_tien:,.0f} VNĐ"
+    
+# quanly/models.py
+
+# ... (các imports và models hiện có của bạn) ...
+
+# -----------------------------------------------------------------------------
+# KHU VỰC MỚI: QUẢN LÝ CA LÀM VIỆC
+# -----------------------------------------------------------------------------
+
+class LoaiCa(models.Model):
+    """Định nghĩa các loại ca làm việc với giờ giấc cụ thể."""
+    ten_ca = models.CharField(max_length=100, unique=True, verbose_name="Tên loại ca")
+    
+    # --- THAY ĐỔI QUAN TRỌNG ---
+    # Thay vì mô tả chung chung, ta định nghĩa giờ bắt đầu và kết thúc cụ thể
+    gio_bat_dau = models.TimeField(verbose_name="Giờ bắt đầu theo quy định")
+    gio_ket_thuc = models.TimeField(verbose_name="Giờ kết thúc theo quy định")
+    
+    # Giữ lại mô tả nhưng không bắt buộc, dùng để ghi chú thêm nếu cần
+    mo_ta = models.TextField(blank=True, null=True, verbose_name="Mô tả (tùy chọn)")
+
+    def __str__(self):
+        # Hiển thị giờ giấc rõ ràng trong admin
+        start_time = self.gio_bat_dau.strftime('%H:%M')
+        end_time = self.gio_ket_thuc.strftime('%H:%M')
+        return f"{self.ten_ca} ({start_time} - {end_time})"
+    
+    class Meta:
+        verbose_name_plural = "Các Loại Ca"
+        ordering = ['gio_bat_dau'] # Sắp xếp theo giờ bắt đầu ca
+class CaLamViec(models.Model):
+    """Ghi lại chi tiết một ca làm việc của nhân viên."""
+    nhan_vien = models.ForeignKey(NhanVien, on_delete=models.PROTECT, verbose_name="Nhân viên")
+    loai_ca = models.ForeignKey(LoaiCa, on_delete=models.PROTECT, verbose_name="Loại ca")
+    
+    thoi_gian_bat_dau_thuc_te = models.DateTimeField(default=timezone.now, verbose_name="Thời gian bắt đầu thực tế")
+    thoi_gian_ket_thuc_thuc_te = models.DateTimeField(null=True, blank=True, verbose_name="Thời gian kết thúc thực tế")
+    
+    tien_mat_ban_dau = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Tiền mặt ban đầu trong két")
+    tien_mat_cuoi_ca = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Tiền mặt cuối ca")
+
+    ghi_chu = models.TextField(blank=True, null=True, verbose_name="Ghi chú")
+
+    TRANG_THAI_CHOICES = [
+        ('DANG_LAM', 'Đang làm việc'),
+        ('DA_KET_THUC', 'Đã kết thúc'),
+    ]
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='DANG_LAM', verbose_name="Trạng thái ca")
+
+    def __str__(self):
+        start_time = self.thoi_gian_bat_dau_thuc_te.strftime('%H:%M %d/%m')
+        end_time = self.thoi_gian_ket_thuc_thuc_te.strftime('%H:%M %d/%m') if self.thoi_gian_ket_thuc_thuc_te else "Chưa kết thúc"
+        return f"Ca {self.loai_ca.ten_ca} của {self.nhan_vien.tai_khoan.username} ({start_time} - {end_time})"
+
+    class Meta:
+        verbose_name_plural = "Các Ca Làm Việc"
+        ordering = ['-thoi_gian_bat_dau_thuc_te'] # Sắp xếp theo thời gian bắt đầu giảm dần
+        # Đảm bảo một nhân viên chỉ có một ca 'DANG_LAM' duy nhất
+        constraints = [
+            models.UniqueConstraint(fields=['nhan_vien'], condition=models.Q(trang_thai='DANG_LAM'), name='unique_active_shift_per_employee')
+        ]
