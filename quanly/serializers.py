@@ -1,6 +1,7 @@
 # quanly/serializers.py
 
 from rest_framework import serializers
+<<<<<<< HEAD
 from .models import May, LoaiMay, PhienSuDung, KhachHang, NhanVien # Import thêm NhanVien
 from .models import MenuItem, DonHangDichVu, ChiTietDonHang
 from .models import LoaiCa, CaLamViec # <-- THÊM CÁC MODELS NÀY
@@ -10,6 +11,15 @@ from .models import CaLamViec, GiaoDichTaiChinh, LoaiCa, NhanVien
 
 # -----------------------------------------------------------------------------
 # KHU VỰC CÁC SERIALIZER HIỆN CÓ CỦA BẠN (Đã sửa lại để bao gồm các thay đổi bạn cung cấp)
+=======
+from .models import (
+    May, LoaiMay, PhienSuDung, KhachHang, CaLamViec, LoaiCa,
+    MenuItem, DonHangDichVu, ChiTietDonHang
+)
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS DÙNG CHUNG
+>>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
 # -----------------------------------------------------------------------------
 
 class LoaiMaySerializer(serializers.ModelSerializer):
@@ -22,6 +32,7 @@ class KhachHangSerializer(serializers.ModelSerializer):
         model = KhachHang
         fields = ['so_du']
 
+<<<<<<< HEAD
 class NhanVienSerializer(serializers.ModelSerializer): # <-- SERIALIZER CHO NHANVIEN
     # Sử dụng SlugRelatedField để lấy username trực tiếp từ User
     tai_khoan = serializers.SlugRelatedField(
@@ -33,6 +44,14 @@ class NhanVienSerializer(serializers.ModelSerializer): # <-- SERIALIZER CHO NHAN
         fields = ['tai_khoan', 'chuc_vu']
 
 class PhienSuDungHienTaiSerializer(serializers.ModelSerializer):
+=======
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO API DANH SÁCH MÁY (/api/may/)
+# -----------------------------------------------------------------------------
+
+class PhienDangChaySerializer(serializers.ModelSerializer):
+    """Serializer rút gọn, chỉ lấy thông tin cần thiết cho màn hình POS."""
+>>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
     khach_hang = KhachHangSerializer(read_only=True, allow_null=True)
     class Meta:
         model = PhienSuDung
@@ -41,7 +60,6 @@ class PhienSuDungHienTaiSerializer(serializers.ModelSerializer):
 class MaySerializer(serializers.ModelSerializer):
     loai_may = LoaiMaySerializer(read_only=True)
     phien_dang_chay = serializers.SerializerMethodField()
-
     class Meta:
         model = May
         fields = ['id', 'ten_may', 'trang_thai', 'loai_may', 'phien_dang_chay']
@@ -49,11 +67,10 @@ class MaySerializer(serializers.ModelSerializer):
     def get_phien_dang_chay(self, obj):
         if obj.trang_thai == 'DANG_SU_DUNG':
             phien = PhienSuDung.objects.select_related('khach_hang').filter(
-                may=obj, 
-                trang_thai='DANG_DIEN_RA'
+                may=obj, trang_thai='DANG_DIEN_RA'
             ).order_by('-thoi_gian_bat_dau').first()
-            
             if phien:
+<<<<<<< HEAD
                 return {
                     'id': phien.id,
                     'thoi_gian_bat_dau': phien.thoi_gian_bat_dau,
@@ -62,6 +79,44 @@ class MaySerializer(serializers.ModelSerializer):
                 }
         return None
 
+=======
+                return PhienDangChaySerializer(phien).data
+        return None
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO API CA LÀM VIỆC
+# -----------------------------------------------------------------------------
+
+class LoaiCaSerializer(serializers.ModelSerializer):
+    """Serializer cho Loại Ca để hiển thị trong lựa chọn bắt đầu ca."""
+    class Meta:
+        model = LoaiCa
+        fields = ['id', 'ten_ca']
+
+# quanly/serializers.py
+
+# ... (các serializer khác) ...
+
+class CaLamViecSerializer(serializers.ModelSerializer):
+    nhan_vien = serializers.StringRelatedField()
+    loai_ca = LoaiCaSerializer(read_only=True)
+    
+    class Meta:
+        model = CaLamViec
+        fields = [
+            'id', 
+            'nhan_vien', 
+            'loai_ca', 
+            'thoi_gian_bat_dau_thuc_te', 
+            'thoi_gian_ket_thuc_thuc_te', 
+            'ngay_lam_viec',
+            'trang_thai', 
+            'tien_mat_ban_dau',
+            'tien_mat_cuoi_ca', # <-- Thêm vào
+            'tong_doanh_thu_he_thong', # <-- Thêm vào
+            'chenh_lech' # <-- Thêm vào
+        ]
+>>>>>>> 19ff6116941a3a84e2c976ff856d8b4625700d16
 class MenuItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MenuItem
@@ -77,7 +132,7 @@ class DonHangDichVuSerializer(serializers.ModelSerializer):
     chi_tiet = ChiTietDonHangSerializer(many=True, read_only=True)
     class Meta:
         model = DonHangDichVu
-        fields = ['id', 'trang_thai_thanh_toan', 'tong_tien', 'chi_tiet']
+        fields = ['id', 'da_thanh_toan', 'tong_tien', 'chi_tiet']
 
 class ChiTietPhienSerializer(serializers.ModelSerializer):
     """Serializer đầy đủ thông tin cho một phiên đang chạy."""

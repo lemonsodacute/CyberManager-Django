@@ -7,7 +7,6 @@ urlpatterns = [
     path('api/', include('quanly.api_urls')),
     path('nhanvien/', include('quanly.urls')),
     
-    # --- DÒNG MỚI ---
-    # Thêm URL cho việc đăng nhập/đăng xuất của Django
-    path('accounts/', include('django.contrib.auth.urls')),
+    # THAY DÒNG CŨ BẰNG DÒNG NÀY
+    path('accounts/', include('accounts.urls')),
 ]
