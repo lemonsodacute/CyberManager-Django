@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Quản Net Pro{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root { --sidebar-width: 260px; }
+        body { background-color: #f0f2f5; }
+        .sidebar { width: var(--sidebar-width); background-color: #2c3e50; color: white; flex-shrink: 0; height: 100vh; position: fixed; top: 0; left: 0; }
+        .sidebar .nav-link { color: #bdc3c7; border-radius: .3rem; margin: 0.2rem 0; transition: all 0.2s; padding: 0.75rem 1rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: #34495e; }
+        .sidebar .nav-link .bi { margin-right: 10px; }
+        .main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        .top-bar { background-color: white; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .content-wrapper { padding: 1.5rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div class="sidebar d-flex flex-column p-3">
+        <a href="{% url 'pos-view' %}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
+            <i class="bi bi-display fs-4 me-2"></i>
+            <span class="fs-4 fw-bold">Quản Net Pro</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="{% url 'pos-view' %}" class="nav-link {% if request.resolver_match.url_name == 'pos-view' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Tổng Quan Máy
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'retail-order-view' %}" class="nav-link {% if request.resolver_match.url_name == 'retail-order-view' %}active{% endif %}">
+                    <i class="bi bi-cart-plus-fill"></i> POS Bán Lẻ
+                </a>
+            </li>
+            <li><a href="#" class="nav-link"><i class="bi bi-cash-stack"></i> Nạp Tiền Khách Hàng</a></li>
+             <li>
+        <!-- <<< SỬA LẠI DÒNG NÀY >>> -->
+        <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">
+            <i class="bi bi-box-seam-fill"></i> Quản Lý Kho
+        </a>
+    </li>
+            <li><a href="#" class="nav-link"><i class="bi bi-clock-history"></i> Báo Cáo / Lịch Sử Ca</a></li>
+        </ul>
+        <hr>
+        <div class="dropdown">
+             <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle fs-4 me-2"></i>
+                <strong>{% if user.is_authenticated %}{{ user.username }}{% else %}Guest{% endif %}</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                <li><a class="dropdown-item" href="#">Cài đặt</a></li>
+                <li><a class="dropdown-item" href="#">Hồ sơ</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'logout' %}">Đăng xuất</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="top-bar" id="top-bar-sticky">
+            <div id="ca-lam-viec-info" class="fw-bold">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2">Đang tải thông tin ca...</span>
+            </div>
+            <div>
+                <button class="btn btn-danger d-none" id="ket-thuc-ca-btn"><i class="bi bi-door-closed-fill me-2"></i>Kết Thúc Ca</button>
+            </div>
+        </div>
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <div class="modal fade" id="startShiftModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="startShiftForm">
+                    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-right me-2"></i> Bắt Đầu Ca Làm Việc Mới</h5></div>
+                    <div class="modal-body">
+                        <p>Vui lòng chọn ca và nhập số tiền mặt ban đầu để bắt đầu.</p>
+                        <div class="mb-3">
+                            <label for="loai_ca_id" class="form-label">Chọn ca của bạn</label>
+                            <select class="form-select" id="loai_ca_id" required><option value="">Đang tải...</option></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tien_mat_ban_dau" class="form-label">Tiền mặt ban đầu</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="tien_mat_ban_dau" value="0" min="0" required><span class="input-group-text">VNĐ</span>
+                            </div>
+                        </div>
+                        <div id="start-shift-error" class="alert alert-danger d-none"></div>
+                    </div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+   <!-- quanly/templates/quanly/pos_base.html -->
+
+<!-- ... Giữ nguyên các phần trên ... -->
+ <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- KHAI BÁO BIẾN CHUNG ---
+            const caLamViecInfo = document.getElementById('ca-lam-viec-info');
+            const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
+            const startShiftModalEl = document.getElementById('startShiftModal');
+            const startShiftModal = new bootstrap.Modal(startShiftModalEl);
+            const startShiftForm = document.getElementById('startShiftForm');
+            const API_BASE_URL = '/pos/api';
+
+            // --- CÁC HÀM TIỆN ÍCH CHUNG ---
+            function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+            const csrftoken = getCookie('csrftoken');
+            const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+            
+            // --- CÁC HÀM API CHUNG ---
+            const fetchData = async (relativeUrl) => {
+                const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            };
+            const postData = async (relativeUrl, data) => {
+                const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
+                return result;
+            };
+
+            // --- LOGIC XỬ LÝ CA LÀM VIỆC (CHUNG) ---
+            async function openStartShiftModal() {
+                const selectEl = document.getElementById('loai_ca_id');
+                selectEl.innerHTML = '<option value="">Đang tải...</option>';
+                try {
+                    const shiftTypes = await fetchData('/loai-ca/');
+                    selectEl.innerHTML = '<option value="" disabled selected>-- Chọn ca làm việc --</option>';
+                    shiftTypes.forEach(type => {
+                        selectEl.innerHTML += `<option value="${type.id}">${type.ten_ca} (${type.gio_bat_dau} - ${type.gio_ket_thuc})</option>`;
+                    });
+                    startShiftModal.show();
+                } catch (error) {
+                    const errorDiv = document.getElementById('start-shift-error');
+                    errorDiv.textContent = 'Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
+                    errorDiv.classList.remove('d-none');
+                }
+            }
+
+            async function updateCaInfo() {
+                try {
+                    const currentShift = await fetchData('/ca/hien-tai/');
+                    if (startShiftModalEl.classList.contains('show')) startShiftModal.hide();
+                    
+                    const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
+                    
+                    caLamViecInfo.innerHTML = `
+                        <i class="bi bi-clock-fill text-success"></i> 
+                        <strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span> | 
+                        <strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan} | 
+                        <strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')} |
+                        <strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span>
+                    `;
+                    ketThucCaBtn.classList.remove('d-none');
+                } catch (error) {
+                    caLamViecInfo.innerHTML = `
+                        <div class="alert alert-warning py-1 px-3 mb-0 d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Chưa bắt đầu ca làm việc!</strong>
+                            <button class="btn btn-primary btn-sm ms-3" id="manual-start-shift-btn">Bắt Đầu Ca</button>
+                        </div>
+                    `;
+                    ketThucCaBtn.classList.add('d-none');
+                    openStartShiftModal();
+                    // Dùng optional chaining (?) để tránh lỗi nếu không tìm thấy nút
+                    document.getElementById('manual-start-shift-btn')?.addEventListener('click', openStartShiftModal);
+                }
+            }
+            
+            // --- GẮN SỰ KIỆN CHUNG ---
+            if (startShiftForm) {
+                startShiftForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const errorDiv = document.getElementById('start-shift-error');
+                    errorDiv.classList.add('d-none');
+                    const data = {
+                        loai_ca_id: document.getElementById('loai_ca_id').value,
+                        tien_mat_ban_dau: document.getElementById('tien_mat_ban_dau').value
+                    };
+                    if (!data.loai_ca_id) {
+                        errorDiv.textContent = 'Vui lòng chọn một ca làm việc.';
+                        errorDiv.classList.remove('d-none');
+                        return;
+                    }
+                    try {
+                        const result = await postData('/ca/bat-dau/', data);
+                        alert(`Đã bắt đầu ${result.loai_ca.ten_ca} thành công!`);
+                        startShiftModal.hide();
+                        location.reload();
+                    } catch (error) {
+                        errorDiv.textContent = `Lỗi: ${error.message}`;
+                        errorDiv.classList.remove('d-none');
+                    }
+                });
+            }
+
+            // <<< THAY ĐỔI LỚN NẰM Ở ĐÂY >>>
+           if (ketThucCaBtn) {
+    ketThucCaBtn.addEventListener('click', async () => {
+        const tienMatStr = prompt("Nhập tổng số tiền mặt cuối ca bạn đếm được:", "0");
+        if (tienMatStr === null) return;
+        
+        try {
+            const result = await postData('/ca/ket-thuc/', { tien_mat_cuoi_ca: tienMatStr });
+            alert(`Đã kết thúc ca thành công!\n- Doanh thu: ${formatCurrency(result.tong_doanh_thu_he_thong)}\n- Chênh lệch: ${formatCurrency(result.chenh_lech)}\n\nBạn sẽ được đăng xuất.`);
+            
+            // <<< SỬA LẠI DÒNG NÀY >>>
+            // Thay vì chuyển hướng, chúng ta submit form ẩn
+            document.getElementById('logout-form').submit();
+            
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+}
+
+            // --- KHỞI CHẠY CHUNG ---
+            updateCaInfo();
+            setInterval(updateCaInfo, 30000);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

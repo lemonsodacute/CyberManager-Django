@@ -1,0 +1,237 @@
+<!-- templates/admin/order.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Dịch Vụ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+        .menu-item { cursor: pointer; transition: all 0.2s; border-radius: .5rem; }
+        .menu-item:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .cart-item-controls button { width: 30px; height: 30px; }
+        #cart-container { max-height: 55vh; overflow-y: auto; }
+        .sticky-cart { position: sticky; top: 1rem; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid my-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 id="page-title">Order Dịch Vụ</h3>
+        <button class="btn btn-sm btn-close" onclick="window.close()" title="Đóng cửa sổ"></button>
+    </div>
+    <hr>
+    <div class="row g-4">
+        <!-- Cột Menu -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="menu-container">
+                        <div class="text-center p-5"><div class="spinner-border text-primary"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Cột Giỏ Hàng -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm sticky-cart">
+                <div class="card-body">
+                    <h4><i class="bi bi-cart3 me-2"></i> Giỏ Hàng</h4>
+                    <hr>
+                    <div id="cart-container" class="list-group mb-3">
+                        <div class="list-group-item text-muted text-center p-4" id="empty-cart-message">Chưa có sản phẩm.</div>
+                    </div>
+                    <div class="d-flex justify-content-between fs-4 fw-bold">
+                        <span>Tổng cộng:</span>
+                        <span id="cart-total" class="text-danger">0 VNĐ</span>
+                    </div>
+                    <div class="d-grid gap-2 mt-3">
+                        <button class="btn btn-primary btn-lg" id="checkout-cash-btn">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <i class="bi bi-cash-coin me-1"></i> Thanh Toán Ngay (Bán Lẻ)
+                        </button>
+                        <button class="btn btn-info btn-lg text-white" id="checkout-debt-btn">
+                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            <i class="bi bi-receipt me-1"></i> Ghi Nợ Vào Phiên
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const menuContainer = document.getElementById('menu-container');
+    const cartContainer = document.getElementById('cart-container');
+    const cartTotalEl = document.getElementById('cart-total');
+    const pageTitle = document.getElementById('page-title');
+    const emptyCartMessage = document.getElementById('empty-cart-message');
+    const checkoutCashBtn = document.getElementById('checkout-cash-btn');
+    const checkoutDebtBtn = document.getElementById('checkout-debt-btn');
+
+    let menuData = [];
+    let cart = {}; 
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('phien_id');
+    const machineName = urlParams.get('may_ten');
+     const API_BASE_URL = '/pos/api';
+    
+    // --- CÁC HÀM TIỆN ÍCH ---
+    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+    const csrftoken = getCookie('csrftoken');
+    const formatCurrency = (v) => Math.ceil(v).toLocaleString('vi-VN') + ' VNĐ';
+    
+    // --- LOGIC GIAO DIỆN ---
+    if (sessionId && machineName) {
+        pageTitle.innerHTML = `Order cho <span class="text-primary fw-bold">${machineName}</span>`;
+        checkoutCashBtn.style.display = 'none';
+    } else {
+        pageTitle.textContent = 'Order Dịch Vụ / Bán Lẻ';
+        checkoutDebtBtn.style.display = 'none';
+    }
+
+    // --- CÁC HÀM RENDER ---
+    function renderCart() {
+        cartContainer.innerHTML = '';
+        let total = 0;
+        const items = Object.values(cart);
+
+        emptyCartMessage.style.display = items.length === 0 ? 'block' : 'none';
+
+        items.forEach(item => {
+            const itemTotal = item.data.don_gia * item.so_luong;
+            total += itemTotal;
+            cartContainer.innerHTML += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${item.data.ten_mon}</h6>
+                        <small class="fw-bold">${formatCurrency(itemTotal)}</small>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-1">
+                        <small class="text-muted">${formatCurrency(item.data.don_gia)}</small>
+                        <div class="input-group input-group-sm w-auto">
+                            <button class="btn btn-outline-secondary cart-item-controls" data-item-id="${item.data.id}" data-action="decrease">-</button>
+                            <input type="text" class="form-control text-center" value="${item.so_luong}" style="width: 40px;" readonly>
+                            <button class="btn btn-outline-secondary cart-item-controls" data-item-id="${item.data.id}" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        cartTotalEl.textContent = formatCurrency(total);
+    }
+
+    // --- CÁC HÀM XỬ LÝ ---
+    function updateCart(itemId, action) {
+        itemId = parseInt(itemId);
+        if (action === 'increase') {
+            cart[itemId].so_luong++;
+        } else if (action === 'decrease') {
+            if (cart[itemId] && cart[itemId].so_luong > 1) cart[itemId].so_luong--;
+            else if (cart[itemId] && cart[itemId].so_luong === 1) delete cart[itemId];
+        }
+        renderCart();
+    }
+
+    function addToCart(itemId) {
+        itemId = parseInt(itemId);
+        if (cart[itemId]) {
+            cart[itemId].so_luong++;
+        } else {
+            const itemData = menuData.find(item => item.id === itemId);
+            if (itemData) cart[itemId] = { data: itemData, so_luong: 1 };
+        }
+        renderCart();
+    }
+
+    async function loadMenu() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/menu/`);
+            if (!response.ok) throw new Error('Không thể tải menu.');
+            menuData = await response.json();
+            
+            const groupedMenu = menuData.reduce((acc, item) => {
+                (acc[item.danh_muc] = acc[item.danh_muc] || []).push(item);
+                return acc;
+            }, {});
+
+            menuContainer.innerHTML = '';
+            for (const category in groupedMenu) {
+                let categoryHtml = `<h5 class="mt-3 text-secondary">${category}</h5><div class="menu-grid">`;
+                groupedMenu[category].forEach(item => {
+                    categoryHtml += `
+                    <div class="card menu-item" data-item-id="${item.id}">
+                        <div class="card-body p-2 text-center">
+                            <h6 class="card-title small mb-1">${item.ten_mon}</h6>
+                            <p class="card-text small text-danger fw-bold">${formatCurrency(item.don_gia)}</p>
+                        </div>
+                    </div>`;
+                });
+                categoryHtml += '</div>';
+                menuContainer.innerHTML += categoryHtml;
+            }
+        } catch (error) {
+            menuContainer.innerHTML = '<div class="alert alert-danger">Lỗi khi tải menu.</div>';
+        }
+    }
+    
+    async function checkout(loaiDonHang, buttonEl) {
+        const items = Object.values(cart).map(item => ({ id: item.data.id, so_luong: item.so_luong }));
+        if (items.length === 0) {
+            alert('Giỏ hàng đang trống!');
+            return;
+        }
+
+        buttonEl.disabled = true;
+        buttonEl.querySelector('.spinner-border').classList.remove('d-none');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/order/tao-moi/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ items, loai_don_hang: loaiDonHang, phien_id: sessionId })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Lỗi không xác định.');
+            
+            alert('Tạo đơn hàng thành công!');
+            // Gửi thông điệp để trang chính có thể tự cập nhật nếu cần
+            if (window.opener) {
+                 window.opener.postMessage('order_successful', '*');
+            }
+            window.close();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        } finally {
+            buttonEl.disabled = false;
+            buttonEl.querySelector('.spinner-border').classList.add('d-none');
+        }
+    }
+
+    // --- GẮN SỰ KIỆN ---
+    menuContainer.addEventListener('click', e => {
+        const card = e.target.closest('.menu-item');
+        if (card) addToCart(card.dataset.itemId);
+    });
+
+    cartContainer.addEventListener('click', e => {
+        const button = e.target.closest('.cart-item-controls');
+        if (button) updateCart(button.dataset.itemId, button.dataset.action);
+    });
+
+    checkoutCashBtn.addEventListener('click', (e) => checkout('BAN_LE', e.currentTarget));
+    checkoutDebtBtn.addEventListener('click', (e) => checkout('GHI_NO', e.currentTarget));
+
+    // --- KHỞI CHẠY ---
+    loadMenu();
+});
+</script>
+</body>
+</html>

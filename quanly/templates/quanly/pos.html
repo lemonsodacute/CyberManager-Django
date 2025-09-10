@@ -1,0 +1,287 @@
+{% extends 'quanly/pos_base.html' %}
+
+{% block title %}Tổng Quan - Quản Net Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .may-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.25rem; }
+    .may-card { cursor: pointer; transition: all 0.2s ease-in-out; border-radius: 0.5rem; border: 1px solid #dee2e6; }
+    .may-card:hover { transform: translateY(-5px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .may-card.selected { border: 2px solid #0d6efd; box-shadow: 0 4px 15px rgba(13,110,253,0.4); }
+    .may-card .card-header { font-weight: bold; }
+    .task-panel { position: sticky; top: 1.5rem; }
+    .badge { font-size: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Sơ Đồ Máy</h3>
+            <div class="btn-group" role="group" id="filter-buttons">
+                <button type="button" class="btn btn-outline-secondary active" data-filter="all">Tất Cả</button>
+                <button type="button" class="btn btn-outline-success" data-filter="DANG_SU_DUNG">Đang sử dụng</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="TRONG">Trống</button>
+                <button type="button" class="btn btn-outline-danger" data-filter="HONG">Hỏng</button>
+            </div>
+        </div>
+        <div class="may-grid" id="may-container">
+            <div class="text-center p-5 col-12">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3">Đang tải dữ liệu máy...</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="task-panel" id="task-panel">
+            <div class="card shadow-sm" id="task-panel-placeholder">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-mouse2 fs-1 text-muted"></i>
+                    <h5 class="mt-2">Chọn một máy để bắt đầu</h5>
+                    <p class="text-muted small">Hoặc chọn chức năng "POS Bán Lẻ" từ menu bên trái.</p>
+                </div>
+            </div>
+            <div class="card shadow-sm d-none" id="task-panel-machine-view">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0" id="machine-view-ten-may"></h5></div>
+                <div class="card-body">
+                    <p><strong>Trạng thái:</strong> <span id="machine-view-trang-thai"></span></p>
+                    <div id="machine-view-info-phien">
+                        <p><strong>Khách hàng:</strong> <span id="machine-view-khach-hang"></span></p>
+                        <p><strong>Bắt đầu:</strong> <span id="machine-view-bat-dau"></span></p>
+                        <p><strong>Thời gian:</strong> <span id="machine-view-thoi-gian" class="fw-bold text-danger"></span></p>
+                        <hr>
+                        <h6>Chi phí tạm tính</h6>
+                        <p class="mb-1"><strong>Tiền giờ:</strong> <span id="machine-view-tien-gio">0 VNĐ</span></p>
+                        <p><strong>Tiền dịch vụ:</strong> <span id="machine-view-tien-dv">0 VNĐ</span></p>
+                        <h5 class="text-danger">Tổng cộng: <span id="machine-view-tong-cong" class="fw-bold">0 VNĐ</span></h5>
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2" id="machine-view-actions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // --- GLOBAL FUNCTIONS ---
+    function openOrderWindowForSession(sessionId, machineName) {
+        const url = `/pos/order/?phien_id=${sessionId}&may_ten=${encodeURIComponent(machineName)}`;
+        window.open(url, 'OrderWindow', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- STATE & SELECTORS ---
+        let mayDataStore = [];
+        let selectedMayId = null;
+        const mayContainer = document.getElementById('may-container');
+        const taskPanelPlaceholder = document.getElementById('task-panel-placeholder');
+        const taskPanelMachineView = document.getElementById('task-panel-machine-view');
+        const filterButtons = document.getElementById('filter-buttons');
+        const API_BASE_URL = '/pos/api';
+
+        // <<< SỬA LỖI TẠI ĐÂY: ĐỊNH NGHĨA LẠI HÀM GETCOOKIE >>>
+        function getCookie(name) { 
+            let cookieValue = null; 
+            if (document.cookie && document.cookie !== '') { 
+                const cookies = document.cookie.split(';'); 
+                for (let i = 0; i < cookies.length; i++) { 
+                    const cookie = cookies[i].trim(); 
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) { 
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); 
+                        break; 
+                    } 
+                } 
+            } 
+            return cookieValue; 
+        }
+
+        // --- HELPER, RENDER, API, LOGIC FUNCTIONS ---
+        const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+        const formatDateTime = (iso) => iso ? new Date(iso).toLocaleString('vi-VN') : 'N/A';
+        const formatDuration = (sec) => {
+            if (isNaN(sec) || sec < 0) return "00:00:00";
+            const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+            const s = Math.floor(sec % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        };
+
+        const fetchData = async (relativeUrl) => {
+            const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        };
+        const postData = async (relativeUrl, data) => {
+            const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
+            return result;
+        };
+
+        function renderMayGrid(data, filter = 'all') {
+            const filteredData = filter === 'all' ? data : data.filter(may => may.trang_thai === filter);
+            mayContainer.innerHTML = '';
+            if (filteredData.length === 0) {
+                 mayContainer.innerHTML = '<p class="text-muted col-12 text-center">Không có máy nào ở trạng thái này.</p>';
+                 return;
+            }
+            filteredData.forEach(may => {
+                let statusClass, statusText, icon, headerClass;
+                switch (may.trang_thai) {
+                    case 'DANG_SU_DUNG': statusClass = 'text-bg-success'; statusText = 'Đang dùng'; icon = 'bi-person-check-fill'; headerClass = 'bg-success-subtle'; break;
+                    case 'TRONG': statusClass = 'text-bg-primary'; statusText = 'Trống'; icon = 'bi-pc-display'; headerClass = 'bg-primary-subtle'; break;
+                    case 'HONG': statusClass = 'text-bg-danger'; statusText = 'Hỏng'; icon = 'bi-x-circle-fill'; headerClass = 'bg-danger-subtle'; break;
+                }
+                const isSelected = may.id === selectedMayId ? 'selected' : '';
+                const card = document.createElement('div');
+                card.className = `card may-card ${isSelected}`;
+                card.dataset.mayId = may.id;
+                let phienHtml = '';
+                if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
+                    phienHtml = `<div class="mt-2"><strong class="text-danger fs-5 time-used" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}">00:00:00</strong><p class="mb-0 small text-muted">${formatCurrency(may.loai_may.don_gia_gio)}/giờ</p></div>`;
+                }
+                card.innerHTML = `<div class="card-header ${headerClass}"><i class="bi ${icon} me-1"></i> ${may.ten_may}</div><div class="card-body"><p class="card-text text-muted small">${may.loai_may.ten_loai}</p><span class="badge ${statusClass}">${statusText}</span>${phienHtml}</div>`;
+                mayContainer.appendChild(card);
+            });
+        }
+        
+        function showTaskPanel(panelId) {
+            taskPanelPlaceholder.classList.toggle('d-none', panelId);
+            taskPanelMachineView.classList.toggle('d-none', panelId !== 'task-panel-machine-view');
+        }
+
+        async function renderTaskPanelForMachine(mayId) {
+            const may = mayDataStore.find(m => m.id === mayId);
+            if (!may) return;
+            document.getElementById('machine-view-ten-may').textContent = may.ten_may;
+            document.getElementById('machine-view-trang-thai').innerHTML = `<span class="badge text-bg-${may.trang_thai === 'DANG_SU_DUNG' ? 'success' : 'primary'}">${may.trang_thai.replace('_', ' ')}</span>`;
+            const actionContainer = document.getElementById('machine-view-actions');
+            const infoPhienContainer = document.getElementById('machine-view-info-phien');
+            actionContainer.innerHTML = '';
+            if (may.trang_thai === 'TRONG') {
+                infoPhienContainer.style.display = 'none';
+                actionContainer.innerHTML = `<button class="btn btn-primary btn-lg" data-action="mo-may"><i class="bi bi-play-circle-fill me-2"></i> Mở Máy (Vãng lai)</button><button class="btn btn-info text-white" disabled><i class="bi bi-person-plus-fill me-2"></i> Mở Máy (Thành viên)</button>`;
+            } else if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
+                const phien = may.phien_dang_chay;
+                const response = await fetch(`${API_BASE_URL}/phien/${phien.id}/`);
+                const phienData = response.ok ? await response.json() : null;
+                infoPhienContainer.style.display = 'block';
+                document.getElementById('machine-view-khach-hang').textContent = phien.khach_hang ? phien.khach_hang.tai_khoan : 'Khách vãng lai';
+                document.getElementById('machine-view-bat-dau').textContent = formatDateTime(phien.thoi_gian_bat_dau);
+                const startTime = new Date(phien.thoi_gian_bat_dau);
+                const durationSec = Math.floor((new Date() - startTime) / 1000);
+                const tienGio = (durationSec / 3600) * parseFloat(may.loai_may.don_gia_gio);
+                const tienDV = phienData ? phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0) : 0;
+                document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
+                document.getElementById('machine-view-tien-dv').textContent = formatCurrency(tienDV);
+                document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
+                actionContainer.innerHTML = `<button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button><button class="btn btn-info text-white" disabled><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button><button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-receipt-cutoff me-2"></i> Tính Tiền & Đóng Máy</button>`;
+            } else {
+                infoPhienContainer.style.display = 'none';
+                actionContainer.innerHTML = `<div class="alert alert-danger">Lỗi: Máy đang ở trạng thái sử dụng nhưng không tìm thấy thông tin phiên. Vui lòng kiểm tra lại.</div>`;
+            }
+            showTaskPanel('task-panel-machine-view');
+        }
+
+        async function updateAllData() {
+            try {
+                mayDataStore = await fetchData('/may/');
+                const activeFilter = filterButtons.querySelector('.active').dataset.filter;
+                renderMayGrid(mayDataStore, activeFilter);
+                if (selectedMayId) await renderTaskPanelForMachine(selectedMayId);
+            } catch (error) { mayContainer.innerHTML = '<div class="alert alert-danger">Lỗi kết nối tới máy chủ.</div>'; }
+        }
+
+        function updateTimers() {
+            document.querySelectorAll('.time-used').forEach(el => {
+                const startTime = new Date(el.dataset.startTime);
+                const seconds = Math.floor((new Date() - startTime) / 1000);
+                el.textContent = formatDuration(seconds);
+                if (selectedMayId && mayDataStore.length > 0) {
+                    const may = mayDataStore.find(m => m.id === selectedMayId);
+                    if (may && may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
+                        const phien = may.phien_dang_chay;
+                        if(new Date(phien.thoi_gian_bat_dau).getTime() === startTime.getTime()) {
+                            const tienGio = (seconds / 3600) * parseFloat(may.loai_may.don_gia_gio);
+                            const tienDvText = document.getElementById('machine-view-tien-dv').textContent;
+                            const tienDV = parseFloat(tienDvText.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                            document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
+                            document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- EVENT HANDLERS ---
+        mayContainer.addEventListener('click', e => {
+            const card = e.target.closest('.may-card');
+            if (card) {
+                selectedMayId = parseInt(card.dataset.mayId);
+                const activeFilter = filterButtons.querySelector('.active').dataset.filter;
+                renderMayGrid(mayDataStore, activeFilter);
+                renderTaskPanelForMachine(selectedMayId);
+            }
+        });
+        
+        filterButtons.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if(button) {
+                filterButtons.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                renderMayGrid(mayDataStore, button.dataset.filter);
+            }
+        });
+
+        taskPanelMachineView.addEventListener('click', async e => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const action = button.dataset.action;
+            const may = mayDataStore.find(m => m.id === selectedMayId);
+            if (!may) return;
+            if (action === 'mo-may') {
+                if (!confirm('Mở máy cho khách vãng lai?')) return;
+                try {
+                    const result = await postData(`/may/${selectedMayId}/mo-may/`);
+                    alert(result.success);
+                    await updateAllData();
+                } catch (error) { alert(`Lỗi: ${error.message}`); }
+            } else if (action === 'tinh-tien' && may.phien_dang_chay) {
+                const phienId = may.phien_dang_chay.id;
+                if (!confirm(`Tính tiền và đóng máy ${may.ten_may}?`)) return;
+                try {
+                    const result = await postData(`/phien/${phienId}/ket-thuc/`);
+                    alert(`${result.success}\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}`);
+                    selectedMayId = null;
+                    showTaskPanel(null);
+                    await updateAllData();
+                    location.reload(); // Tải lại để cập nhật tổng thu
+                } catch (error) { alert(`Lỗi: ${error.message}`); }
+            }
+        });
+        
+        window.addEventListener('message', (event) => {
+            if (event.data === 'order_successful') {
+                if (selectedMayId) renderTaskPanelForMachine(selectedMayId);
+                location.reload(); // Tải lại để cập nhật tổng thu
+            }
+        });
+
+        // --- INITIALIZATION ---
+        function initialize() {
+            updateAllData();
+            setInterval(updateAllData, 20000);
+            setInterval(updateTimers, 1000);
+        }
+        initialize();
+    });
+</script>
+{% endblock %}

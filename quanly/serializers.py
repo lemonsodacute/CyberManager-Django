@@ -1,16 +1,23 @@
 # quanly/serializers.py
 
 from rest_framework import serializers
-from .models import May, LoaiMay, PhienSuDung, KhachHang, NhanVien # Import thêm NhanVien
-from .models import MenuItem, DonHangDichVu, ChiTietDonHang
-from .models import LoaiCa, CaLamViec # <-- THÊM CÁC MODELS NÀY
-from django.db.models import Sum, Q  # <-- THÊM Sum và Q
-from django.utils import timezone   
-from .models import CaLamViec, GiaoDichTaiChinh, LoaiCa, NhanVien
+from .models import (
+    ChiTietKiemKe, May, LoaiMay, PhienSuDung, KhachHang, CaLamViec, LoaiCa,
+    MenuItem, DonHangDichVu, ChiTietDonHang, NhanVien
+)
+from .models import NguyenLieu
+from django.db.models import Sum
+from .models import GiaoDichTaiChinh
 
 # -----------------------------------------------------------------------------
-# KHU VỰC CÁC SERIALIZER HIỆN CÓ CỦA BẠN (Đã sửa lại để bao gồm các thay đổi bạn cung cấp)
+# SERIALIZERS DÙNG CHUNG / NỀN TẢNG
 # -----------------------------------------------------------------------------
+
+class NhanVienSerializer(serializers.ModelSerializer):
+    tai_khoan = serializers.StringRelatedField()
+    class Meta:
+        model = NhanVien
+        fields = ['tai_khoan']
 
 class LoaiMaySerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,17 +29,16 @@ class KhachHangSerializer(serializers.ModelSerializer):
         model = KhachHang
         fields = ['so_du']
 
-class NhanVienSerializer(serializers.ModelSerializer): # <-- SERIALIZER CHO NHANVIEN
-    # Sử dụng SlugRelatedField để lấy username trực tiếp từ User
-    tai_khoan = serializers.SlugRelatedField(
-        slug_field='username',
-        read_only=True
-    )
+class LoaiCaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = NhanVien
-        fields = ['tai_khoan', 'chuc_vu']
+        model = LoaiCa
+        fields = ['id', 'ten_ca', 'gio_bat_dau', 'gio_ket_thuc']
 
-class PhienSuDungHienTaiSerializer(serializers.ModelSerializer):
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO API DANH SÁCH MÁY (/api/may/)
+# -----------------------------------------------------------------------------
+
+class PhienDangChaySerializer(serializers.ModelSerializer):
     khach_hang = KhachHangSerializer(read_only=True, allow_null=True)
     class Meta:
         model = PhienSuDung
@@ -41,31 +47,59 @@ class PhienSuDungHienTaiSerializer(serializers.ModelSerializer):
 class MaySerializer(serializers.ModelSerializer):
     loai_may = LoaiMaySerializer(read_only=True)
     phien_dang_chay = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = May
         fields = ['id', 'ten_may', 'trang_thai', 'loai_may', 'phien_dang_chay']
         
     def get_phien_dang_chay(self, obj):
-        if obj.trang_thai == 'DANG_SU_DUNG':
-            phien = PhienSuDung.objects.select_related('khach_hang').filter(
-                may=obj, 
-                trang_thai='DANG_DIEN_RA'
-            ).order_by('-thoi_gian_bat_dau').first()
-            
-            if phien:
-                return {
-                    'id': phien.id,
-                    'thoi_gian_bat_dau': phien.thoi_gian_bat_dau,
-                    'hinh_thuc': phien.hinh_thuc,
-                    'khach_hang': KhachHangSerializer(phien.khach_hang).data if phien.khach_hang else None
-                }
+        # <<< THAY ĐỔI LỚN >>>
+        # Thay vì truy vấn DB tại đây (gây ra N+1), chúng ta sẽ sử dụng
+        # thuộc tính 'phien_dang_chay_prefetched' đã được tối ưu sẵn từ view.
+        # `hasattr` dùng để kiểm tra xem thuộc tính đó có tồn tại không.
+        if hasattr(obj, 'phien_dang_chay_prefetched') and obj.phien_dang_chay_prefetched:
+            # `phien_dang_chay_prefetched` là một list, ta lấy phần tử đầu tiên.
+            return PhienDangChaySerializer(obj.phien_dang_chay_prefetched[0]).data
         return None
 
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO API CA LÀM VIỆC
+# -----------------------------------------------------------------------------
+
+class CaLamViecSerializer(serializers.ModelSerializer):
+    nhan_vien = NhanVienSerializer(read_only=True)
+    loai_ca = LoaiCaSerializer(read_only=True)
+    tong_thu_hien_tai = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CaLamViec
+        fields = [
+            'id', 'nhan_vien', 'loai_ca', 'thoi_gian_bat_dau_thuc_te',
+            'thoi_gian_ket_thuc_thuc_te', 'ngay_lam_viec', 'tien_mat_ban_dau',
+            'trang_thai', 'tong_thu_hien_tai',
+            'tien_mat_cuoi_ca', 'tong_doanh_thu_he_thong', 'chenh_lech'
+        ]
+
+    def get_tong_thu_hien_tai(self, obj):
+        if obj.trang_thai != 'DANG_DIEN_RA':
+            return obj.tong_doanh_thu_he_thong
+
+        giao_dich_thu_tien = GiaoDichTaiChinh.objects.filter(
+            ca_lam_viec=obj,
+            loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE', 'NAP_TIEN']
+        )
+        total = giao_dich_thu_tien.aggregate(total=Sum('so_tien'))['total']
+        return total or 0
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO API MENU & ORDER
+# -----------------------------------------------------------------------------
+
 class MenuItemSerializer(serializers.ModelSerializer):
+    danh_muc = serializers.StringRelatedField()
     class Meta:
         model = MenuItem
-        fields = ['ten_mon']
+        fields = ['id', 'ten_mon', 'don_gia', 'danh_muc', 'is_available']
 
 class ChiTietDonHangSerializer(serializers.ModelSerializer):
     mon = MenuItemSerializer(read_only=True)
@@ -77,10 +111,9 @@ class DonHangDichVuSerializer(serializers.ModelSerializer):
     chi_tiet = ChiTietDonHangSerializer(many=True, read_only=True)
     class Meta:
         model = DonHangDichVu
-        fields = ['id', 'trang_thai_thanh_toan', 'tong_tien', 'chi_tiet']
+        fields = ['id', 'loai_don_hang', 'da_thanh_toan', 'tong_tien', 'chi_tiet']
 
 class ChiTietPhienSerializer(serializers.ModelSerializer):
-    """Serializer đầy đủ thông tin cho một phiên đang chạy."""
     cac_don_hang = DonHangDichVuSerializer(many=True, read_only=True)
     loai_may = LoaiMaySerializer(source='may.loai_may', read_only=True)
     ten_may = serializers.CharField(source='may.ten_may', read_only=True)
@@ -88,61 +121,23 @@ class ChiTietPhienSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhienSuDung
         fields = ['id', 'ten_may', 'loai_may', 'thoi_gian_bat_dau', 'hinh_thuc', 'cac_don_hang']
-
-
+        
+        
 # -----------------------------------------------------------------------------
-# THÊM CÁC SERIALIZER MỚI CHO LOẠI CA VÀ CA LÀM VIỆC
+# SERIALIZERS CHO API QUẢN LÝ KHO (MỚI)
 # -----------------------------------------------------------------------------
-class LoaiCaSerializer(serializers.ModelSerializer):
+
+class NguyenLieuSerializer(serializers.ModelSerializer):
+    """Serializer chi tiết cho Nguyên Liệu để quản lý kho."""
     class Meta:
-        model = LoaiCa
-        # --- THAY ĐỔI ---
-        # Thêm các trường giờ giấc vào để API trả về
-        fields = ['id', 'ten_ca', 'gio_bat_dau', 'gio_ket_thuc', 'mo_ta']
-class CaLamViecSerializer(serializers.ModelSerializer):
-    nhan_vien = NhanVienSerializer(read_only=True)
-    loai_ca = LoaiCaSerializer(read_only=True)
-    tong_thu_hien_tai = serializers.SerializerMethodField() # Đảm bảo có dòng này
+        model = NguyenLieu
+        fields = ['id', 'ten_nguyen_lieu', 'don_vi_tinh', 'so_luong_ton']
+
+class ChiTietKiemKeSerializer(serializers.ModelSerializer):
+    """Serializer dùng trong API tạo phiếu kiểm kê."""
+    nguyen_lieu_id = serializers.IntegerField()
+    ton_thuc_te = serializers.FloatField()
 
     class Meta:
-        model = CaLamViec
-        fields = [
-            'id', 'nhan_vien', 'loai_ca', 'thoi_gian_bat_dau_thuc_te',
-            'thoi_gian_ket_thuc_thuc_te', 'tien_mat_ban_dau', 'tien_mat_cuoi_ca',
-            'trang_thai', 'ghi_chu',
-            'tong_thu_hien_tai'  # Đảm bảo có trường này
-        ]
-
-    # Đảm bảo có hàm này
-    def get_tong_thu_hien_tai(self, obj):
-        if obj.trang_thai != 'DANG_LAM':
-            return 0
-
-        giao_dichs = GiaoDichTaiChinh.objects.filter(
-            thoi_gian_giao_dich__gte=obj.thoi_gian_bat_dau_thuc_te,
-            loai_giao_dich__in=[
-                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_HOA_DON,
-                GiaoDichTaiChinh.LoaiGiaoDich.NAP_TIEN,
-                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE
-            ]
-        )
-        tong_thu = giao_dichs.aggregate(total=Sum('so_tien'))['total'] or 0
-        return tong_thu
-
-class StartShiftSerializer(serializers.Serializer):
-    """Serializer dùng để nhận dữ liệu khi bắt đầu ca làm việc."""
-    loai_ca_id = serializers.IntegerField()
-    tien_mat_ban_dau = serializers.DecimalField(max_digits=12, decimal_places=2, default=0)
-    
-    def validate_loai_ca_id(self, value):
-        try:
-            LoaiCa.objects.get(id=value)
-        except LoaiCa.DoesNotExist:
-            raise serializers.ValidationError("Loại ca không tồn tại.")
-        return value
-
-class EndShiftSerializer(serializers.Serializer):
-    """Serializer dùng để nhận dữ liệu khi kết thúc ca làm việc."""
-    tien_mat_cuoi_ca = serializers.DecimalField(max_digits=12, decimal_places=2)
-    
-    
+        model = ChiTietKiemKe
+        fields = ['nguyen_lieu_id', 'ton_thuc_te']

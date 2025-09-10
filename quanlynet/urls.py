@@ -1,14 +1,22 @@
 # quanlynet/urls.py
-
 from django.contrib import admin
-from django.urls import path, include 
-# quanlynet/urls.py
+from django.urls import path, include
+from django.contrib.auth import views as auth_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('quanly.api_urls')), 
+    path('pos/', include('quanly.urls')), 
     
-    # Sửa lại thành 'nhanvien/'
-    path('nhanvien/', include('quanly.urls')),
-    
-    path('accounts/', include('django.contrib.auth.urls')),
+    path(
+        'accounts/login/', 
+        auth_views.LoginView.as_view(template_name='accounts/login.html'), 
+        name='login'
+    ),
+    # DÒNG QUAN TRỌNG NẰM Ở ĐÂY
+     path(
+        'accounts/logout/', 
+        auth_views.LogoutView.as_view(next_page='/accounts/login/'), 
+        name='logout'
+    ),
 ]
+LOGOUT_ON_GET = True

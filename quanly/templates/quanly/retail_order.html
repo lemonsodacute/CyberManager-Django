@@ -1,0 +1,257 @@
+{% extends 'quanly/pos_base.html' %}
+
+{% block title %}POS Bán Lẻ - Quản Net Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-list .list-group-item { cursor: pointer; }
+    .category-list .list-group-item.active { font-weight: bold; background-color: #e9ecef; border-color: #dee2e6;}
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+    .menu-item { cursor: pointer; transition: all 0.2s; border-radius: .5rem; text-align: center; }
+    .menu-item:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .cart-item-controls button { width: 30px; height: 30px; }
+    #cart-container { max-height: 60vh; overflow-y: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">POS Bán Lẻ</h3>
+<div class="row g-4">
+    <!-- Cột Danh mục -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold"><i class="bi bi-tags-fill me-2"></i> Danh Mục</div>
+            <div class="list-group list-group-flush category-list" id="category-list">
+                <div class="p-5 text-center"><div class="spinner-border spinner-border-sm"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột Menu Item -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold"><i class="bi bi-cup-straw me-2"></i> Menu</div>
+            <div class="card-body">
+                <input type="text" id="search-bar" class="form-control mb-3" placeholder="Tìm kiếm món ăn...">
+                <div class="menu-grid" id="menu-grid">
+                    <div class="p-5 text-center"><div class="spinner-border"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột Giỏ Hàng -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm position-sticky" style="top: 1.5rem;">
+            <div class="card-header fw-bold"><i class="bi bi-cart3 me-2"></i> Giỏ Hàng</div>
+            <div class="card-body">
+                <div id="cart-container" class="list-group mb-3">
+                    <div class="list-group-item text-muted text-center p-4" id="empty-cart-message">Chưa có sản phẩm.</div>
+                </div>
+                <div class="d-flex justify-content-between fs-4 fw-bold">
+                    <span>Tổng cộng:</span>
+                    <span id="cart-total" class="text-danger">0 VNĐ</span>
+                </div>
+                <div class="d-grid mt-3">
+                    <button class="btn btn-primary btn-lg" id="checkout-btn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <i class="bi bi-cash-coin me-2"></i> Thanh Toán
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const categoryList = document.getElementById('category-list');
+    const menuGrid = document.getElementById('menu-grid');
+    const searchBar = document.getElementById('search-bar');
+    const cartContainer = document.getElementById('cart-container');
+    const cartTotalEl = document.getElementById('cart-total');
+    const emptyCartMessage = document.getElementById('empty-cart-message');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    let menuData = [];
+    let cart = {}; 
+    const API_BASE_URL = '/pos/api';
+
+    // --- CÁC HÀM TIỆN ÍCH ---
+    const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+
+    // --- CÁC HÀM RENDER ---
+    function renderCategories(categories) {
+        categoryList.innerHTML = `<a href="#" class="list-group-item list-group-item-action active" data-category="all">Tất Cả Danh Mục</a>`;
+        categories.forEach(cat => {
+            categoryList.innerHTML += `<a href="#" class="list-group-item list-group-item-action" data-category="${cat}">${cat}</a>`;
+        });
+    }
+
+    function renderMenu(items) {
+        menuGrid.innerHTML = '';
+        if (items.length === 0) {
+            menuGrid.innerHTML = '<p class="text-muted text-center col-12">Không có sản phẩm nào được tìm thấy.</p>';
+            return;
+        }
+        items.forEach(item => {
+            menuGrid.innerHTML += `
+                <div class="card menu-item" data-item-id="${item.id}">
+                    <div class="card-body p-2">
+                        <h6 class="card-title small mb-1">${item.ten_mon}</h6>
+                        <p class="card-text small text-danger fw-bold">${formatCurrency(item.don_gia)}</p>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function renderCart() {
+        cartContainer.innerHTML = '';
+        let total = 0;
+        const items = Object.values(cart);
+        emptyCartMessage.style.display = items.length === 0 ? 'block' : 'none';
+
+        items.forEach(item => {
+            const itemTotal = parseFloat(item.data.don_gia) * item.so_luong;
+            total += itemTotal;
+            cartContainer.innerHTML += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 small">${item.data.ten_mon}</h6>
+                        <small class="fw-bold">${formatCurrency(itemTotal)}</small>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mt-1">
+                        <small class="text-muted">${formatCurrency(item.data.don_gia)}</small>
+                        <div class="input-group input-group-sm w-auto">
+                            <button class="btn btn-outline-secondary cart-item-controls" data-item-id="${item.data.id}" data-action="decrease">-</button>
+                            <input type="text" class="form-control text-center" value="${item.so_luong}" readonly style="width: 40px;">
+                            <button class="btn btn-outline-secondary cart-item-controls" data-item-id="${item.data.id}" data-action="increase">+</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        cartTotalEl.textContent = formatCurrency(total);
+    }
+    
+    // --- CÁC HÀM XỬ LÝ LOGIC ---
+    function updateCart(itemId, action) {
+        itemId = parseInt(itemId);
+        if (action === 'increase') {
+            if (cart[itemId]) cart[itemId].so_luong++;
+        } else if (action === 'decrease') {
+            if (cart[itemId] && cart[itemId].so_luong > 1) cart[itemId].so_luong--;
+            else if (cart[itemId] && cart[itemId].so_luong === 1) delete cart[itemId];
+        }
+        renderCart();
+    }
+
+    function addToCart(itemId) {
+        itemId = parseInt(itemId);
+        if (cart[itemId]) {
+            cart[itemId].so_luong++;
+        } else {
+            const itemData = menuData.find(item => item.id === itemId);
+            if (itemData) cart[itemId] = { data: itemData, so_luong: 1 };
+        }
+        renderCart();
+    }
+
+    async function checkout() {
+        const items = Object.values(cart).map(item => ({ id: item.data.id, so_luong: item.so_luong }));
+        if (items.length === 0) return alert('Giỏ hàng đang trống!');
+        
+        checkoutBtn.disabled = true;
+        checkoutBtn.querySelector('.spinner-border').classList.remove('d-none');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/order/tao-moi/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ items, loai_don_hang: 'BAN_LE', phien_id: null })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Lỗi không xác định.');
+            
+            alert('Thanh toán thành công!');
+            cart = {}; // Xóa giỏ hàng
+            renderCart(); // Cập nhật lại giao diện giỏ hàng
+            // Gửi tín hiệu để trang POS (nếu đang mở) cập nhật tổng thu
+            window.opener?.postMessage('order_successful', '*');
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        } finally {
+            checkoutBtn.disabled = false;
+            checkoutBtn.querySelector('.spinner-border').classList.add('d-none');
+        }
+    }
+
+    async function initialize() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/menu/`);
+            if (!response.ok) throw new Error('Không thể tải menu.');
+            menuData = await response.json();
+            
+            const categories = [...new Set(menuData.map(item => item.danh_muc))];
+            renderCategories(categories);
+            renderMenu(menuData);
+        } catch (error) {
+            menuGrid.innerHTML = `<div class="alert alert-danger col-12">${error.message}</div>`;
+            categoryList.innerHTML = '';
+        }
+    }
+
+    // --- GẮN SỰ KIỆN ---
+    categoryList.addEventListener('click', (e) => {
+        e.preventDefault();
+        const link = e.target.closest('a');
+        if (!link) return;
+
+        categoryList.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+        link.classList.add('active');
+        
+        const category = link.dataset.category;
+        searchBar.value = ''; // Reset thanh tìm kiếm
+        if (category === 'all') {
+            renderMenu(menuData);
+        } else {
+            const filteredItems = menuData.filter(item => item.danh_muc === category);
+            renderMenu(filteredItems);
+        }
+    });
+
+    searchBar.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const activeCategoryLink = categoryList.querySelector('a.active');
+        const activeCategory = activeCategoryLink ? activeCategoryLink.dataset.category : 'all';
+
+        let itemsToSearch = menuData;
+        if (activeCategory !== 'all') {
+            itemsToSearch = menuData.filter(item => item.danh_muc === activeCategory);
+        }
+
+        const filteredItems = itemsToSearch.filter(item => item.ten_mon.toLowerCase().includes(searchTerm));
+        renderMenu(filteredItems);
+    });
+
+    menuGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.menu-item');
+        if (card) addToCart(parseInt(card.dataset.itemId));
+    });
+    
+    cartContainer.addEventListener('click', (e) => {
+        const button = e.target.closest('.cart-item-controls');
+        if (button) {
+            updateCart(button.dataset.itemId, button.dataset.action);
+        }
+    });
+
+    checkoutBtn.addEventListener('click', checkout);
+
+    initialize();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends 'quanly/pos_base.html' %}
+
+{% block title %}Kiểm Kê Cuối Ca - Quản Net Pro{% endblock %}
+
+{% block content %}
+<div class="col-lg-8 mx-auto">
+    <h3 class="mb-3">Kiểm Kê Hàng Hóa Cuối Ca</h3>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="text-muted">Trước khi kết thúc ca, hãy đếm số lượng thực tế của từng mặt hàng và nhập vào cột "Số lượng đếm được". Quản lý sẽ xem xét và đối chiếu báo cáo này sau.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên Hàng Hóa</th>
+                            <th>Đơn Vị Tính</th>
+                            <th style="width: 200px;">Số Lượng Đếm Được</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-tbody">
+                         <tr><td colspan="3" class="text-center p-5"><div class="spinner-border"></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <button class="btn btn-primary btn-lg" id="submit-inventory-btn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <i class="bi bi-send-check-fill me-2"></i>Gửi Báo Cáo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const inventoryTbody = document.getElementById('inventory-tbody');
+    const submitBtn = document.getElementById('submit-inventory-btn');
+    const API_BASE_URL = '/pos/api';
+
+    // --- CÁC HÀM TIỆN ÍCH & API ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const postData = async (relativeUrl, data) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
+            return result;
+        } catch(e) {
+            console.error(`Lỗi khi POST đến ${relativeUrl}:`, e);
+            throw e;
+        }
+    };
+    
+    // --- HÀM RENDER ---
+    function populateTable(data) {
+        inventoryTbody.innerHTML = '';
+        if (!data || data.length === 0) {
+            inventoryTbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-4">Không có dữ liệu hàng hóa để kiểm kê.</td></tr>';
+            submitBtn.disabled = true; // Vô hiệu hóa nút nếu không có gì để kiểm
+            return;
+        }
+        data.forEach(item => {
+            inventoryTbody.innerHTML += `
+                <tr data-id="${item.id}">
+                    <td>${item.ten_nguyen_lieu}</td>
+                    <td>${item.don_vi_tinh}</td>
+                    <td><input type="number" class="form-control form-control-sm physical-count" min="0" step="any" placeholder="Nhập số lượng..."></td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- HÀM LOGIC ---
+    async function loadInventoryData() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/kho/nguyen-lieu/`);
+            if (!response.ok) throw new Error('Lỗi tải dữ liệu kho.');
+            const data = await response.json();
+            populateTable(data);
+        } catch (error) {
+            inventoryTbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger p-4">${error.message}</td></tr>`;
+        }
+    }
+    
+    // --- SỰ KIỆN ---
+    submitBtn.addEventListener('click', async () => {
+        if (!confirm('Bạn có chắc muốn gửi báo cáo kiểm kê này không? Bạn sẽ không thể sửa lại sau khi gửi.')) return;
+        
+        const items = [];
+        inventoryTbody.querySelectorAll('tr').forEach(row => {
+            const id = row.dataset.id;
+            const input = row.querySelector('.physical-count');
+            // Chỉ gửi những dòng đã được nhập liệu
+            if (id && input.value.trim() !== '') {
+                items.push({
+                    nguyen_lieu_id: parseInt(id),
+                    ton_thuc_te: parseFloat(input.value) || 0
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            alert("Bạn chưa nhập số liệu cho bất kỳ hàng hóa nào.");
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.querySelector('.spinner-border').classList.remove('d-none');
+        try {
+            const result = await postData('/kho/kiem-ke/', { items });
+            alert(result.success);
+            
+            // Vô hiệu hóa form sau khi gửi thành công
+            submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Đã Gửi Báo Cáo';
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-success');
+            inventoryTbody.querySelectorAll('input').forEach(input => input.disabled = true);
+
+        } catch(error) {
+            alert(`Lỗi: ${error.message}`);
+            submitBtn.disabled = false; // Mở lại nút nếu có lỗi
+        } finally {
+            submitBtn.querySelector('.spinner-border').classList.add('d-none');
+        }
+    });
+
+    // --- KHỞI CHẠY ---
+    loadInventoryData();
+});
+</script>
+{% endblock %}

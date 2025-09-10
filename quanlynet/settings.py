@@ -153,8 +153,15 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Chào mừng đến với trang quản trị Quản Net Pro",
     "copyright": "Quản Net Pro Ltd",
 }
-# URL mặc định sau khi đăng nhập thành công
-LOGIN_REDIRECT_URL = '/nhanvien/' 
+# settings.py
 
-# URL mặc định sau khi đăng xuất thành công
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+# ... các cài đặt khác của bạn
+
+# URL để chuyển hướng người dùng đến khi họ chưa đăng nhập
+LOGIN_URL = '/accounts/login/'
+
+# URL để chuyển hướng người dùng đến sau khi họ đăng nhập thành công
+LOGIN_REDIRECT_URL = '/pos/' # Chuyển đến trang POS sau khi login
+
+# URL để chuyển hướng người dùng đến sau khi họ đăng xuất
+LOGOUT_REDIRECT_URL = '/accounts/login/' # Quay về trang login sau khi logout
