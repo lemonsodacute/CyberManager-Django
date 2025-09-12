@@ -1,13 +1,14 @@
 # quanly/api_views.py
 # quanly/api_views.py
+import pandas as pd
 from accounts.models import TaiKhoan
 from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Sum, Prefetch, F
 from django.contrib.auth.models import User
-from django.http import Http404
-
+from django.http import Http404, HttpResponse
+from .serializers import ChiTietCaLamViecSerializer 
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -630,3 +631,157 @@ class NapTienAPIView(BaseNhanVienAPIView):
         
         khach_hang.refresh_from_db() # Lấy lại giá trị số dư mới nhất từ DB
         return Response(KhachHangSerializer(khach_hang).data)
+ # -----------------------------------------------------------------------------
+# CÁC API VIEW CHO BÁO CÁO
+# -----------------------------------------------------------------------------
+
+class LichSuCaAPIView(BaseNhanVienAPIView, generics.ListAPIView):
+    """
+    API để lấy danh sách các ca làm việc đã kết thúc, có thể lọc theo ngày và nhân viên.
+    """
+    serializer_class = CaLamViecSerializer
+    
+    def get_queryset(self):
+        # Nhân viên chỉ có thể xem các ca của chính mình
+        nhan_vien = self.get_nhan_vien(self.request)
+        queryset = CaLamViec.objects.filter(
+            trang_thai='DA_KET_THUC',
+            nhan_vien=nhan_vien
+        ).select_related('nhan_vien__tai_khoan', 'loai_ca').order_by('-thoi_gian_ket_thuc_thuc_te')
+        
+        start_date_str = self.request.query_params.get('start_date')
+        end_date_str = self.request.query_params.get('end_date')
+
+        if start_date_str:
+            queryset = queryset.filter(ngay_lam_viec__gte=start_date_str)
+        if end_date_str:
+            queryset = queryset.filter(ngay_lam_viec__lte=end_date_str)
+            
+        return queryset
+
+class TongQuanDoanhThuAPIView(BaseNhanVienAPIView):
+    """
+    API cung cấp dữ liệu tổng quan cho dashboard báo cáo của nhân viên.
+    Chỉ tính toán trên các ca của nhân viên đang đăng nhập.
+    """
+    def get(self, request, *args, **kwargs):
+        nhan_vien = self.get_nhan_vien(request)
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=6)
+        
+        # Lấy các ca của nhân viên trong 7 ngày qua
+        cac_ca_cua_nv = CaLamViec.objects.filter(
+            nhan_vien=nhan_vien,
+            ngay_lam_viec__range=[start_date, end_date]
+        )
+
+        # 1. Doanh thu theo ngày (chỉ từ các ca của NV này)
+        doanh_thu_theo_ngay = GiaoDichTaiChinh.objects.filter(
+            ca_lam_viec__in=cac_ca_cua_nv,
+            loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE', 'THANH_TOAN_TK']
+        ).annotate(
+            ngay=TruncDate('thoi_gian_giao_dich')
+        ).values('ngay').annotate(total=Sum('so_tien')).order_by('ngay')
+
+        # 2. Top món bán chạy (chỉ từ các ca của NV này)
+        top_mon_an = ChiTietDonHang.objects.filter(
+            don_hang__ca_lam_viec__in=cac_ca_cua_nv
+        ).values('mon__ten_mon').annotate(
+            total_sold=Sum('so_luong')
+        ).order_by('-total_sold')[:5]
+
+        # 3. Các chỉ số chính (chỉ từ các ca của NV này)
+        giao_dichs = GiaoDichTaiChinh.objects.filter(ca_lam_viec__in=cac_ca_cua_nv)
+        tong_doanh_thu = giao_dichs.filter(loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE']).aggregate(total=Sum('so_tien'))['total'] or 0
+        so_hoa_don = HoaDon.objects.filter(ca_lam_viec__in=cac_ca_cua_nv).count()
+        
+        data = {
+            'summary': {
+                'tong_doanh_thu': tong_doanh_thu,
+                'so_hoa_don': so_hoa_don,
+                'doanh_thu_trung_binh': tong_doanh_thu / so_hoa_don if so_hoa_don > 0 else 0
+            },
+            'doanh_thu_theo_ngay': list(doanh_thu_theo_ngay),
+            'top_mon_an': list(top_mon_an)
+        }
+        return Response(data)
+
+class ChiTietCaAPIView(generics.RetrieveAPIView):
+    """
+    API để lấy dữ liệu báo cáo chi tiết cho MỘT ca làm việc.
+    Nhân viên chỉ có thể xem chi tiết ca của chính mình.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChiTietCaLamViecSerializer
+    lookup_field = 'pk'
+
+    def get_queryset(self):
+        # Lấy đối tượng nhân viên từ request
+        nhan_vien = NhanVien.objects.get(tai_khoan=self.request.user)
+        return CaLamViec.objects.filter(trang_thai='DA_KET_THUC', nhan_vien=nhan_vien)
+
+class XuatBaoCaoChiTietCaAPIView(BaseNhanVienAPIView):
+    """API để xuất file Excel báo cáo chi tiết của một ca."""
+    def get(self, request, pk, *args, **kwargs):
+        nhan_vien = self.get_nhan_vien(request)
+        try:
+            ca = CaLamViec.objects.get(pk=pk, nhan_vien=nhan_vien)
+        except CaLamViec.DoesNotExist:
+            return HttpResponse("Không tìm thấy ca làm việc hoặc bạn không có quyền truy cập.", status=404)
+
+        serializer = ChiTietCaLamViecSerializer(ca)
+        data = serializer.data
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="BaoCaoCa_{ca.id}_{ca.ngay_lam_viec.strftime("%d%m%Y")}.xlsx"'
+        
+        try:
+            with pd.ExcelWriter(response, engine='openpyxl') as writer:
+                # <<< BẮT ĐẦU SỬA LỖI TẠI ĐÂY >>>
+                # Chuyển đổi tất cả các giá trị tiền tệ sang Decimal để đảm bảo định dạng đúng
+                tien_mat_dau_ca = Decimal(data.get('tien_mat_ban_dau', 0))
+                tong_doanh_thu = Decimal(data.get('tong_doanh_thu_he_thong', 0))
+                tien_mat_cuoi_ca = Decimal(data.get('tien_mat_cuoi_ca', 0))
+                chenh_lech = Decimal(data.get('chenh_lech', 0))
+                
+                # Sheet 1: Tổng kết ca
+                tong_ket_data = {
+                    "Thông tin": ["Ngày", "Ca", "Nhân viên", "Thời gian", "Tiền mặt đầu ca", "Doanh thu hệ thống", "Tiền mặt cuối ca", "Chênh lệch"],
+                    "Giá trị": [
+                        ca.ngay_lam_viec.strftime('%d/%m/%Y'),
+                        ca.loai_ca.ten_ca if ca.loai_ca else "Ca Tự Do",
+                        ca.nhan_vien.tai_khoan.username,
+                        f"{ca.thoi_gian_bat_dau_thuc_te.strftime('%H:%M')} - {ca.thoi_gian_ket_thuc_thuc_te.strftime('%H:%M') if ca.thoi_gian_ket_thuc_thuc_te else 'N/A'}",
+                        f"{tien_mat_dau_ca:,.0f} VNĐ",
+                        f"{tong_doanh_thu:,.0f} VNĐ",
+                        f"{tien_mat_cuoi_ca:,.0f} VNĐ",
+                        f"{chenh_lech:,.0f} VNĐ"
+                    ]
+                }
+                pd.DataFrame(tong_ket_data).to_excel(writer, sheet_name='Tổng Kết Ca', index=False)
+                
+                # Sheet 2: Tổng doanh thu theo loại
+                doanh_thu_loai_data = {
+                    "Loại Doanh Thu": ["Tiền giờ", "Tiền dịch vụ"],
+                    "Tổng Tiền (VNĐ)": [
+                        Decimal(data.get('tong_tien_gio', 0)), 
+                        Decimal(data.get('tong_tien_dich_vu', 0))
+                    ]
+                }
+                pd.DataFrame(doanh_thu_loai_data).to_excel(writer, sheet_name='Tổng Hợp Doanh Thu', index=False)
+
+                # Sheet 3: Chi tiết doanh thu dịch vụ
+                chi_tiet_dv = data.get('chi_tiet_dich_vu')
+                if chi_tiet_dv:
+                    df_dich_vu = pd.DataFrame(chi_tiet_dv)
+                    df_dich_vu.rename(columns={'mon__ten_mon': 'Tên Món', 'so_luong_ban': 'Số Lượng', 'doanh_thu': 'Doanh Thu (VNĐ)'}, inplace=True)
+                    df_dich_vu.to_excel(writer, sheet_name='Doanh Thu Dịch Vụ', index=False)
+                # <<< KẾT THÚC SỬA LỖI >>>
+
+        except Exception as e:
+            # Nếu có bất kỳ lỗi nào xảy ra trong quá trình tạo Excel,
+            # trả về một thông báo lỗi rõ ràng thay vì crash.
+            print(f"Lỗi khi tạo file Excel: {e}")
+            return HttpResponse(f"Đã có lỗi xảy ra khi tạo file báo cáo: {e}", status=500)
+        
+        return response

@@ -32,4 +32,10 @@ urlpatterns = [
     path('khach-hang/', api_views.KhachHangListCreateAPIView.as_view(), name='api_khachhang_list_create'),
     path('khach-hang/<int:pk>/', api_views.KhachHangDetailAPIView.as_view(), name='api_khachhang_detail'),
     path('khach-hang/<int:pk>/nap-tien/', api_views.NapTienAPIView.as_view(), name='api_khachhang_nap_tien'),
+    
+    path('bao-cao/lich-su-ca/', api_views.LichSuCaAPIView.as_view(), name='api_lich_su_ca'),
+    path('bao-cao/tong-quan-doanh-thu/', api_views.TongQuanDoanhThuAPIView.as_view(), name='api_tong_quan_doanh_thu'),
+    
+     path('bao-cao/ca/<int:pk>/', api_views.ChiTietCaAPIView.as_view(), name='api_chi_tiet_ca'),
+    path('bao-cao/ca/<int:pk>/xuat-excel/', api_views.XuatBaoCaoChiTietCaAPIView.as_view(), name='api_xuat_ca_excel'),
 ]

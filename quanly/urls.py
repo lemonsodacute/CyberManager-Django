@@ -12,4 +12,7 @@ urlpatterns = [
      path('inventory/', views.inventory_view, name='inventory-view'),
       path('customers/', views.customer_management_view, name='customer-management-view'),
     path('api/', include('quanly.api_urls')),
+      path('reports/', views.reports_view, name='reports-view'),
+
+    path('api/', include('quanly.api_urls')),
 ]

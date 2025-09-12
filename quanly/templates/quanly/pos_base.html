@@ -51,7 +51,12 @@
             <i class="bi bi-box-seam-fill"></i> Quản Lý Kho
         </a>
     </li>
-            <li><a href="#" class="nav-link"><i class="bi bi-clock-history"></i> Báo Cáo / Lịch Sử Ca</a></li>
+             <li>
+        <!-- <<< SỬA LẠI DÒNG NÀY >>> -->
+        <a href="{% url 'reports-view' %}" class="nav-link {% if request.resolver_match.url_name == 'reports-view' %}active{% endif %}">
+            <i class="bi bi-clock-history"></i> Báo Cáo / Lịch Sử Ca
+        </a>
+    </li>
         </ul>
         <hr>
         <div class="dropdown">

@@ -1,34 +1,23 @@
 # quanly/views.py
 
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
 
-# (Tùy chọn) Một hàm kiểm tra để đảm bảo chỉ nhân viên mới vào được trang POS
-def is_nhan_vien(user):
-    # Giả sử bạn có một cách để kiểm tra user có phải là NhanVien không
-    # Ví dụ: user.groups.filter(name='NhanVien').exists() hoặc hasattr(user, 'nhanvien')
-    # Ở đây tôi dùng hasattr cho đơn giản, bạn cần điều chỉnh cho phù hợp với model NhanVien của bạn
-    return hasattr(user, 'nhanvien')
+# <<< THÊM DÒNG IMPORT BỊ THIẾU VÀO ĐÂY >>>
+from .models import NhanVien
 
-# Sử dụng decorator để bảo vệ view
-# @user_passes_test(is_nhan_vien, login_url='/accounts/login/') # Bật dòng này nếu bạn muốn bảo vệ chặt chẽ hơn
-@login_required(login_url='/accounts/login/') # Giữ decorator login_required là bắt buộc
+@login_required(login_url='/accounts/login/')
 def pos_view(request):
     """
     View này CHỈ có một nhiệm vụ duy nhất: render ra bộ khung HTML của trang POS.
     Toàn bộ dữ liệu và logic sẽ được xử lý bởi JavaScript và các API.
     """
-    # <<< THAY ĐỔI TẠI ĐÂY >>>
-    # Đường dẫn đúng phải là 'ten_app/ten_file.html'
     return render(request, 'quanly/pos.html')
 
 
-@login_required(login_url='/accounts/login/') # Cũng nên bảo vệ trang order
+@login_required(login_url='/accounts/login/')
 def order_view(request):
     """View để hiển thị trang Order dịch vụ."""
-    # <<< THAY ĐỔI TẠI ĐÂY >>>
-    # Đường dẫn đúng phải là 'ten_app/ten_file.html'
     return render(request, 'quanly/order.html')
 
 
@@ -36,6 +25,7 @@ def order_view(request):
 def retail_order_view(request):
     """View để hiển thị trang POS Bán Lẻ chuyên dụng."""
     return render(request, 'quanly/retail_order.html')
+
 
 @login_required(login_url='/accounts/login/')
 def inventory_view(request):
@@ -47,3 +37,14 @@ def inventory_view(request):
 def customer_management_view(request):
     """View để hiển thị trang Quản lý khách hàng."""
     return render(request, 'quanly/customer_management.html')
+
+
+@login_required(login_url='/accounts/login/')
+def reports_view(request):
+    """View để hiển thị trang Báo cáo và Lịch sử."""
+    # Dòng này trước đây gây lỗi vì thiếu import NhanVien
+    staffs = NhanVien.objects.select_related('tai_khoan').all()
+    context = {
+        'staff_list': staffs
+    }
+    return render(request, 'quanly/reports.html', context)
