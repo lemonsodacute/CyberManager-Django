@@ -39,7 +39,12 @@
                     <i class="bi bi-cart-plus-fill"></i> POS Bán Lẻ
                 </a>
             </li>
-            <li><a href="#" class="nav-link"><i class="bi bi-cash-stack"></i> Nạp Tiền Khách Hàng</a></li>
+         <li>
+        <!-- <<< SỬA LẠI DÒNG NÀY >>> -->
+        <a href="{% url 'customer-management-view' %}" class="nav-link {% if request.resolver_match.url_name == 'customer-management-view' %}active{% endif %}">
+            <i class="bi bi-cash-stack"></i> Nạp Tiền Khách Hàng
+        </a>
+    </li>
              <li>
         <!-- <<< SỬA LẠI DÒNG NÀY >>> -->
         <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">
@@ -99,6 +104,26 @@
                     </div>
                     <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button></div>
                 </form>
+            </div>
+        </div>
+    </div>
+ <!-- <<< THÊM CÁC MODAL MỚI TẠI ĐÂY >>> -->
+    {% include 'quanly/partials/deposit_modal.html' %}
+
+    <!-- Modal Mở Máy Cho Thành Viên -->
+    <div class="modal fade" id="openForMemberModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Mở Máy Cho Thành Viên</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" id="open-member-machine-id">
+                    <p>Tìm và chọn khách hàng để mở máy <strong id="open-member-machine-name" class="text-primary"></strong>.</p>
+                    <input type="text" id="member-search-input" class="form-control" placeholder="Nhập tên đăng nhập để tìm...">
+                    <div id="member-search-results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                </div>
             </div>
         </div>
     </div>

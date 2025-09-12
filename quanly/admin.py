@@ -4,16 +4,15 @@ from django.contrib import admin
 from .models import (
     # Nền tảng
     NhanVien, KhachHang, LoaiMay, May,
-    
     # Menu & Kho
     DanhMucMenu, NguyenLieu, MenuItem, DinhLuong,
-    
     # Ca làm việc & Vận hành
     LoaiCa, CaLamViec, PhienSuDung, DonHangDichVu, 
     ChiTietDonHang, KhuyenMai, HoaDon,
-    
     # Tài chính
-    GiaoDichTaiChinh
+    GiaoDichTaiChinh,
+    # Kho & Kiểm Kê (Bổ sung)
+    PhieuKiemKe, ChiTietKiemKe, LichSuThayDoiKho
 )
 
 # -----------------------------------------------------------------------------
@@ -22,13 +21,33 @@ from .models import (
 
 @admin.register(NhanVien)
 class NhanVienAdmin(admin.ModelAdmin):
-    search_fields = ('tai_khoan__username',)
+    list_display = ['tai_khoan']
+    search_fields = ['tai_khoan__username']
+
+
+@admin.register(LoaiMay)
+class LoaiMayAdmin(admin.ModelAdmin):
+    list_display = ('ten_loai', 'don_gia_gio')
+    search_fields = ('ten_loai',)# quanly/admin.py
+
+# ... (các import và các class Admin khác)
 
 @admin.register(KhachHang)
 class KhachHangAdmin(admin.ModelAdmin):
-    list_display = ('tai_khoan', 'so_du')
-    search_fields = ('tai_khoan__username',)
-    readonly_fields = ('so_du',) # Số dư chỉ nên được thay đổi qua giao dịch
+    # <<< SỬA LỖI TẠI ĐÂY >>>
+    # Hiển thị các trường từ model liên quan (tai_khoan) và của chính nó
+    list_display = ['get_username', 'so_du'] 
+    
+    # Các trường chỉ đọc
+    readonly_fields = ['get_username']
+    
+    # Thêm trường tìm kiếm cho tiện
+    search_fields = ['tai_khoan__username']
+
+    # Tạo một phương thức để lấy username từ model User liên quan
+    @admin.display(description='Tên đăng nhập', ordering='tai_khoan__username')
+    def get_username(self, obj):
+        return obj.tai_khoan.username
 
 @admin.register(May)
 class MayAdmin(admin.ModelAdmin):
@@ -36,18 +55,18 @@ class MayAdmin(admin.ModelAdmin):
     list_filter = ('trang_thai', 'loai_may')
     search_fields = ('ten_may',)
 
-admin.site.register(LoaiMay)
-
 # -----------------------------------------------------------------------------
 # KHU VỰC 2: QUẢN LÝ MENU VÀ KHO
 # -----------------------------------------------------------------------------
 
-admin.site.register(DanhMucMenu)
+@admin.register(DanhMucMenu)
+class DanhMucMenuAdmin(admin.ModelAdmin):
+    search_fields = ('ten_danh_muc',)
+
 @admin.register(NguyenLieu)
 class NguyenLieuAdmin(admin.ModelAdmin):
     list_display = ('ten_nguyen_lieu', 'don_vi_tinh', 'so_luong_ton')
-    # Dòng này là bắt buộc để autocomplete_fields hoạt động
-    search_fields = ('ten_nguyen_lieu',) 
+    search_fields = ('ten_nguyen_lieu',)
 
 class DinhLuongInline(admin.TabularInline):
     model = DinhLuong
@@ -56,10 +75,10 @@ class DinhLuongInline(admin.TabularInline):
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):
+    inlines = [DinhLuongInline]
     list_display = ('ten_mon', 'danh_muc', 'don_gia', 'is_available')
     list_filter = ('danh_muc', 'is_available')
     search_fields = ('ten_mon',)
-    inlines = [DinhLuongInline]
 
 admin.site.register(KhuyenMai)
 
@@ -127,9 +146,39 @@ class GiaoDichTaiChinhAdmin(admin.ModelAdmin):
     list_filter = ('loai_giao_dich', 'ca_lam_viec__nhan_vien')
     
     # Bảo vệ dữ liệu
-    def has_add_permission(self, request):
-        return False
-    def has_change_permission(self, request, obj=None):
-        return False
-    def has_delete_permission(self, request, obj=None):
-        return False
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False
+
+# -----------------------------------------------------------------------------
+# KHU VỰC 6: QUẢN LÝ KHO VÀ KIỂM KÊ (Bổ sung)
+# -----------------------------------------------------------------------------
+
+class ChiTietKiemKeInline(admin.TabularInline):
+    model = ChiTietKiemKe
+    extra = 0
+    readonly_fields = ('nguyen_lieu', 'ton_he_thong', 'ton_thuc_te', 'chenh_lech')
+    can_delete = False
+    def has_add_permission(self, request, obj): return False
+
+@admin.register(PhieuKiemKe)
+class PhieuKiemKeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'ca_lam_viec', 'nhan_vien', 'thoi_gian_tao', 'da_xac_nhan')
+    list_filter = ('da_xac_nhan',)
+    inlines = [ChiTietKiemKeInline]
+    # Thêm action để admin xác nhận phiếu
+    actions = ['xac_nhan_va_cap_nhat_kho']
+
+    @admin.action(description='Xác nhận và Cập nhật kho từ các phiếu đã chọn')
+    def xac_nhan_va_cap_nhat_kho(self, request, queryset):
+        # ... (logic xử lý xác nhận phiếu sẽ được viết ở đây)
+        self.message_user(request, "Chức năng đang được phát triển.")
+
+@admin.register(LichSuThayDoiKho)
+class LichSuThayDoiKhoAdmin(admin.ModelAdmin):
+    list_display = ('thoi_gian', 'nguyen_lieu', 'so_luong_thay_doi', 'loai_thay_doi', 'nhan_vien')
+    list_filter = ('loai_thay_doi', 'nhan_vien')
+    # Bảo vệ dữ liệu
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False

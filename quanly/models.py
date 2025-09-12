@@ -8,27 +8,30 @@ from django.utils import timezone
 # KHU VỰC 1: CÁC MODEL NỀN TẢNG
 # Các model này không phụ thuộc vào các model phức tạp khác.
 # -----------------------------------------------------------------------------
-
 class NhanVien(models.Model):
-    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True, related_name='nhanvien')
     def __str__(self): return f"Nhân viên: {self.tai_khoan.username}"
 
 class KhachHang(models.Model):
-    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True, related_name='khachhang')
     so_du = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Số dư")
+    @property
+    def username(self):
+        return self.tai_khoan.username
     def __str__(self): return f"Khách hàng: {self.tai_khoan.username}"
 
 class LoaiMay(models.Model):
-    ten_loai = models.CharField(max_length=50, unique=True, verbose_name="Tên loại máy")
-    don_gia_gio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Đơn giá/giờ")
+    ten_loai = models.CharField(max_length=50, unique=True)
+    don_gia_gio = models.DecimalField(max_digits=10, decimal_places=2)
     def __str__(self): return self.ten_loai
 
 class May(models.Model):
     TRANG_THAI_CHOICES = [('TRONG', 'Trống'), ('DANG_SU_DUNG', 'Đang sử dụng'), ('HONG', 'Hỏng')]
-    ten_may = models.CharField(max_length=50, unique=True, verbose_name="Tên máy")
-    loai_may = models.ForeignKey(LoaiMay, on_delete=models.PROTECT, verbose_name="Loại máy")
-    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='TRONG', verbose_name="Trạng thái")
+    ten_may = models.CharField(max_length=50, unique=True)
+    loai_may = models.ForeignKey(LoaiMay, on_delete=models.PROTECT) # Phụ thuộc vào LoaiMay
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='TRONG')
     def __str__(self): return self.ten_may
+
 
 # -----------------------------------------------------------------------------
 # KHU VỰC 2: QUẢN LÝ MENU, KHO VÀ ĐỊNH LƯỢNG
@@ -163,25 +166,77 @@ class HoaDon(models.Model):
 # -----------------------------------------------------------------------------
 # KHU VỰC 5: SỔ CÁI TÀI CHÍNH
 # -----------------------------------------------------------------------------
-
 class GiaoDichTaiChinh(models.Model):
+    """
+    Model Sổ Cái - Ghi lại mọi giao dịch tài chính trong hệ thống.
+    """
     LOAI_GIAO_DICH = [
-        ('NAP_TIEN', 'Nạp tiền'),
-        ('THANH_TOAN_HOA_DON', 'Thanh toán hóa đơn'),
-        ('THANH_TOAN_ORDER_LE', 'Thanh toán order lẻ'),
-        ('TRU_TIEN_GIO', 'Trừ tiền giờ tự động'),
+        # --- CÁC KHOẢN THU ---
+        ('NAP_TIEN', 'Nạp tiền vào tài khoản thành viên'),
+        ('THANH_TOAN_HOA_DON', 'Thanh toán hóa đơn (Tiền mặt/Chuyển khoản)'),
+        ('THANH_TOAN_ORDER_LE', 'Thanh toán order lẻ (Tiền mặt/Chuyển khoản)'),
+        
+        # --- CÁC KHOẢN CHI HOẶC GHI NỢ ---
+        ('THANH_TOAN_TK', 'Thanh toán hóa đơn (Trừ vào tài khoản)'), 
+        
+        # --- ĐIỀU CHỈNH ---
         ('ADMIN_ADJUST', 'Admin điều chỉnh'),
     ]
-    ca_lam_viec = models.ForeignKey(CaLamViec, on_delete=models.PROTECT, related_name='cac_giao_dich')
-    hoa_don = models.ForeignKey(HoaDon, on_delete=models.SET_NULL, null=True, blank=True, related_name='cac_giao_dich')
-    don_hang_le = models.ForeignKey(DonHangDichVu, on_delete=models.SET_NULL, null=True, blank=True, related_name='giao_dich')
-    khach_hang = models.ForeignKey(KhachHang, on_delete=models.SET_NULL, null=True, blank=True)
-    loai_giao_dich = models.CharField(max_length=30, choices=LOAI_GIAO_DICH)
-    so_tien = models.DecimalField(max_digits=12, decimal_places=2)
-    thoi_gian_giao_dich = models.DateTimeField(default=timezone.now)
-    ghi_chu = models.CharField(max_length=255, blank=True, null=True)
-    def __str__(self): return f"[{self.get_loai_giao_dich_display()}] {self.so_tien:,.0f} VNĐ"
+
+    ca_lam_viec = models.ForeignKey(
+        'CaLamViec',  # Sử dụng chuỗi để tránh lỗi import vòng
+        on_delete=models.PROTECT, 
+        related_name='cac_giao_dich',
+        verbose_name="Ca làm việc"
+    )
+    hoa_don = models.ForeignKey(
+        'HoaDon', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True, 
+        related_name='cac_giao_dich',
+        verbose_name="Hóa đơn"
+    )
+    don_hang_le = models.ForeignKey(
+        'DonHangDichVu', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True, 
+        related_name='giao_dich',
+        verbose_name="Đơn hàng lẻ"
+    )
+    khach_hang = models.ForeignKey(
+        'KhachHang', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True,
+        verbose_name="Khách hàng"
+    )
     
+    loai_giao_dich = models.CharField(
+        max_length=30, 
+        choices=LOAI_GIAO_DICH,
+        verbose_name="Loại giao dịch"
+    )
+    so_tien = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        verbose_name="Số tiền"
+    )
+    thoi_gian_giao_dich = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Thời gian giao dịch"
+    )
+    ghi_chu = models.CharField(
+        max_length=255, 
+        blank=True, null=True,
+        verbose_name="Ghi chú"
+    )
+
+    class Meta:
+        verbose_name = "Giao dịch tài chính"
+        verbose_name_plural = "Sổ Cái Giao Dịch Tài Chính"
+        ordering = ['-thoi_gian_giao_dich'] # Sắp xếp giao dịch mới nhất lên đầu
+
+    def __str__(self): 
+        return f"[{self.get_loai_giao_dich_display()}] {self.so_tien:,.0f} VNĐ"
     # -----------------------------------------------------------------------------
 # KHU VỰC 6: QUẢN LÝ KHO VÀ KIỂM KÊ (MỚI)
 # -----------------------------------------------------------------------------

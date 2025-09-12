@@ -64,7 +64,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
     // --- GLOBAL FUNCTIONS ---
@@ -76,30 +75,21 @@
     document.addEventListener('DOMContentLoaded', function() {
         // --- STATE & SELECTORS ---
         let mayDataStore = [];
+        let customers = [];
         let selectedMayId = null;
+        
         const mayContainer = document.getElementById('may-container');
         const taskPanelPlaceholder = document.getElementById('task-panel-placeholder');
         const taskPanelMachineView = document.getElementById('task-panel-machine-view');
         const filterButtons = document.getElementById('filter-buttons');
         const API_BASE_URL = '/pos/api';
 
-        // <<< SỬA LỖI TẠI ĐÂY: ĐỊNH NGHĨA LẠI HÀM GETCOOKIE >>>
-        function getCookie(name) { 
-            let cookieValue = null; 
-            if (document.cookie && document.cookie !== '') { 
-                const cookies = document.cookie.split(';'); 
-                for (let i = 0; i < cookies.length; i++) { 
-                    const cookie = cookies[i].trim(); 
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) { 
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); 
-                        break; 
-                    } 
-                } 
-            } 
-            return cookieValue; 
-        }
+        const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+        const openForMemberModal = new bootstrap.Modal(document.getElementById('openForMemberModal'));
+        const depositForm = document.getElementById('depositForm');
 
-        // --- HELPER, RENDER, API, LOGIC FUNCTIONS ---
+        // --- HELPER & API FUNCTIONS ---
+        function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
         const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
         const formatDateTime = (iso) => iso ? new Date(iso).toLocaleString('vi-VN') : 'N/A';
         const formatDuration = (sec) => {
@@ -110,22 +100,18 @@
             return `${h}:${m}:${s}`;
         };
 
-        const fetchData = async (relativeUrl) => {
-            const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        };
-        const postData = async (relativeUrl, data) => {
-            const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
-            return result;
+        const apiRequest = async (url, options = {}) => {
+            try {
+                options.headers = { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken'), ...options.headers };
+                const response = await fetch(`${API_BASE_URL}${url}`, options);
+                if (response.status === 204) return null;
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || JSON.stringify(result));
+                return result;
+            } catch (e) { throw e; }
         };
 
+        // --- RENDER FUNCTIONS ---
         function renderMayGrid(data, filter = 'all') {
             const filteredData = filter === 'all' ? data : data.filter(may => may.trang_thai === filter);
             mayContainer.innerHTML = '';
@@ -154,50 +140,77 @@
         }
         
         function showTaskPanel(panelId) {
-            taskPanelPlaceholder.classList.toggle('d-none', panelId);
+            taskPanelPlaceholder.classList.toggle('d-none', !!panelId);
             taskPanelMachineView.classList.toggle('d-none', panelId !== 'task-panel-machine-view');
         }
 
         async function renderTaskPanelForMachine(mayId) {
             const may = mayDataStore.find(m => m.id === mayId);
             if (!may) return;
-            document.getElementById('machine-view-ten-may').textContent = may.ten_may;
-            document.getElementById('machine-view-trang-thai').innerHTML = `<span class="badge text-bg-${may.trang_thai === 'DANG_SU_DUNG' ? 'success' : 'primary'}">${may.trang_thai.replace('_', ' ')}</span>`;
+
             const actionContainer = document.getElementById('machine-view-actions');
             const infoPhienContainer = document.getElementById('machine-view-info-phien');
+
+            document.getElementById('machine-view-ten-may').textContent = may.ten_may;
+            document.getElementById('machine-view-trang-thai').innerHTML = `<span class="badge text-bg-${may.trang_thai === 'DANG_SU_DUNG' ? 'success' : may.trang_thai === 'TRONG' ? 'primary' : 'danger'}">${may.trang_thai.replace('_', ' ')}</span>`;
+            
             actionContainer.innerHTML = '';
+
             if (may.trang_thai === 'TRONG') {
                 infoPhienContainer.style.display = 'none';
-                actionContainer.innerHTML = `<button class="btn btn-primary btn-lg" data-action="mo-may"><i class="bi bi-play-circle-fill me-2"></i> Mở Máy (Vãng lai)</button><button class="btn btn-info text-white" disabled><i class="bi bi-person-plus-fill me-2"></i> Mở Máy (Thành viên)</button>`;
+                actionContainer.innerHTML = `
+                    <button class="btn btn-primary btn-lg" data-action="mo-may-vang-lai"><i class="bi bi-play-circle-fill me-2"></i> Mở Máy (Vãng lai)</button>
+                    <button class="btn btn-info text-white btn-lg" data-action="mo-may-thanh-vien"><i class="bi bi-person-plus-fill me-2"></i> Mở Máy (Thành viên)</button>
+                `;
             } else if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
                 const phien = may.phien_dang_chay;
                 const response = await fetch(`${API_BASE_URL}/phien/${phien.id}/`);
                 const phienData = response.ok ? await response.json() : null;
+                
                 infoPhienContainer.style.display = 'block';
-                document.getElementById('machine-view-khach-hang').textContent = phien.khach_hang ? phien.khach_hang.tai_khoan : 'Khách vãng lai';
+                document.getElementById('machine-view-khach-hang').textContent = phien.khach_hang ? phien.khach_hang.username : 'Khách vãng lai';
                 document.getElementById('machine-view-bat-dau').textContent = formatDateTime(phien.thoi_gian_bat_dau);
+                
                 const startTime = new Date(phien.thoi_gian_bat_dau);
                 const durationSec = Math.floor((new Date() - startTime) / 1000);
                 const tienGio = (durationSec / 3600) * parseFloat(may.loai_may.don_gia_gio);
                 const tienDV = phienData ? phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0) : 0;
+                
                 document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
                 document.getElementById('machine-view-tien-dv').textContent = formatCurrency(tienDV);
                 document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
-                actionContainer.innerHTML = `<button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button><button class="btn btn-info text-white" disabled><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button><button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-receipt-cutoff me-2"></i> Tính Tiền & Đóng Máy</button>`;
+
+                let depositButtonHtml = `<button class="btn btn-info text-white" disabled><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
+                if (phien.khach_hang) {
+                    depositButtonHtml = `<button class="btn btn-info text-white" data-action="nap-tien" data-customer-id="${phien.khach_hang.tai_khoan_id}" data-customer-name="${phien.khach_hang.username}"><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
+                }
+
+                actionContainer.innerHTML = `
+                    <button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button>
+                    ${depositButtonHtml}
+                    <button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-receipt-cutoff me-2"></i> Tính Tiền & Đóng Máy</button>`;
             } else {
                 infoPhienContainer.style.display = 'none';
-                actionContainer.innerHTML = `<div class="alert alert-danger">Lỗi: Máy đang ở trạng thái sử dụng nhưng không tìm thấy thông tin phiên. Vui lòng kiểm tra lại.</div>`;
+                actionContainer.innerHTML = `<div class="alert alert-danger">Lỗi: Dữ liệu không nhất quán.</div>`;
             }
             showTaskPanel('task-panel-machine-view');
         }
 
-        async function updateAllData() {
+        // --- DATA LOADING ---
+        async function loadInitialData() {
             try {
-                mayDataStore = await fetchData('/may/');
+                const [mayData, customerData] = await Promise.all([
+                    apiRequest('/may/'),
+                    apiRequest('/khach-hang/')
+                ]);
+                mayDataStore = mayData;
+                customers = customerData;
                 const activeFilter = filterButtons.querySelector('.active').dataset.filter;
                 renderMayGrid(mayDataStore, activeFilter);
                 if (selectedMayId) await renderTaskPanelForMachine(selectedMayId);
-            } catch (error) { mayContainer.innerHTML = '<div class="alert alert-danger">Lỗi kết nối tới máy chủ.</div>'; }
+            } catch (error) {
+                mayContainer.innerHTML = `<div class="alert alert-danger">Lỗi kết nối: ${error.message}</div>`;
+            }
         }
 
         function updateTimers() {
@@ -205,6 +218,7 @@
                 const startTime = new Date(el.dataset.startTime);
                 const seconds = Math.floor((new Date() - startTime) / 1000);
                 el.textContent = formatDuration(seconds);
+                
                 if (selectedMayId && mayDataStore.length > 0) {
                     const may = mayDataStore.find(m => m.id === selectedMayId);
                     if (may && may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
@@ -212,7 +226,8 @@
                         if(new Date(phien.thoi_gian_bat_dau).getTime() === startTime.getTime()) {
                             const tienGio = (seconds / 3600) * parseFloat(may.loai_may.don_gia_gio);
                             const tienDvText = document.getElementById('machine-view-tien-dv').textContent;
-                            const tienDV = parseFloat(tienDvText.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                            const tienDV = parseFloat(tienDvText.replace(/[^\d]/g, '')) || 0;
+                            
                             document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
                             document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
                         }
@@ -247,38 +262,93 @@
             const action = button.dataset.action;
             const may = mayDataStore.find(m => m.id === selectedMayId);
             if (!may) return;
-            if (action === 'mo-may') {
+
+            if (action === 'mo-may-vang-lai') {
                 if (!confirm('Mở máy cho khách vãng lai?')) return;
                 try {
-                    const result = await postData(`/may/${selectedMayId}/mo-may/`);
+                    const result = await apiRequest(`/may/${selectedMayId}/mo-may/`, { method: 'POST', body: JSON.stringify({}) });
                     alert(result.success);
-                    await updateAllData();
+                    await loadInitialData();
                 } catch (error) { alert(`Lỗi: ${error.message}`); }
+            } else if (action === 'mo-may-thanh-vien') {
+                document.getElementById('open-member-machine-id').value = selectedMayId;
+                document.getElementById('open-member-machine-name').textContent = may.ten_may;
+                document.getElementById('member-search-input').value = '';
+                document.getElementById('member-search-results').innerHTML = '';
+                openForMemberModal.show();
+            } else if (action === 'nap-tien') {
+                document.getElementById('deposit-modal-customer-id').value = button.dataset.customerId;
+                document.getElementById('deposit-modal-customer-name').textContent = button.dataset.customerName;
+                depositForm.reset();
+                document.getElementById('deposit-modal-error').classList.add('d-none');
+                depositModal.show();
             } else if (action === 'tinh-tien' && may.phien_dang_chay) {
                 const phienId = may.phien_dang_chay.id;
                 if (!confirm(`Tính tiền và đóng máy ${may.ten_may}?`)) return;
                 try {
-                    const result = await postData(`/phien/${phienId}/ket-thuc/`);
+                    const result = await apiRequest(`/phien/${phienId}/ket-thuc/`, { method: 'POST' });
                     alert(`${result.success}\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}`);
                     selectedMayId = null;
                     showTaskPanel(null);
-                    await updateAllData();
-                    location.reload(); // Tải lại để cập nhật tổng thu
+                    location.reload();
                 } catch (error) { alert(`Lỗi: ${error.message}`); }
             }
         });
-        
+
+        depositForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const customerId = document.getElementById('deposit-modal-customer-id').value;
+            const amount = document.getElementById('deposit-modal-amount').value;
+            const errorDiv = document.getElementById('deposit-modal-error');
+            try {
+                await apiRequest(`/khach-hang/${customerId}/nap-tien/`, { method: 'POST', body: JSON.stringify({ so_tien: amount }) });
+                depositModal.hide();
+                alert(`Nạp ${formatCurrency(amount)} thành công!`);
+                location.reload();
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('d-none');
+            }
+        });
+
+        document.getElementById('member-search-input').addEventListener('input', e => {
+            const searchTerm = e.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('member-search-results');
+            resultsContainer.innerHTML = '';
+            if (!searchTerm) return;
+            const filtered = customers.filter(c => c.username.toLowerCase().includes(searchTerm));
+            filtered.forEach(c => {
+                resultsContainer.innerHTML += `<a href="#" class="list-group-item list-group-item-action member-select-item" data-id="${c.tai_khoan_id}" data-name="${c.username}">${c.username} - ${formatCurrency(c.so_du)}</a>`;
+            });
+        });
+
+        document.getElementById('member-search-results').addEventListener('click', async e => {
+            e.preventDefault();
+            const item = e.target.closest('.member-select-item');
+            if (item) {
+                const customerId = item.dataset.id;
+                const customerName = item.dataset.name;
+                const machineId = document.getElementById('open-member-machine-id').value;
+                if (!confirm(`Mở máy cho thành viên "${customerName}"?`)) return;
+                try {
+                    const result = await apiRequest(`/may/${machineId}/mo-may/`, { method: 'POST', body: JSON.stringify({ khach_hang_id: customerId }) });
+                    openForMemberModal.hide();
+                    alert(result.success);
+                    await loadInitialData();
+                } catch (error) { alert(`Lỗi: ${error.message}`); }
+            }
+        });
+
         window.addEventListener('message', (event) => {
             if (event.data === 'order_successful') {
-                if (selectedMayId) renderTaskPanelForMachine(selectedMayId);
-                location.reload(); // Tải lại để cập nhật tổng thu
+                location.reload();
             }
         });
 
         // --- INITIALIZATION ---
         function initialize() {
-            updateAllData();
-            setInterval(updateAllData, 20000);
+            loadInitialData();
+            setInterval(loadInitialData, 30000);
             setInterval(updateTimers, 1000);
         }
         initialize();

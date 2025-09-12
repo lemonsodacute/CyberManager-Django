@@ -1,5 +1,5 @@
 # quanly/serializers.py
-
+from accounts.models import TaiKhoan 
 from rest_framework import serializers
 from .models import (
     ChiTietKiemKe, May, LoaiMay, PhienSuDung, KhachHang, CaLamViec, LoaiCa,
@@ -7,7 +7,9 @@ from .models import (
 )
 from .models import NguyenLieu
 from django.db.models import Sum
+from django.contrib.auth.models import User
 from .models import GiaoDichTaiChinh
+from rest_framework.validators import UniqueValidator
 
 # -----------------------------------------------------------------------------
 # SERIALIZERS DÙNG CHUNG / NỀN TẢNG
@@ -25,9 +27,26 @@ class LoaiMaySerializer(serializers.ModelSerializer):
         fields = ['ten_loai', 'don_gia_gio']
 
 class KhachHangSerializer(serializers.ModelSerializer):
+    """Serializer chi tiết cho Khách Hàng."""
+    username = serializers.CharField(source='tai_khoan.username', read_only=True)
+    
     class Meta:
         model = KhachHang
-        fields = ['so_du']
+        fields = ['tai_khoan_id', 'username', 'so_du']
+
+class TaoKhachHangSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        max_length=150,
+        # <<< SỬA LẠI DÒNG NÀY >>>
+        validators=[UniqueValidator(queryset=TaiKhoan.objects.all(), message="Tên đăng nhập này đã tồn tại.")]
+    )
+    password = serializers.CharField(write_only=True, min_length=1, error_messages={
+        'min_length': 'Mật khẩu không được để trống.'
+    })
+
+class DoiMatKhauSerializer(serializers.Serializer):
+    """Serializer để validate mật khẩu mới."""
+    new_password = serializers.CharField(write_only=True)
 
 class LoaiCaSerializer(serializers.ModelSerializer):
     class Meta:

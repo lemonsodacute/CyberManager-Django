@@ -1,0 +1,272 @@
+{% extends 'quanly/pos_base.html' %}
+
+{% block title %}Quản Lý Khách Hàng - Quản Net Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-list { max-height: 75vh; overflow-y: auto; }
+    .customer-list .list-group-item { cursor: pointer; }
+    .customer-list .list-group-item.active { background-color: #0d6efd; border-color: #0d6efd; }
+    .detail-panel { min-height: 50vh; }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="row">
+    <!-- Cột danh sách khách hàng -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Danh Sách Khách Hàng</h5>
+                <button class="btn btn-primary btn-sm" id="add-customer-btn" title="Thêm khách hàng mới">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <input type="text" id="customer-search" class="form-control mb-3" placeholder="Tìm kiếm khách hàng...">
+                <div class="list-group customer-list" id="customer-list">
+                    <div class="text-center p-5"><div class="spinner-border"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột thông tin chi tiết và hành động -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm detail-panel" id="detail-panel">
+            <!-- Placeholder -->
+            <div id="detail-placeholder" class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <i class="bi bi-person-bounding-box" style="font-size: 5rem; color: #adb5bd;"></i>
+                <h4 class="mt-3">Chọn một khách hàng</h4>
+                <p class="text-muted">Chọn một khách hàng từ danh sách bên trái để xem thông tin và thực hiện các thao tác.</p>
+            </div>
+
+            <!-- Detail View -->
+            <div id="detail-view" class="card-body d-none">
+                <h3 id="detail-username" class="mb-3"></h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">SỐ DƯ HIỆN TẠI</h6>
+                                <h2 id="detail-balance" class="card-title text-success fw-bold"></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <h4>Hành Động</h4>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button class="btn btn-lg btn-success" id="deposit-btn"><i class="bi bi-wallet2 me-2"></i>Nạp Tiền</button>
+                    <button class="btn btn-lg btn-warning" id="change-password-btn"><i class="bi bi-key-fill me-2"></i>Đổi Mật Khẩu</button>
+                    <button class="btn btn-lg btn-danger" id="delete-customer-btn"><i class="bi bi-trash3-fill me-2"></i>Xóa Khách Hàng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include 'quanly/partials/customer_modals.html' %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const customerList = document.getElementById('customer-list');
+    const searchInput = document.getElementById('customer-search');
+    const detailPlaceholder = document.getElementById('detail-placeholder');
+    const detailView = document.getElementById('detail-view');
+
+    // Modals
+    const addCustomerModal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+    const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+    const changePasswordModal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+
+    // Forms
+    const addCustomerForm = document.getElementById('addCustomerForm');
+    const depositForm = document.getElementById('depositForm');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    
+    // Nút
+    const addCustomerBtn = document.getElementById('add-customer-btn');
+    const depositBtn = document.getElementById('deposit-btn');
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    const deleteCustomerBtn = document.getElementById('delete-customer-btn');
+
+    let customers = [];
+    let selectedCustomerId = null;
+    const API_BASE_URL = '/pos/api';
+
+    // --- CÁC HÀM TIỆN ÍCH & API ---
+    const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+    
+    const apiRequest = async (url, options = {}) => {
+        try {
+            options.headers = { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken'), ...options.headers };
+            const response = await fetch(`${API_BASE_URL}${url}`, options);
+            if (response.status === 204) return null; // No Content for DELETE
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || JSON.stringify(result));
+            return result;
+        } catch (e) { throw e; }
+    };
+
+    // --- CÁC HÀM RENDER ---
+    function renderCustomerList(data) {
+        customerList.innerHTML = '';
+        if (data.length === 0) {
+            customerList.innerHTML = '<p class="text-muted text-center">Chưa có khách hàng nào.</p>';
+            return;
+        }
+        data.forEach(customer => {
+            const isActive = customer.tai_khoan_id === selectedCustomerId ? 'active' : '';
+            customerList.innerHTML += `
+                <a href="#" class="list-group-item list-group-item-action ${isActive}" data-id="${customer.tai_khoan_id}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${customer.username}</h6>
+                    </div>
+                    <p class="mb-1 text-success fw-bold">${formatCurrency(customer.so_du)}</p>
+                </a>
+            `;
+        });
+    }
+
+    function renderDetailView() {
+        if (!selectedCustomerId) {
+            detailPlaceholder.classList.remove('d-none');
+            detailView.classList.add('d-none');
+            return;
+        }
+        const customer = customers.find(c => c.tai_khoan_id === selectedCustomerId);
+        if (!customer) return;
+
+        document.getElementById('detail-username').textContent = customer.username;
+        document.getElementById('detail-balance').textContent = formatCurrency(customer.so_du);
+
+        detailPlaceholder.classList.add('d-none');
+        detailView.classList.remove('d-none');
+    }
+
+    // --- LOGIC ---
+    async function loadCustomers() {
+        try {
+            customers = await apiRequest('/khach-hang/');
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredCustomers = customers.filter(c => c.username.toLowerCase().includes(searchTerm));
+            renderCustomerList(filteredCustomers);
+            renderDetailView();
+        } catch(error) {
+            customerList.innerHTML = `<div class="alert alert-danger">Lỗi tải danh sách: ${error.message}</div>`;
+        }
+    }
+
+    // --- SỰ KIỆN ---
+    addCustomerBtn.addEventListener('click', () => {
+        addCustomerForm.reset();
+        document.getElementById('add-customer-error').classList.add('d-none');
+        addCustomerModal.show();
+    });
+
+    depositBtn.addEventListener('click', () => {
+        const customer = customers.find(c => c.tai_khoan_id === selectedCustomerId);
+        if(!customer) return;
+        document.getElementById('deposit-customer-name').textContent = customer.username;
+        document.getElementById('deposit-error').classList.add('d-none');
+        depositForm.reset();
+        depositModal.show();
+    });
+
+    changePasswordBtn.addEventListener('click', () => {
+        const customer = customers.find(c => c.tai_khoan_id === selectedCustomerId);
+        if(!customer) return;
+        document.getElementById('change-password-customer-name').textContent = customer.username;
+        document.getElementById('change-password-error').classList.add('d-none');
+        changePasswordForm.reset();
+        changePasswordModal.show();
+    });
+    
+    deleteCustomerBtn.addEventListener('click', async () => {
+        const customer = customers.find(c => c.tai_khoan_id === selectedCustomerId);
+        if(!customer) return;
+
+        if(!confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn khách hàng "${customer.username}"? Hành động này không thể hoàn tác.`)) return;
+
+        try {
+            await apiRequest(`/khach-hang/${selectedCustomerId}/`, { method: 'DELETE' });
+            alert('Xóa khách hàng thành công.');
+            selectedCustomerId = null; // Bỏ chọn
+            await loadCustomers(); // Tải lại danh sách
+        } catch(error) {
+            alert(`Lỗi khi xóa: ${error.message}`);
+        }
+    });
+    
+    customerList.addEventListener('click', e => {
+        e.preventDefault();
+        const item = e.target.closest('.list-group-item');
+        if (item) {
+            selectedCustomerId = parseInt(item.dataset.id);
+            renderCustomerList(customers.filter(c => c.username.toLowerCase().includes(searchInput.value.toLowerCase())));
+            renderDetailView();
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredCustomers = customers.filter(c => c.username.toLowerCase().includes(searchTerm));
+        renderCustomerList(filteredCustomers);
+    });
+
+    addCustomerForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const data = {
+            username: document.getElementById('new-username').value,
+            password: document.getElementById('new-password').value,
+        };
+        try {
+            await apiRequest('/khach-hang/', { method: 'POST', body: JSON.stringify(data) });
+            addCustomerModal.hide();
+            await loadCustomers();
+        } catch(error) {
+            document.getElementById('add-customer-error').textContent = error.message;
+            document.getElementById('add-customer-error').classList.remove('d-none');
+        }
+    });
+
+    depositForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const data = { so_tien: document.getElementById('deposit-amount').value };
+        try {
+            await apiRequest(`/khach-hang/${selectedCustomerId}/nap-tien/`, { method: 'POST', body: JSON.stringify(data) });
+            depositModal.hide();
+            await loadCustomers();
+        } catch(error) {
+            document.getElementById('deposit-error').textContent = error.message;
+            document.getElementById('deposit-error').classList.remove('d-none');
+        }
+    });
+
+    changePasswordForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const data = { new_password: document.getElementById('change-password-new').value };
+        try {
+            await apiRequest(`/khach-hang/${selectedCustomerId}/`, { method: 'PATCH', body: JSON.stringify(data) });
+            changePasswordModal.hide();
+            alert('Đổi mật khẩu thành công.');
+        } catch(error) {
+            document.getElementById('change-password-error').textContent = error.message;
+            document.getElementById('change-password-error').classList.remove('d-none');
+        }
+    });
+
+    // --- KHỞI CHẠY ---
+    loadCustomers();
+});
+</script>
+{% endblock %}

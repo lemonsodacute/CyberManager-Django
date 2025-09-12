@@ -2,33 +2,67 @@
 
 {% block title %}Kiểm Kê Cuối Ca - Quản Net Pro{% endblock %}
 
+{% block extra_css %}
+<style>
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+    .inventory-card {
+        transition: all 0.2s ease-in-out;
+        border-left-width: 4px;
+    }
+    .inventory-card.checked-item {
+        background-color: #f8f9fa;
+        border-left-color: #198754;
+    }
+    .inventory-card input[type=number] {
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="col-lg-8 mx-auto">
-    <h3 class="mb-3">Kiểm Kê Hàng Hóa Cuối Ca</h3>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <p class="text-muted">Trước khi kết thúc ca, hãy đếm số lượng thực tế của từng mặt hàng và nhập vào cột "Số lượng đếm được". Quản lý sẽ xem xét và đối chiếu báo cáo này sau.</p>
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tên Hàng Hóa</th>
-                            <th>Đơn Vị Tính</th>
-                            <th style="width: 200px;">Số Lượng Đếm Được</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-tbody">
-                         <tr><td colspan="3" class="text-center p-5"><div class="spinner-border"></div></td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="text-end mt-3">
-                <button class="btn btn-primary btn-lg" id="submit-inventory-btn">
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    <i class="bi bi-send-check-fill me-2"></i>Gửi Báo Cáo
-                </button>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h3>Kiểm Kê Hàng Hóa Cuối Ca</h3>
+            <p class="text-muted">Trước khi kết thúc ca, hãy kiểm tra số lượng thực tế và cập nhật vào các ô bên dưới. Báo cáo sẽ được gửi cho quản lý để đối chiếu.</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="inventory-search" class="form-control" placeholder="Tìm kiếm hàng hóa...">
             </div>
         </div>
+        <div class="col-md-4 d-flex align-items-center">
+            <div class="progress w-100" style="height: 25px;">
+                <div id="inventory-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+            </div>
+            <strong id="inventory-progress-text" class="ms-2">0/0</strong>
+        </div>
+    </div>
+
+    <div class="inventory-grid" id="inventory-grid">
+        <div class="text-center p-5 col-12">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <p class="mt-3">Đang tải dữ liệu kho...</p>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <!-- <<< SỬA LỖI TẠI ĐÂY: THÊM LẠI SPINNER VÀO BÊN TRONG NÚT >>> -->
+        <button class="btn btn-primary btn-lg" id="submit-inventory-btn" disabled>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <i class="bi bi-send-check-fill me-2"></i>
+            <span class="btn-text">Gửi Báo Cáo</span>
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -38,112 +72,140 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- KHAI BÁO BIẾN ---
-    const inventoryTbody = document.getElementById('inventory-tbody');
+    const inventoryGrid = document.getElementById('inventory-grid');
+    const searchInput = document.getElementById('inventory-search');
+    const progressBar = document.getElementById('inventory-progress-bar');
+    const progressText = document.getElementById('inventory-progress-text');
     const submitBtn = document.getElementById('submit-inventory-btn');
+    
     const API_BASE_URL = '/pos/api';
+    let inventoryData = [];
 
     // --- CÁC HÀM TIỆN ÍCH & API ---
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
+    function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
     const postData = async (relativeUrl, data) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
-            return result;
-        } catch(e) {
-            console.error(`Lỗi khi POST đến ${relativeUrl}:`, e);
-            throw e;
-        }
+        const response = await fetch(`${API_BASE_URL}${relativeUrl}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }, body: JSON.stringify(data) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
+        return result;
     };
-    
-    // --- HÀM RENDER ---
-    function populateTable(data) {
-        inventoryTbody.innerHTML = '';
+
+    // --- CÁC HÀM RENDER & UI ---
+    function renderInventory(data) {
+        inventoryGrid.innerHTML = '';
         if (!data || data.length === 0) {
-            inventoryTbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-4">Không có dữ liệu hàng hóa để kiểm kê.</td></tr>';
-            submitBtn.disabled = true; // Vô hiệu hóa nút nếu không có gì để kiểm
+            inventoryGrid.innerHTML = '<p class="text-muted text-center col-12">Không tìm thấy hàng hóa nào.</p>';
+            updateProgress();
             return;
         }
+
         data.forEach(item => {
-            inventoryTbody.innerHTML += `
-                <tr data-id="${item.id}">
-                    <td>${item.ten_nguyen_lieu}</td>
-                    <td>${item.don_vi_tinh}</td>
-                    <td><input type="number" class="form-control form-control-sm physical-count" min="0" step="any" placeholder="Nhập số lượng..."></td>
-                </tr>
+            const card = document.createElement('div');
+            card.className = 'card inventory-card';
+            card.dataset.id = item.id;
+            card.dataset.name = item.ten_nguyen_lieu.toLowerCase();
+
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="card-title mb-1">${item.ten_nguyen_lieu}</h5>
+                            <p class="card-text text-muted mb-2">Đơn vị tính: ${item.don_vi_tinh}</p>
+                            <div class="form-check">
+                                <input class="form-check-input check-inventory" type="checkbox" value="" id="check-${item.id}">
+                                <label class="form-check-label" for="check-${item.id}">Đã kiểm tra</label>
+                            </div>
+                        </div>
+                        <div class="col-auto" style="max-width: 120px;">
+                            <label class="form-label text-center d-block small">Số lượng</label>
+                            <input type="number" class="form-control physical-count" min="0" step="any" value="${item.so_luong_ton}">
+                        </div>
+                    </div>
+                </div>
             `;
+            inventoryGrid.appendChild(card);
         });
+        updateProgress();
     }
 
-    // --- HÀM LOGIC ---
+    function updateProgress() {
+        const totalItems = inventoryGrid.querySelectorAll('.inventory-card').length;
+        const checkedItems = inventoryGrid.querySelectorAll('.inventory-card.checked-item').length;
+        
+        progressText.textContent = `${checkedItems}/${totalItems}`;
+        const percentage = totalItems > 0 ? (checkedItems / totalItems) * 100 : 0;
+        progressBar.style.width = `${percentage}%`;
+        progressBar.textContent = `${Math.round(percentage)}%`;
+
+        submitBtn.disabled = (checkedItems !== totalItems || totalItems === 0);
+    }
+    
+    // --- CÁC HÀM LOGIC ---
     async function loadInventoryData() {
         try {
             const response = await fetch(`${API_BASE_URL}/kho/nguyen-lieu/`);
             if (!response.ok) throw new Error('Lỗi tải dữ liệu kho.');
-            const data = await response.json();
-            populateTable(data);
+            inventoryData = await response.json();
+            renderInventory(inventoryData);
         } catch (error) {
-            inventoryTbody.innerHTML = `<tr><td colspan="3" class="text-center text-danger p-4">${error.message}</td></tr>`;
+            inventoryGrid.innerHTML = `<div class="alert alert-danger col-12">${error.message}</div>`;
         }
     }
-    
-    // --- SỰ KIỆN ---
+
+    // --- GẮN SỰ KIỆN ---
+    searchInput.addEventListener('input', () => {
+        const searchTerm = searchInput.value.toLowerCase();
+        inventoryGrid.querySelectorAll('.inventory-card').forEach(card => {
+            const itemName = card.dataset.name;
+            card.style.display = itemName.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    inventoryGrid.addEventListener('change', e => {
+        if (e.target.classList.contains('check-inventory')) {
+            const card = e.target.closest('.inventory-card');
+            card.classList.toggle('checked-item', e.target.checked);
+            updateProgress();
+        }
+    });
+
     submitBtn.addEventListener('click', async () => {
-        if (!confirm('Bạn có chắc muốn gửi báo cáo kiểm kê này không? Bạn sẽ không thể sửa lại sau khi gửi.')) return;
+        if (!confirm('Bạn có chắc muốn gửi báo cáo kiểm kê? Hành động này không thể hoàn tác.')) return;
         
         const items = [];
-        inventoryTbody.querySelectorAll('tr').forEach(row => {
-            const id = row.dataset.id;
-            const input = row.querySelector('.physical-count');
-            // Chỉ gửi những dòng đã được nhập liệu
-            if (id && input.value.trim() !== '') {
-                items.push({
-                    nguyen_lieu_id: parseInt(id),
-                    ton_thuc_te: parseFloat(input.value) || 0
-                });
-            }
+        inventoryGrid.querySelectorAll('.inventory-card.checked-item').forEach(card => {
+            items.push({
+                nguyen_lieu_id: parseInt(card.dataset.id),
+                ton_thuc_te: parseFloat(card.querySelector('.physical-count').value) || 0
+            });
         });
 
         if (items.length === 0) {
-            alert("Bạn chưa nhập số liệu cho bất kỳ hàng hóa nào.");
+            alert("Bạn chưa kiểm kê hàng hóa nào.");
             return;
         }
         
+        const spinner = submitBtn.querySelector('.spinner-border');
+        const btnText = submitBtn.querySelector('.btn-text');
         submitBtn.disabled = true;
-        submitBtn.querySelector('.spinner-border').classList.remove('d-none');
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Đang gửi...';
+
         try {
             const result = await postData('/kho/kiem-ke/', { items });
             alert(result.success);
-            
-            // Vô hiệu hóa form sau khi gửi thành công
+            // Vô hiệu hóa toàn bộ sau khi gửi thành công
+            searchInput.disabled = true;
+            inventoryGrid.querySelectorAll('input').forEach(input => input.disabled = true);
             submitBtn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Đã Gửi Báo Cáo';
             submitBtn.classList.remove('btn-primary');
             submitBtn.classList.add('btn-success');
-            inventoryTbody.querySelectorAll('input').forEach(input => input.disabled = true);
-
         } catch(error) {
             alert(`Lỗi: ${error.message}`);
-            submitBtn.disabled = false; // Mở lại nút nếu có lỗi
+            submitBtn.disabled = false;
+            btnText.textContent = 'Gửi Báo Cáo';
         } finally {
-            submitBtn.querySelector('.spinner-border').classList.add('d-none');
+            spinner.classList.add('d-none');
         }
     });
 

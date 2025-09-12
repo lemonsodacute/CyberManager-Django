@@ -1,0 +1,48 @@
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addCustomerForm" onsubmit="return false;">
+                <div class="modal-header"><h5 class="modal-title">Thêm Khách Hàng Mới</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Tên đăng nhập</label><input type="text" id="new-username" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Mật khẩu</label><input type="password" id="new-password" class="form-control" required></div>
+                    <div id="add-customer-error" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Tạo Tài Khoản</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal fade" id="depositModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="depositForm" onsubmit="return false;">
+                <div class="modal-header"><h5 class="modal-title">Nạp Tiền cho <span id="deposit-customer-name" class="text-primary"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Số tiền cần nạp</label><input type="number" id="deposit-amount" class="form-control" min="1000" step="1000" required></div>
+                    <div id="deposit-error" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Xác Nhận Nạp Tiền</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="changePasswordForm" onsubmit="return false;">
+                <div class="modal-header"><h5 class="modal-title">Đổi Mật Khẩu cho <span id="change-password-customer-name" class="text-primary"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Mật khẩu mới</label><input type="password" id="change-password-new" class="form-control" required></div>
+                    <div id="change-password-error" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu Mật Khẩu</button></div>
+            </form>
+        </div>
+    </div>
+</div>

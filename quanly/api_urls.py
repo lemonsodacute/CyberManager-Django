@@ -27,4 +27,9 @@ urlpatterns = [
     path('kho/nguyen-lieu/', api_views.DanhSachNguyenLieuAPIView.as_view(), name='api_danh_sach_nguyen_lieu'),
     path('kho/nguyen-lieu/<int:pk>/bao-hong/', api_views.BaoHongNguyenLieuAPIView.as_view(), name='api_bao_hong'),
     path('kho/kiem-ke/', api_views.KiemKeCuoiCaAPIView.as_view(), name='api_kiem_ke_cuoi_ca'),
+    
+      # <<< THÊM URL API CHO QUẢN LÝ KHÁCH HÀNG >>>
+    path('khach-hang/', api_views.KhachHangListCreateAPIView.as_view(), name='api_khachhang_list_create'),
+    path('khach-hang/<int:pk>/', api_views.KhachHangDetailAPIView.as_view(), name='api_khachhang_detail'),
+    path('khach-hang/<int:pk>/nap-tien/', api_views.NapTienAPIView.as_view(), name='api_khachhang_nap_tien'),
 ]

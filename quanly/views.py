@@ -41,3 +41,9 @@ def retail_order_view(request):
 def inventory_view(request):
     """View để hiển thị trang Quản Lý Kho."""
     return render(request, 'quanly/inventory.html')
+
+
+@login_required(login_url='/accounts/login/')
+def customer_management_view(request):
+    """View để hiển thị trang Quản lý khách hàng."""
+    return render(request, 'quanly/customer_management.html')
