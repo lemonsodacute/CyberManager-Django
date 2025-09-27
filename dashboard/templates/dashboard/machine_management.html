@@ -1,0 +1,258 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Quản Lý Máy{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">Quản Lý Máy & Loại Máy</h3>
+
+<div class="row">
+    <!-- Cột Loại Máy -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Loại Máy</h5>
+                <button class="btn btn-primary btn-sm" id="addLoaiMayBtn"><i class="bi bi-plus-circle me-1"></i>Thêm Mới</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Tên Loại</th><th class="text-end">Đơn Giá/giờ</th><th class="text-center">Sửa</th></tr></thead>
+                        <tbody id="loaiMayTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột Danh Sách Máy -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Danh Sách Máy</h5>
+                <button class="btn btn-primary btn-sm" id="addMayBtn"><i class="bi bi-plus-circle me-1"></i>Thêm Mới</button>
+            </div>
+            <div class="card-body">
+                 <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>Tên Máy</th><th>Loại Máy</th><th>Trạng Thái</th><th class="text-center">Sửa</th></tr></thead>
+                        <tbody id="mayTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Loại Máy -->
+<div class="modal fade" id="loaiMayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="loaiMayForm">
+                <div class="modal-header"><h5 class="modal-title" id="loaiMayModalLabel"></h5></div>
+                <div class="modal-body">
+                    <input type="hidden" id="loaiMayId">
+                    <div class="mb-3"><label class="form-label">Tên loại máy</label><input type="text" id="loaiMayTen" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Đơn giá / giờ</label><input type="number" id="loaiMayGia" class="form-control" required></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Máy -->
+<div class="modal fade" id="mayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="mayForm">
+                 <div class="modal-header"><h5 class="modal-title" id="mayModalLabel"></h5></div>
+                 <div class="modal-body">
+                    <input type="hidden" id="mayId">
+                    <div class="mb-3"><label class="form-label">Tên máy</label><input type="text" id="mayTen" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Loại máy</label><select id="mayLoai" class="form-select" required></select></div>
+                    <div class="mb-3"><label class="form-label">Trạng thái</label>
+                        <select id="mayTrangThai" class="form-select" required>
+                            <option value="TRONG">Trống</option>
+                            <option value="DANG_SU_DUNG">Đang sử dụng</option>
+                            <option value="HONG">Hỏng</option>
+                        </select>
+                    </div>
+                 </div>
+                 <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN & HẰNG ---
+    const loaiMayTbody = document.getElementById('loaiMayTbody');
+    const mayTbody = document.getElementById('mayTbody');
+    const addLoaiMayBtn = document.getElementById('addLoaiMayBtn');
+    const addMayBtn = document.getElementById('addMayBtn');
+
+    // Modals
+    const loaiMayModalEl = document.getElementById('loaiMayModal');
+    const loaiMayModal = new bootstrap.Modal(loaiMayModalEl);
+    const mayModalEl = document.getElementById('mayModal');
+    const mayModal = new bootstrap.Modal(mayModalEl);
+    
+    // Forms
+    const loaiMayForm = document.getElementById('loaiMayForm');
+    const mayForm = document.getElementById('mayForm');
+
+    // State
+    let allMachineTypes = [];
+    let allMachines = [];
+    let currentLoaiMayId = null;
+    let currentMayId = null;
+
+    // --- CÁC HÀM RENDER ---
+    function renderMachineTypes() {
+        loaiMayTbody.innerHTML = '';
+        allMachineTypes.forEach(type => {
+            loaiMayTbody.innerHTML += `
+                <tr>
+                    <td>${type.ten_loai}</td>
+                    <td class="text-end">${parseFloat(type.don_gia_gio).toLocaleString('vi-VN')}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary edit-loai-may-btn" data-id="${type.id}"><i class="bi bi-pencil-fill"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderMachines() {
+        mayTbody.innerHTML = '';
+        allMachines.forEach(may => {
+            const statusBadge = {
+                'TRONG': '<span class="badge bg-success">Trống</span>',
+                'DANG_SU_DUNG': '<span class="badge bg-danger">Đang sử dụng</span>',
+                'HONG': '<span class="badge bg-warning text-dark">Hỏng</span>'
+            }[may.trang_thai] || `<span class="badge bg-secondary">${may.trang_thai}</span>`;
+
+            mayTbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${may.ten_may}</td>
+                    <td>${may.loai_may_ten}</td>
+                    <td>${statusBadge}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary edit-may-btn" data-id="${may.id}"><i class="bi bi-pencil-fill"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- CÁC HÀM TƯƠNG TÁC DỮ LIỆU ---
+    async function loadInitialData() {
+        try {
+            const [typesRes, machinesRes] = await Promise.all([
+                apiClient('/api/dashboard/machines/types/'),
+                apiClient('/api/dashboard/machines/')
+            ]);
+            allMachineTypes = typesRes;
+            allMachines = machinesRes;
+            renderMachineTypes();
+            renderMachines();
+        } catch (error) {
+            console.error("Lỗi tải dữ liệu ban đầu:", error);
+        }
+    }
+
+    // --- XỬ LÝ SỰ KIỆN ---
+
+    // ----- Loại Máy -----
+    addLoaiMayBtn.addEventListener('click', () => {
+        currentLoaiMayId = null;
+        loaiMayForm.reset();
+        document.getElementById('loaiMayModalLabel').textContent = 'Thêm Loại Máy Mới';
+        loaiMayModal.show();
+    });
+
+    loaiMayTbody.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-loai-may-btn');
+        if (editBtn) {
+            currentLoaiMayId = editBtn.dataset.id;
+            const type = allMachineTypes.find(t => t.id == currentLoaiMayId);
+            document.getElementById('loaiMayModalLabel').textContent = 'Sửa Loại Máy';
+            document.getElementById('loaiMayId').value = type.id;
+            document.getElementById('loaiMayTen').value = type.ten_loai;
+            document.getElementById('loaiMayGia').value = parseFloat(type.don_gia_gio);
+            loaiMayModal.show();
+        }
+    });
+
+    loaiMayForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = currentLoaiMayId ? `/api/dashboard/machines/types/${currentLoaiMayId}/` : '/api/dashboard/machines/types/';
+        const method = currentLoaiMayId ? 'PUT' : 'POST';
+        const payload = {
+            ten_loai: document.getElementById('loaiMayTen').value,
+            don_gia_gio: document.getElementById('loaiMayGia').value
+        };
+        try {
+            await apiClient(url, { method, body: JSON.stringify(payload) });
+            loaiMayModal.hide();
+            await loadInitialData();
+        } catch(error) { alert(`Lỗi: ${error.message}`); }
+    });
+    
+    // ----- Máy -----
+    addMayBtn.addEventListener('click', () => {
+        currentMayId = null;
+        mayForm.reset();
+        document.getElementById('mayModalLabel').textContent = 'Thêm Máy Mới';
+        
+        const loaiMaySelect = document.getElementById('mayLoai');
+        loaiMaySelect.innerHTML = '';
+        allMachineTypes.forEach(type => loaiMaySelect.innerHTML += `<option value="${type.id}">${type.ten_loai}</option>`);
+
+        mayModal.show();
+    });
+
+    mayTbody.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-may-btn');
+        if (editBtn) {
+            currentMayId = editBtn.dataset.id;
+            const may = allMachines.find(m => m.id == currentMayId);
+            document.getElementById('mayModalLabel').textContent = 'Sửa Máy';
+            document.getElementById('mayId').value = may.id;
+            document.getElementById('mayTen').value = may.ten_may;
+            document.getElementById('mayTrangThai').value = may.trang_thai;
+            
+            const loaiMaySelect = document.getElementById('mayLoai');
+            loaiMaySelect.innerHTML = '';
+            allMachineTypes.forEach(type => {
+                loaiMaySelect.innerHTML += `<option value="${type.id}" ${type.id == may.loai_may ? 'selected' : ''}>${type.ten_loai}</option>`;
+            });
+
+            mayModal.show();
+        }
+    });
+    
+    mayForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = currentMayId ? `/api/dashboard/machines/${currentMayId}/` : '/api/dashboard/machines/';
+        const method = currentMayId ? 'PUT' : 'POST';
+        const payload = {
+            ten_may: document.getElementById('mayTen').value,
+            loai_may: document.getElementById('mayLoai').value,
+            trang_thai: document.getElementById('mayTrangThai').value
+        };
+        try {
+            await apiClient(url, { method, body: JSON.stringify(payload) });
+            mayModal.hide();
+            await loadInitialData();
+        } catch(error) { alert(`Lỗi: ${error.message}`); }
+    });
+
+    // --- KHỞI CHẠY ---
+    loadInitialData();
+});
+</script>
+{% endblock %}

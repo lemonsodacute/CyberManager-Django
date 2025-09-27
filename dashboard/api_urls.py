@@ -23,4 +23,20 @@ urlpatterns = [
     path('inventory/items/', api_views.NguyenLieuListCreateAPIView.as_view(), name='dashboard_inventory_list'),
     path('inventory/items/<int:pk>/', api_views.NguyenLieuDetailAPIView.as_view(), name='dashboard_inventory_detail'),
     path('inventory/import/', api_views.NhapKhoAPIView.as_view(), name='dashboard_inventory_import'),
+    
+    # <<< THÊM CÁC URL MỚI CHO QUẢN LÝ MÁY >>>
+    path('machines/types/', api_views.LoaiMayListCreateAPIView.as_view(), name='dashboard_machinetype_list'),
+    path('machines/types/<int:pk>/', api_views.LoaiMayDetailAPIView.as_view(), name='dashboard_machinetype_detail'),
+    path('machines/', api_views.MayListCreateAPIView.as_view(), name='dashboard_machine_list'),
+    path('machines/<int:pk>/', api_views.MayDetailAPIView.as_view(), name='dashboard_machine_detail'),
+    
+    # <<< THÊM CÁC URL MỚI CHO BÁO CÁO >>>
+    path('reports/summary/', api_views.ReportSummaryAPIView.as_view(), name='dashboard_report_summary'),
+    path('reports/shifts/', api_views.CaLamViecListAPIView.as_view(), name='dashboard_shift_list'),
+    path('reports/shifts/<int:pk>/', api_views.CaLamViecDetailAPIView.as_view(), name='dashboard_shift_detail'),
+    # <<< THÊM URL MỚI CHO BÁO CÁO SẢN PHẨM >>>
+    path('reports/product-performance/', api_views.ProductPerformanceAPIView.as_view(), name='dashboard_report_product'),
+    
+      # <<< THÊM URL MỚI CHO BÁO CÁO GIỜ CAO ĐIỂM >>>
+    path('reports/peak-hours/', api_views.PeakHoursAPIView.as_view(), name='dashboard_report_peakhours'),
 ]

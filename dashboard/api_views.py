@@ -7,7 +7,12 @@ from rest_framework.permissions import IsAdminUser
 from django.db import transaction
 from django.db.models import Sum, F # <<< ĐÃ THÊM 'F'
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
+from quanly.models import CaLamViec, ChiTietDonHang, HoaDon, LoaiMay, May # Thêm import này
+from quanly.serializers import CaLamViecSerializer, ChiTietCaLamViecSerializer # Import các serializer đã có
+from django.db.models.functions import TruncMonth
+from django.db.models.functions import ExtractHour
+
 
 # Import models từ các app khác
 from accounts.models import TaiKhoan
@@ -265,3 +270,331 @@ class NhapKhoAPIView(APIView):
             return Response({'error': 'Tài khoản admin của bạn chưa được liên kết với một đối tượng Nhân viên. Vui lòng liên kết trong trang Django Admin.'}, status=status.HTTP_403_FORBIDDEN)
         except NguyenLieu.DoesNotExist:
             return Response({'error': 'Nguyên liệu không tồn tại.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS MỚI CHO QUẢN LÝ MÁY
+# -----------------------------------------------------------------------------
+
+class LoaiMayDashboardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoaiMay
+        fields = ['id', 'ten_loai', 'don_gia_gio']
+
+class MayDashboardSerializer(serializers.ModelSerializer):
+    # Dùng StringRelatedField để hiển thị tên thay vì ID
+    loai_may_ten = serializers.CharField(source='loai_may.ten_loai', read_only=True)
+
+    class Meta:
+        model = May
+        # 'loai_may' dùng để gửi dữ liệu đi (ID), 'loai_may_ten' dùng để đọc
+        fields = ['id', 'ten_may', 'trang_thai', 'loai_may', 'loai_may_ten']
+
+
+# ... các API View hiện có ...
+
+# -----------------------------------------------------------------------------
+# API VIEWS MỚI CHO QUẢN LÝ MÁY
+# -----------------------------------------------------------------------------
+
+class LoaiMayListCreateAPIView(generics.ListCreateAPIView):
+    """API để lấy và tạo Loại Máy."""
+    permission_classes = [IsAdminUser]
+    serializer_class = LoaiMayDashboardSerializer
+    queryset = LoaiMay.objects.all().order_by('ten_loai')
+
+class LoaiMayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """API để xem, sửa, xóa một Loại Máy."""
+    permission_classes = [IsAdminUser]
+    serializer_class = LoaiMayDashboardSerializer
+    queryset = LoaiMay.objects.all()
+
+class MayListCreateAPIView(generics.ListCreateAPIView):
+    """API để lấy và tạo Máy."""
+    permission_classes = [IsAdminUser]
+    serializer_class = MayDashboardSerializer
+    queryset = May.objects.select_related('loai_may').all().order_by('ten_may')
+
+class MayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """API để xem, sửa, xóa một Máy."""
+    permission_classes = [IsAdminUser]
+    serializer_class = MayDashboardSerializer
+    queryset = May.objects.all()
+    
+# -----------------------------------------------------------------------------
+# API VIEWS MỚI CHO BÁO CÁO
+# -----------------------------------------------------------------------------
+
+# dashboard/api_views.py
+
+class ReportSummaryAPIView(APIView):
+    """
+    API cung cấp dữ liệu tóm tắt cho trang báo cáo, có thể lọc theo ngày.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({'error': 'Vui lòng cung cấp start_date và end_date.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Chuyển đổi chuỗi ngày tháng sang đối tượng date
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # <<< BẮT ĐẦU PHẦN SỬA LỖI QUAN TRỌNG >>>
+        # Tạo đối tượng datetime hoàn chỉnh cho việc truy vấn
+        # Bắt đầu từ 00:00:00 của ngày bắt đầu
+        start_datetime = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+        # Kết thúc vào 23:59:59 của ngày kết thúc
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+
+        # Queryset cơ sở sử dụng datetime
+        giao_dichs = GiaoDichTaiChinh.objects.filter(thoi_gian_giao_dich__range=[start_datetime, end_datetime])
+        hoa_dons = HoaDon.objects.filter(thoi_gian_tao__range=[start_datetime, end_datetime], da_thanh_toan=True)
+        # <<< KẾT THÚC PHẦN SỬA LỖI QUAN TRỌNG >>>
+        
+        # 1. Tổng doanh thu
+        tong_doanh_thu = giao_dichs.filter(
+            loai_giao_dich__in=[
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_HOA_DON,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_TK
+            ]
+        ).aggregate(total=Sum('so_tien'))['total'] or 0
+        
+        # 2. Tổng số hóa đơn
+        tong_hoa_don = hoa_dons.count()
+        
+        # 3. Doanh thu trung bình / hóa đơn
+        doanh_thu_tb = tong_doanh_thu / tong_hoa_don if tong_hoa_don > 0 else 0
+        
+        # 4. Doanh thu theo từng loại
+        # Lấy tổng tiền giờ từ các hóa đơn đã được lọc chính xác
+        doanh_thu_gio = hoa_dons.aggregate(total=Sum('tong_tien_gio'))['total'] or 0
+        
+        # Lấy tổng tiền dịch vụ từ các hóa đơn đã được lọc chính xác
+        doanh_thu_dich_vu_hd = hoa_dons.aggregate(total=Sum('tong_tien_dich_vu'))['total'] or 0
+        # Lấy tổng tiền dịch vụ từ các đơn hàng lẻ (không có tiền giờ)
+        doanh_thu_dich_vu_le = giao_dichs.filter(loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE).aggregate(total=Sum('so_tien'))['total'] or 0
+        doanh_thu_dich_vu = doanh_thu_dich_vu_hd + doanh_thu_dich_vu_le
+        
+        data = {
+            'tong_doanh_thu': tong_doanh_thu,
+            'tong_hoa_don': tong_hoa_don,
+            'doanh_thu_trung_binh_hoa_don': doanh_thu_tb,
+            'doanh_thu_theo_loai': {
+                'tien_gio': doanh_thu_gio,
+                'tien_dich_vu': doanh_thu_dich_vu,
+            }
+        }
+        return Response(data)
+class CaLamViecListAPIView(generics.ListAPIView):
+    """API để lấy danh sách các ca làm việc đã kết thúc, có thể lọc theo ngày."""
+    permission_classes = [IsAdminUser]
+    serializer_class = CaLamViecSerializer # Dùng lại serializer đã có
+
+    def get_queryset(self):
+        queryset = CaLamViec.objects.filter(trang_thai=CaLamViec.TrangThai.DA_KET_THUC).select_related('nhan_vien__tai_khoan', 'loai_ca').order_by('-thoi_gian_ket_thuc_thuc_te')
+        
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(ngay_lam_viec__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(ngay_lam_viec__lte=end_date)
+            
+        return queryset
+
+class CaLamViecDetailAPIView(generics.RetrieveAPIView):
+    """API để lấy chi tiết một ca làm việc."""
+    permission_classes = [IsAdminUser]
+    serializer_class = ChiTietCaLamViecSerializer # Dùng serializer chi tiết
+    queryset = CaLamViec.objects.all()
+    
+    # -----------------------------------------------------------------------------
+# API VIEWS MỚI CHO BÁO CÁO (PHÂN TÍCH HIỆU SUẤT)
+# -----------------------------------------------------------------------------
+# dashboard/api_views.py
+# dashboard/api_views.py
+
+# ... (các import và các class khác giữ nguyên)
+
+# -----------------------------------------------------------------------------
+# API VIEWS CHO BÁO CÁO
+# -----------------------------------------------------------------------------
+
+class ReportSummaryAPIView(APIView):
+    """
+    API cung cấp dữ liệu tóm tắt cho trang báo cáo, có thể lọc theo ngày.
+    Đã nâng cấp để tính toán lợi nhuận.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({'error': 'Vui lòng cung cấp start_date và end_date.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        start_datetime = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+
+        # Queryset cơ sở
+        giao_dichs = GiaoDichTaiChinh.objects.filter(thoi_gian_giao_dich__range=[start_datetime, end_datetime])
+        hoa_dons = HoaDon.objects.filter(thoi_gian_tao__range=[start_datetime, end_datetime], da_thanh_toan=True)
+        
+        # 1. TÍNH TOÁN DOANH THU
+        tong_doanh_thu = giao_dichs.filter(
+            loai_giao_dich__in=[
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_HOA_DON,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_TK
+            ]
+        ).aggregate(total=Sum('so_tien'))['total'] or 0
+        
+        # 2. TÍNH TOÁN GIÁ VỐN
+        chi_tiet_ban_hang = ChiTietDonHang.objects.filter(
+            don_hang__ca_lam_viec__cac_giao_dich__thoi_gian_giao_dich__range=[start_datetime, end_datetime]
+        )
+        tong_gia_von = 0
+        # Dùng select_related và prefetch_related để tối ưu truy vấn
+        for chi_tiet in chi_tiet_ban_hang.select_related('mon').prefetch_related('mon__dinh_luong__nguyen_lieu'):
+            gia_von_mon = 0
+            for dinh_luong in chi_tiet.mon.dinh_luong.all():
+                # Chuyển đổi an toàn sang float
+                gia_von_mon += float(dinh_luong.so_luong_can) * float(dinh_luong.nguyen_lieu.gia_von)
+            
+            tong_gia_von += gia_von_mon * chi_tiet.so_luong
+
+        # 3. CÁC CHỈ SỐ KHÁC
+        tong_hoa_don = hoa_dons.count()
+        doanh_thu_tb = tong_doanh_thu / tong_hoa_don if tong_hoa_don > 0 else 0
+        doanh_thu_gio = hoa_dons.aggregate(total=Sum('tong_tien_gio'))['total'] or 0
+        doanh_thu_dich_vu_hd = hoa_dons.aggregate(total=Sum('tong_tien_dich_vu'))['total'] or 0
+        doanh_thu_dich_vu_le = giao_dichs.filter(loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE).aggregate(total=Sum('so_tien'))['total'] or 0
+        doanh_thu_dich_vu = doanh_thu_dich_vu_hd + doanh_thu_dich_vu_le
+        
+        # 4. TỔNG HỢP KẾT QUẢ
+        data = {
+            'tong_doanh_thu': tong_doanh_thu,
+            'tong_hoa_don': tong_hoa_don,
+            'doanh_thu_trung_binh_hoa_don': doanh_thu_tb,
+            'doanh_thu_theo_loai': {
+                'tien_gio': doanh_thu_gio,
+                'tien_dich_vu': doanh_thu_dich_vu,
+            },
+            'tong_gia_von': tong_gia_von,
+            'loi_nhuan_gop': float(tong_doanh_thu) - tong_gia_von
+        }
+        return Response(data)
+
+class ProductPerformanceAPIView(APIView):
+    """
+    API phân tích hiệu suất sản phẩm, đã nâng cấp để tính lợi nhuận.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({'error': 'Vui lòng cung cấp start_date và end_date.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        start_datetime = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+
+        # Bước 1: Tổng hợp doanh thu và số lượng bán từ DB
+        product_performance_raw = ChiTietDonHang.objects.filter(
+            don_hang__ca_lam_viec__cac_giao_dich__thoi_gian_giao_dich__range=[start_datetime, end_datetime]
+        ).values(
+            'mon_id', 'mon__ten_mon'
+        ).annotate(
+            tong_so_luong_ban=Sum('so_luong'),
+            tong_doanh_thu=Sum('thanh_tien')
+        ).order_by('-tong_doanh_thu')
+
+        # Bước 2: Lấy tất cả các món ăn và định lượng liên quan trong một truy vấn
+        menu_items_with_dinh_luong = MenuItem.objects.filter(
+            id__in=[item['mon_id'] for item in product_performance_raw]
+        ).prefetch_related('dinh_luong__nguyen_lieu')
+
+        # Tạo một dictionary để tra cứu giá vốn nhanh
+        gia_von_lookup = {}
+        for mon in menu_items_with_dinh_luong:
+            gia_von_mon = 0
+            for dl in mon.dinh_luong.all():
+                gia_von_mon += float(dl.so_luong_can) * float(dl.nguyen_lieu.gia_von)
+            gia_von_lookup[mon.id] = gia_von_mon
+
+        # Bước 3: Tính toán lợi nhuận bằng Python
+        final_report = []
+        for item in product_performance_raw:
+            gia_von_don_vi = gia_von_lookup.get(item['mon_id'], 0)
+            tong_gia_von_item = gia_von_don_vi * float(item['tong_so_luong_ban'])
+            
+            final_report.append({
+                'mon__ten_mon': item['mon__ten_mon'],
+                'tong_so_luong_ban': item['tong_so_luong_ban'],
+                'tong_doanh_thu': item['tong_doanh_thu'],
+                'tong_gia_von': tong_gia_von_item,
+                'loi_nhuan': float(item['tong_doanh_thu']) - tong_gia_von_item
+            })
+            
+        # Sắp xếp lại theo lợi nhuận và lấy top 10
+        final_report.sort(key=lambda x: x['loi_nhuan'], reverse=True)
+
+        return Response(final_report[:10])
+
+class PeakHoursAPIView(APIView):
+    """
+    API phân tích doanh thu theo từng giờ trong ngày (giờ cao điểm).
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({'error': 'Vui lòng cung cấp start_date và end_date.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        start_datetime = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+        end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+
+        # Lấy tất cả các giao dịch trong khoảng thời gian
+        giao_dichs = GiaoDichTaiChinh.objects.filter(
+            thoi_gian_giao_dich__range=[start_datetime, end_datetime],
+            loai_giao_dich__in=[
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_HOA_DON,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_ORDER_LE,
+                GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_TK
+            ]
+        ).values('thoi_gian_giao_dich', 'so_tien')
+
+        # Xử lý dữ liệu bằng Python
+        report_data = [0] * 24
+        for entry in giao_dichs:
+            local_time = timezone.localtime(entry['thoi_gian_giao_dich'])
+            hour_index = local_time.hour
+            if 0 <= hour_index < 24:
+                report_data[hour_index] += entry['so_tien']
+        
+        report_data = [float(val) for val in report_data]
+
+        return Response(report_data)

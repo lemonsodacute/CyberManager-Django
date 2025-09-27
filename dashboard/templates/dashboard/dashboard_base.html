@@ -34,9 +34,11 @@
                 </a>
             </li>
             <!-- Các link này sẽ được tạo sau -->
-            <li><a href="#" class="nav-link"><i class="bi bi-bar-chart-line-fill me-2"></i> Báo Cáo Chi Tiết</a></li>
+            <li><a href="{% url 'dashboard_reports' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_reports' %}active{% endif %}"><i class="bi bi-bar-chart-line-fill me-2"></i> Báo Cáo Doanh Thu</a></li>
             <!-- <<< THÊM DÒNG NÀY >>> -->
     <li><a href="{% url 'dashboard_menu' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_menu' %}active{% endif %}"><i class="bi bi-journal-text me-2"></i> Quản Lý Menu</a></li>
+    <!-- <<< THÊM DÒNG NÀY >>> -->
+    <li><a href="{% url 'dashboard_machines' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_machines' %}active{% endif %}"><i class="bi bi-display me-2"></i> Quản Lý Máy</a></li>
            <li><a href="{% url 'dashboard_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_inventory' %}active{% endif %}"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho</a></li>
           <li><a href="{% url 'dashboard_users' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_users' %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Quản Lý Người Dùng</a></li>
         </ul>

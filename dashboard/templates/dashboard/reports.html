@@ -1,0 +1,272 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Báo Cáo Doanh Thu{% endblock %}
+
+{% block extra_css %}
+<!-- Thêm thư viện cho Date Range Picker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">Báo Cáo Doanh Thu & Lịch Sử Ca</h3>
+
+<!-- Bộ lọc ngày -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <label class="form-label">Chọn khoảng thời gian:</label>
+        <input type="text" id="date-range-picker" class="form-control">
+    </div>
+</div>
+
+<!-- Các thẻ tóm tắt -->
+<div id="summary-cards" class="row">
+    <!-- Nội dung sẽ được load bằng JS -->
+</div>
+<!-- Bảng Top Sản phẩm (thêm cột Lợi nhuận) -->
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0">Top 10 Sản Phẩm Lợi Nhuận Cao Nhất</h5></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Tên Sản Phẩm</th>
+                                <th scope="col" class="text-end">Số Lượng Bán</th>
+                                <th scope="col" class="text-end">Tổng Doanh Thu</th>
+                                <th scope="col" class="text-end">Lợi Nhuận Gộp</th> <!-- <<< CỘT MỚI >>> -->
+                            </tr>
+                        </thead>
+                        <tbody id="top-products-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Phân Tích Doanh Thu Theo Giờ</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="peakHoursChart"></canvas>
+                <div id="peakHoursChartLoading" class="text-center p-5" style="display: none;">
+                    <div class="spinner-border text-primary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Danh sách ca làm việc -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header"><h5 class="mb-0">Lịch sử ca làm việc</h5></div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Ngày</th><th>Ca</th><th>Nhân viên</th><th class="text-end">Doanh thu HT</th><th class="text-end">Chênh lệch</th><th></th></tr></thead>
+                <tbody id="shifts-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi Tiết Ca -->
+<div class="modal fade" id="shiftDetailModal" tabindex="-1" style="--bs-modal-width: 800px;">
+    <div class="modal-dialog">
+        <div class="modal-content" id="shiftDetailContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Thư viện cần thiết -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- <<< TOÀN BỘ SCRIPT PHẢI NẰM TRONG BLOCK NÀY >>> -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const dateRangePicker = $('#date-range-picker');
+    const summaryCards = document.getElementById('summary-cards');
+    const shiftsTbody = document.getElementById('shifts-tbody');
+    const topProductsTbody = document.getElementById('top-products-tbody');
+    const peakHoursChartCanvas = document.getElementById('peakHoursChart');
+    const peakHoursChartLoading = document.getElementById('peakHoursChartLoading');
+    const shiftDetailModalEl = document.getElementById('shiftDetailModal');
+    const shiftDetailModal = new bootstrap.Modal(shiftDetailModalEl);
+    const shiftDetailContent = document.getElementById('shiftDetailContent');
+
+    let startDate = moment().subtract(6, 'days');
+    let endDate = moment();
+    let peakHoursChartInstance = null;
+    
+    // --- HÀM TIỆN ÍCH ---
+    const formatCurrency = (val) => {
+        const number = parseFloat(val);
+        if (isNaN(number)) {
+            return (0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+        }
+        return number.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    };
+
+    // --- HÀM TẢI DỮ LIỆU CHÍNH ---
+    async function loadReportData() {
+        const start = startDate.format('YYYY-MM-DD');
+        const end = endDate.format('YYYY-MM-DD');
+        
+        // Hiển thị trạng thái loading
+        summaryCards.innerHTML = '<div class="col-12 text-center p-3"><div class="spinner-border text-primary"></div></div>';
+        shiftsTbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        topProductsTbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        peakHoursChartCanvas.style.display = 'none';
+        peakHoursChartLoading.style.display = 'block';
+        peakHoursChartLoading.innerHTML = '<div class="spinner-border text-primary"></div>';
+
+        try {
+            const [summaryRes, shiftsRes, topProductsRes, peakHoursRes] = await Promise.all([
+                apiClient(`/api/dashboard/reports/summary/?start_date=${start}&end_date=${end}`),
+                apiClient(`/api/dashboard/reports/shifts/?start_date=${start}&end_date=${end}`),
+                apiClient(`/api/dashboard/reports/product-performance/?start_date=${start}&end_date=${end}`),
+                apiClient(`/api/dashboard/reports/peak-hours/?start_date=${start}&end_date=${end}`)
+            ]);
+
+            // 1. Render các thẻ tóm tắt
+            summaryCards.innerHTML = `
+                <div class="col-6 col-lg-3 mb-3"><div class="card h-100"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Tổng Doanh Thu</h6><h4 class="card-title text-primary">${formatCurrency(summaryRes.tong_doanh_thu)}</h4></div></div></div>
+                <div class="col-6 col-lg-3 mb-3"><div class="card h-100"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Tổng Giá Vốn</h6><h4 class="card-title text-warning">${formatCurrency(summaryRes.tong_gia_von)}</h4></div></div></div>
+                <div class="col-6 col-lg-3 mb-3"><div class="card h-100"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Lợi Nhuận Gộp</h6><h4 class="card-title text-success">${formatCurrency(summaryRes.loi_nhuan_gop)}</h4></div></div></div>
+                <div class="col-6 col-lg-3 mb-3"><div class="card h-100"><div class="card-body"><h6 class="card-subtitle mb-2 text-muted">Tổng Hóa Đơn</h6><h4 class="card-title">${summaryRes.tong_hoa_don.toLocaleString('vi-VN')}</h4></div></div></div>
+            `;
+            
+            // 2. Render bảng lịch sử ca
+            shiftsTbody.innerHTML = '';
+            if (shiftsRes.length === 0) {
+                shiftsTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Không có dữ liệu ca làm việc.</td></tr>';
+            } else {
+                shiftsRes.forEach(shift => {
+                    const tenCa = shift.loai_ca ? shift.loai_ca.ten_ca : 'Ca Tự Do';
+                    const tenNV = shift.nhan_vien.tai_khoan;
+                    shiftsTbody.innerHTML += `
+                        <tr>
+                            <td>${moment(shift.ngay_lam_viec).format('DD/MM/YYYY')}</td>
+                            <td>${tenCa}</td><td>${tenNV}</td>
+                            <td class="text-end">${formatCurrency(shift.tong_doanh_thu_he_thong)}</td>
+                            <td class="text-end ${parseFloat(shift.chenh_lech) != 0 ? 'text-danger fw-bold' : ''}">${formatCurrency(shift.chenh_lech)}</td>
+                            <td class="text-center"><button class="btn btn-sm btn-outline-info view-shift-detail" data-id="${shift.id}">Xem Chi Tiết</button></td>
+                        </tr>`;
+                });
+            }
+            
+            // 3. Render bảng top sản phẩm lợi nhuận
+            topProductsTbody.innerHTML = '';
+            if (topProductsRes.length === 0) {
+                topProductsTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không có dữ liệu sản phẩm.</td></tr>';
+            } else {
+                topProductsRes.forEach((product, index) => {
+                    topProductsTbody.innerHTML += `
+                        <tr>
+                            <th scope="row">${index + 1}</th>
+                            <td>${product.mon__ten_mon}</td>
+                            <td class="text-end">${product.tong_so_luong_ban}</td>
+                            <td class="text-end">${formatCurrency(product.tong_doanh_thu)}</td>
+                            <td class="text-end fw-bold text-success">${formatCurrency(product.loi_nhuan)}</td>
+                        </tr>`;
+                });
+            }
+
+            // 4. Render biểu đồ giờ cao điểm
+            peakHoursChartLoading.style.display = 'none';
+            peakHoursChartCanvas.style.display = 'block';
+            if (peakHoursChartInstance) peakHoursChartInstance.destroy();
+            const ctx = peakHoursChartCanvas.getContext('2d');
+            peakHoursChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}h`),
+                    datasets: [{
+                        label: 'Doanh Thu (VNĐ)',
+                        data: peakHoursRes,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return value.toLocaleString('vi-VN') + ' ₫'; } } } } }
+            });
+
+        } catch (error) {
+            console.error("Đã xảy ra lỗi trong loadReportData:", error);
+            const errorMessage = `<div class="alert alert-danger">Lỗi khi tải dữ liệu: ${error.message}</div>`;
+            summaryCards.innerHTML = errorMessage;
+            shiftsTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi tải dữ liệu.</td></tr>`;
+            topProductsTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Lỗi tải dữ liệu.</td></tr>`;
+            peakHoursChartLoading.style.display = 'block';
+            peakHoursChartLoading.innerHTML = `<div class="alert alert-danger m-0">Lỗi tải biểu đồ.</div>`;
+            peakHoursChartCanvas.style.display = 'none';
+        }
+    }
+
+    // --- KHỞI TẠO & SỰ KIỆN ---
+    // (Toàn bộ phần này giữ nguyên không thay đổi)
+    dateRangePicker.daterangepicker({
+        startDate: startDate, endDate: endDate,
+        ranges: {
+           'Hôm nay': [moment(), moment()], 'Hôm qua': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+           '7 ngày qua': [moment().subtract(6, 'days'), moment()], '30 ngày qua': [moment().subtract(29, 'days'), moment()],
+           'Tháng này': [moment().startOf('month'), moment().endOf('month')],
+           'Tháng trước': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        },
+        locale: { format: 'DD/MM/YYYY', applyLabel: 'Áp dụng', cancelLabel: 'Hủy', customRangeLabel: 'Tùy chọn' }
+    }, function(start, end) {
+        startDate = start;
+        endDate = end;
+        loadReportData();
+    });
+
+    shiftsTbody.addEventListener('click', async e => {
+        const detailBtn = e.target.closest('.view-shift-detail');
+        if(detailBtn) {
+            const shiftId = detailBtn.dataset.id;
+            shiftDetailContent.innerHTML = '<div class="modal-body text-center"><div class="spinner-border"></div></div>';
+            shiftDetailModal.show();
+            try {
+                const shiftDetails = await apiClient(`/api/dashboard/reports/shifts/${shiftId}/`);
+                let itemsHtml = '';
+                if(shiftDetails.chi_tiet_dich_vu.length > 0){
+                    shiftDetails.chi_tiet_dich_vu.forEach(item => {
+                        itemsHtml += `<li>${item.mon__ten_mon}: ${item.so_luong_ban} ( ${formatCurrency(item.doanh_thu)} )</li>`;
+                    });
+                } else {
+                    itemsHtml = '<li>Không có dịch vụ nào được bán.</li>';
+                }
+                shiftDetailContent.innerHTML = `
+                    <div class="modal-header"><h5 class="modal-title">Chi Tiết Ca #${shiftDetails.id} - ${moment(shiftDetails.ngay_lam_viec).format('DD/MM/YYYY')}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <p><strong>Nhân viên:</strong> ${shiftDetails.nhan_vien}</p>
+                        <h6>Tổng kết tài chính</h6>
+                        <ul>
+                            <li>Doanh thu tiền giờ: ${formatCurrency(shiftDetails.tong_tien_gio)}</li>
+                            <li>Doanh thu dịch vụ: ${formatCurrency(shiftDetails.tong_tien_dich_vu)}</li>
+                            <li class="fw-bold">Tổng cộng: ${formatCurrency(shiftDetails.tong_doanh_thu_he_thong)}</li>
+                        </ul>
+                         <h6>Chi tiết dịch vụ bán ra</h6>
+                         <ul>${itemsHtml}</ul>
+                    </div>`;
+            } catch(error) {
+                shiftDetailContent.innerHTML = `<div class="modal-body"><div class="alert alert-danger">${error.message}</div></div>`;
+            }
+        }
+    });
+
+    // Tải dữ liệu lần đầu
+    loadReportData();
+});
+</script>
+{% endblock %}

@@ -32,3 +32,14 @@ def add_user_view(request):
 def menu_management_view(request):
     """View để hiển thị trang Quản lý Menu."""
     return render(request, 'dashboard/menu_management.html')
+
+
+@user_passes_test(is_staff_user, login_url='/pos/')
+def machine_management_view(request):
+    """View để hiển thị trang Quản lý Máy."""
+    return render(request, 'dashboard/machine_management.html')
+
+@user_passes_test(is_staff_user, login_url='/pos/')
+def reports_view(request):
+    """View để hiển thị trang Báo cáo."""
+    return render(request, 'dashboard/reports.html')

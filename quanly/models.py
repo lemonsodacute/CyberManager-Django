@@ -52,6 +52,7 @@ class NguyenLieu(models.Model):
     ten_nguyen_lieu = models.CharField(max_length=100, unique=True, verbose_name="Tên hàng hóa")
     don_vi_tinh = models.CharField(max_length=20, verbose_name="Đơn vị tính")
     so_luong_ton = models.FloatField(default=0, verbose_name="Số lượng tồn kho")
+    gia_von = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Giá vốn / Đơn vị")
     def __str__(self): return self.ten_nguyen_lieu
 
 class MenuItem(models.Model):
