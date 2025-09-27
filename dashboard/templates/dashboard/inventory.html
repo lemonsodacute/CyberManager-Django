@@ -1,0 +1,364 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Quản Lý Kho{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Quản Lý Kho</h3>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs" id="inventoryTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="ton-kho-tab" data-bs-toggle="tab" data-bs-target="#ton-kho-pane" type="button" role="tab">Tồn Kho Hiện Tại</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="kiem-ke-tab" data-bs-toggle="tab" data-bs-target="#kiem-ke-pane" type="button" role="tab">Xử Lý Kiểm Kê</button>
+    </li>
+</ul>
+
+<!-- Tabs Content -->
+<div class="tab-content pt-3" id="inventoryTabContent">
+    <!-- TAB 1: TỒN KHO -->
+    <div class="tab-pane fade show active" id="ton-kho-pane" role="tabpanel">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Danh sách nguyên liệu</h5>
+                <button class="btn btn-primary btn-sm" id="addNewIngredientBtn"><i class="bi bi-plus-circle-fill me-2"></i>Thêm Nguyên Liệu Mới</button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Tên Nguyên Liệu</th>
+                                <th>Đơn Vị Tính</th>
+                                <th class="text-end">Tồn Kho</th>
+                                <th class="text-center">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-tbody">
+                            <!-- Dữ liệu sẽ được load vào đây bằng JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: XỬ LÝ KIỂM KÊ -->
+    <div class="tab-pane fade" id="kiem-ke-pane" role="tabpanel">
+        <div class="card shadow-sm">
+            <div class="card-body" id="stocktake-list">
+                 <div class="text-center p-5"><div class="spinner-border text-primary"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- CÁC MODAL -->
+
+<!-- Modal Thêm/Sửa Nguyên Liệu -->
+<div class="modal fade" id="ingredientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="ingredientForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ingredientModalLabel">Thêm Nguyên Liệu Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="ingredientId">
+                    <div class="mb-3">
+                        <label class="form-label">Tên nguyên liệu</label>
+                        <input type="text" class="form-control" id="ingredientName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Đơn vị tính</label>
+                        <input type="text" class="form-control" id="ingredientUnit" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nhập Kho -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nhập Kho cho <span id="importItemName" class="text-primary"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="importIngredientId">
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng nhập</label>
+                        <input type="number" step="0.01" class="form-control" id="importQuantity" required>
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label">Ghi chú (Tùy chọn)</label>
+                        <input type="text" class="form-control" id="importReason" placeholder="VD: Nhập hàng từ NCC ABC">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Xác Nhận Nhập Kho</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Chi Tiết Phiếu Kiểm Kê (ĐÃ ĐƯỢC THÊM LẠI ĐẦY ĐỦ) -->
+<div class="modal fade" id="detailModal" tabindex="-1" style="--bs-modal-width: 800px;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi Tiết Phiếu Kiểm Kê #<span id="modal-phieu-id"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Ca làm việc:</strong> <span id="modal-ca-info"></span></p>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead><tr><th>Nguyên Liệu</th><th>Tồn Hệ Thống</th><th>Tồn Thực Tế</th><th>Chênh Lệch</th></tr></thead>
+                        <tbody id="modal-details-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="confirm-stocktake-btn">Xác Nhận & Cập Nhật Kho</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN CHO CẢ 2 TAB ---
+    // Tab 1: Tồn kho
+    const inventoryTbody = document.getElementById('inventory-tbody');
+    const ingredientModalEl = document.getElementById('ingredientModal');
+    const ingredientModal = new bootstrap.Modal(ingredientModalEl);
+    const ingredientForm = document.getElementById('ingredientForm');
+    const addNewIngredientBtn = document.getElementById('addNewIngredientBtn');
+    const importModalEl = document.getElementById('importModal');
+    const importModal = new bootstrap.Modal(importModalEl);
+    const importForm = document.getElementById('importForm');
+    let allIngredients = [];
+    let currentIngredientId = null;
+
+    // Tab 2: Kiểm kê
+    const stocktakeListDiv = document.getElementById('stocktake-list');
+    const detailModalEl = document.getElementById('detailModal');
+    const detailModal = new bootstrap.Modal(detailModalEl);
+    const confirmBtn = document.getElementById('confirm-stocktake-btn');
+    let stocktakeData = [];
+    let selectedPhieuId = null;
+
+    // --- LOGIC CHO TAB 1: TỒN KHO ---
+    
+    function renderInventory() {
+        inventoryTbody.innerHTML = '';
+        if (allIngredients.length === 0) {
+            inventoryTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Chưa có nguyên liệu nào.</td></tr>';
+            return;
+        }
+        allIngredients.forEach(item => {
+            inventoryTbody.innerHTML += `
+                <tr class="${item.so_luong_ton <= 10 ? 'table-warning' : ''}">
+                    <td>${item.ten_nguyen_lieu}</td>
+                    <td>${item.don_vi_tinh}</td>
+                    <td class="text-end fw-bold">${item.so_luong_ton}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-success import-btn" data-id="${item.id}" data-name="${item.ten_nguyen_lieu}">Nhập kho</button>
+                        <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${item.id}">Sửa</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    async function loadIngredients() {
+        inventoryTbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        try {
+            allIngredients = await apiClient('/api/dashboard/inventory/items/');
+            renderInventory();
+        } catch (error) {
+            inventoryTbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Lỗi: ${error.message}</td></tr>`;
+        }
+    }
+    
+    addNewIngredientBtn.addEventListener('click', () => {
+        currentIngredientId = null;
+        ingredientForm.reset();
+        document.getElementById('ingredientModalLabel').textContent = 'Thêm Nguyên Liệu Mới';
+        ingredientModal.show();
+    });
+
+    inventoryTbody.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-btn');
+        if (editBtn) {
+            currentIngredientId = editBtn.dataset.id;
+            const item = allIngredients.find(i => i.id == currentIngredientId);
+            document.getElementById('ingredientModalLabel').textContent = 'Sửa Nguyên Liệu';
+            document.getElementById('ingredientId').value = item.id;
+            document.getElementById('ingredientName').value = item.ten_nguyen_lieu;
+            document.getElementById('ingredientUnit').value = item.don_vi_tinh;
+            ingredientModal.show();
+        }
+
+        const importBtn = e.target.closest('.import-btn');
+        if (importBtn) {
+            importForm.reset();
+            document.getElementById('importIngredientId').value = importBtn.dataset.id;
+            document.getElementById('importItemName').textContent = importBtn.dataset.name;
+            importModal.show();
+        }
+    });
+
+    ingredientForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = currentIngredientId ? `/api/dashboard/inventory/items/${currentIngredientId}/` : '/api/dashboard/inventory/items/';
+        const method = currentIngredientId ? 'PUT' : 'POST';
+        const payload = {
+            ten_nguyen_lieu: document.getElementById('ingredientName').value,
+            don_vi_tinh: document.getElementById('ingredientUnit').value
+        };
+        try {
+            await apiClient(url, { method: method, body: JSON.stringify(payload) });
+            ingredientModal.hide();
+            await loadIngredients();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+    
+    importForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const payload = {
+            nguyen_lieu_id: document.getElementById('importIngredientId').value,
+            so_luong_nhap: document.getElementById('importQuantity').value,
+            ly_do: document.getElementById('importReason').value
+        };
+        try {
+            await apiClient('/api/dashboard/inventory/import/', { method: 'POST', body: JSON.stringify(payload) });
+            importModal.hide();
+            await loadIngredients();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+
+
+    // --- LOGIC CHO TAB 2: KIỂM KÊ ---
+    async function loadStocktakes() {
+        stocktakeListDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+        try {
+            const data = await apiClient('/api/dashboard/kiem-ke/');
+            stocktakeData = data;
+            
+            stocktakeListDiv.innerHTML = '';
+            if (stocktakeData.length === 0) {
+                stocktakeListDiv.innerHTML = '<div class="alert alert-info">Hiện không có phiếu kiểm kê nào cần xử lý.</div>';
+                return;
+            }
+
+            const accordion = document.createElement('div');
+            accordion.className = 'accordion';
+            accordion.id = 'stocktakeAccordion';
+
+            stocktakeData.forEach(phieu => {
+                const isConfirmed = phieu.da_xac_nhan;
+                const accordionItem = `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-${phieu.id}">
+                            <button class="accordion-button ${isConfirmed ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${phieu.id}">
+                                Phiếu #${phieu.id} - ${phieu.ca_lam_viec_info}
+                                <span class="ms-auto badge ${isConfirmed ? 'bg-success' : 'bg-warning'}">${isConfirmed ? 'Đã xác nhận' : 'Chờ xử lý'}</span>
+                            </button>
+                        </h2>
+                        <div id="collapse-${phieu.id}" class="accordion-collapse collapse ${!isConfirmed ? 'show' : ''}" data-bs-parent="#stocktakeAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Nhân viên:</strong> ${phieu.nhan_vien} | <strong>Thời gian tạo:</strong> ${new Date(phieu.thoi_gian_tao).toLocaleString('vi-VN')}</p>
+                                <button class="btn btn-primary btn-sm view-details-btn" data-id="${phieu.id}">
+                                    ${isConfirmed ? 'Xem Lại Chi Tiết' : 'Xem Chi Tiết & Xử Lý'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                accordion.innerHTML += accordionItem;
+            });
+            stocktakeListDiv.appendChild(accordion);
+        } catch (error) {
+            stocktakeListDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+        }
+    }
+
+    stocktakeListDiv.addEventListener('click', e => {
+        const btn = e.target.closest('.view-details-btn');
+        if (btn) {
+            selectedPhieuId = btn.dataset.id;
+            const phieu = stocktakeData.find(p => p.id == selectedPhieuId);
+            if (!phieu) return;
+            
+            document.getElementById('modal-phieu-id').textContent = phieu.id;
+            document.getElementById('modal-ca-info').textContent = phieu.ca_lam_viec_info;
+            
+            const tbody = document.getElementById('modal-details-tbody');
+            tbody.innerHTML = '';
+            phieu.chi_tiet.forEach(item => {
+                const variance = parseFloat(item.chenh_lech);
+                let rowClass = '';
+                if (variance < 0) rowClass = 'table-danger';
+                else if (variance > 0) rowClass = 'table-success';
+
+                tbody.innerHTML += `
+                    <tr class="${rowClass}">
+                        <td>${item.nguyen_lieu}</td>
+                        <td class="text-end">${item.ton_he_thong}</td>
+                        <td class="text-end">${item.ton_thuc_te}</td>
+                        <td class="text-end fw-bold">${variance.toFixed(2).replace(/\.00$/, '')}</td>
+                    </tr>
+                `;
+            });
+            
+            confirmBtn.style.display = phieu.da_xac_nhan ? 'none' : 'block';
+            detailModal.show();
+        }
+    });
+    
+    confirmBtn.addEventListener('click', async () => {
+        if (!selectedPhieuId || !confirm(`Bạn có chắc muốn xác nhận phiếu #${selectedPhieuId}? Hành động này sẽ cập nhật lại toàn bộ tồn kho.`)) return;
+        
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+
+        try {
+            const result = await apiClient(`/api/dashboard/kiem-ke/${selectedPhieuId}/xac-nhan/`, { method: 'POST', body: JSON.stringify({}) });
+            alert(result.success);
+            detailModal.hide();
+            await loadStocktakes();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Xác Nhận & Cập Nhật Kho';
+        }
+    });
+
+    // --- KHỞI CHẠY BAN ĐẦU ---
+    loadIngredients(); 
+    loadStocktakes();
+});
+</script>
+{% endblock %}

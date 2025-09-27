@@ -1,0 +1,383 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Quản Lý Menu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Quản Lý Menu</h3>
+    <div>
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#categoryModal">
+            <i class="bi bi-tags-fill me-2"></i>Quản Lý Danh Mục
+        </button>
+        <button class="btn btn-primary btn-sm" id="add-new-item-btn">
+            <i class="bi bi-plus-circle-fill me-2"></i>Thêm Món Mới
+        </button>
+    </div>
+</div>
+
+<div id="menu-items-container">
+    <div class="text-center p-5"><div class="spinner-border"></div></div>
+</div>
+
+<!-- Modal Thêm/Sửa Món -->
+<div class="modal fade" id="itemModal" tabindex="-1" style="--bs-modal-width: 800px;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="itemForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="itemModalLabel">Thêm Món Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="itemId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tên món</label>
+                            <input type="text" id="itemName" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Đơn giá (VNĐ)</label>
+                            <input type="number" id="itemPrice" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <select id="itemCategory" class="form-select" required></select>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                             <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="itemIsAvailable" checked>
+                                <label class="form-check-label" for="itemIsAvailable">Đang bán</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Định Lượng Nguyên Liệu</h6>
+                    <div id="dinhLuongContainer">
+                        <!-- Các dòng định lượng sẽ được thêm vào đây bằng JS -->
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="add-dinh-luong-row">
+                        <i class="bi bi-plus"></i> Thêm Nguyên Liệu
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="deleteItemBtn" style="display: none;">Xóa Món</button>
+                    <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Quản Lý Danh Mục -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản Lý Danh Mục</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Thêm Danh Mục Mới</h6>
+                <form id="categoryForm" class="d-flex gap-2">
+                    <input type="text" id="newCategoryName" class="form-control" placeholder="Tên danh mục mới" required>
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </form>
+                <hr>
+                <h6>Danh Sách Hiện Có</h6>
+                <div id="category-list-container">
+                    <div class="text-center"><div class="spinner-border spinner-border-sm"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN & HẰNG ---
+    const menuContainer = document.getElementById('menu-items-container');
+    const itemModalEl = document.getElementById('itemModal');
+    const itemModal = new bootstrap.Modal(itemModalEl);
+    const itemForm = document.getElementById('itemForm');
+    const addItemBtn = document.getElementById('add-new-item-btn');
+    const deleteItemBtn = document.getElementById('deleteItemBtn');
+    const addDinhLuongBtn = document.getElementById('add-dinh-luong-row');
+    const dinhLuongContainer = document.getElementById('dinhLuongContainer');
+    const categoryModalEl = document.getElementById('categoryModal');
+    const categoryModal = new bootstrap.Modal(categoryModalEl);
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryListContainer = document.getElementById('category-list-container');
+
+    // Biến toàn cục để lưu trữ dữ liệu
+    let allMenuItems = [];
+    let allCategories = [];
+    let allIngredients = [];
+    let currentEditingItemId = null;
+
+    // --- CÁC HÀM GỌI API ---
+    async function loadInitialData() {
+        menuContainer.innerHTML = '<div class="text-center p-5"><div class="spinner-border"></div></div>';
+        try {
+            const [itemsRes, categoriesRes, ingredientsRes] = await Promise.all([
+                apiClient('/api/dashboard/menu/items/'),
+                apiClient('/api/dashboard/menu/categories/'),
+                apiClient('/pos/api/kho/nguyen-lieu/')
+            ]);
+            allMenuItems = itemsRes;
+            allCategories = categoriesRes;
+            allIngredients = ingredientsRes;
+            
+            renderMenuItems();
+        } catch (error) {
+            menuContainer.innerHTML = `<div class="alert alert-danger">Lỗi khi tải dữ liệu: ${error.message}</div>`;
+        }
+    }
+
+    // --- CÁC HÀM RENDER GIAO DIỆN ---
+    function renderMenuItems() {
+        menuContainer.innerHTML = '';
+        if (allMenuItems.length === 0) {
+            menuContainer.innerHTML = '<div class="alert alert-info">Chưa có món nào trong thực đơn.</div>';
+            return;
+        }
+
+        const itemsByCat = {};
+        allMenuItems.forEach(item => {
+            const catName = item.danh_muc_ten || 'Chưa phân loại';
+            if (!itemsByCat[catName]) itemsByCat[catName] = [];
+            itemsByCat[catName].push(item);
+        });
+
+        const sortedCategories = Object.keys(itemsByCat).sort();
+
+        for (const category of sortedCategories) {
+            let categoryHtml = `<h4 class="mt-4 mb-3">${category}</h4><div class="row g-3">`;
+            itemsByCat[category].forEach(item => {
+                categoryHtml += `
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">${item.ten_mon}</h5>
+                                <p class="card-text text-primary fw-bold">${parseFloat(item.don_gia).toLocaleString('vi-VN')} VNĐ</p>
+                                <div class="mt-auto pt-2">
+                                    <button class="btn btn-sm btn-outline-primary edit-item-btn" data-id="${item.id}">Chỉnh sửa</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            categoryHtml += '</div>';
+            menuContainer.innerHTML += categoryHtml;
+        }
+    }
+
+    function createDinhLuongRow(data = {}) {
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 align-items-center dinh-luong-row';
+        row.innerHTML = `
+            <div class="col-6">
+                <select class="form-select form-select-sm nguyen-lieu-select"></select>
+            </div>
+            <div class="col-3">
+                <input type="number" step="0.01" class="form-control form-control-sm so-luong-input" placeholder="Số lượng" value="${data.so_luong_can || ''}">
+            </div>
+            <div class="col-2">
+                <span class="don-vi-tinh text-muted">${data.nguyen_lieu_don_vi || ''}</span>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-dinh-luong-btn">X</button>
+            </div>
+        `;
+        
+        const select = row.querySelector('.nguyen-lieu-select');
+        select.innerHTML = '<option value="" selected disabled>-- Chọn nguyên liệu --</option>';
+        allIngredients.forEach(ing => {
+            select.innerHTML += `<option value="${ing.id}" data-unit="${ing.don_vi_tinh}" ${ing.id == data.nguyen_lieu ? 'selected' : ''}>${ing.ten_nguyen_lieu}</option>`;
+        });
+        
+        dinhLuongContainer.appendChild(row);
+    }
+
+    function renderCategories() {
+        categoryListContainer.innerHTML = '';
+        if (allCategories.length === 0) {
+            categoryListContainer.innerHTML = '<p class="text-muted small">Chưa có danh mục nào.</p>';
+            return;
+        }
+        
+        const list = document.createElement('ul');
+        list.className = 'list-group';
+        allCategories.forEach(cat => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `
+                <span>${cat.ten_danh_muc}</span>
+                <button class="btn btn-sm btn-outline-danger delete-cat-btn" data-id="${cat.id}">Xóa</button>
+            `;
+            list.appendChild(listItem);
+        });
+        categoryListContainer.appendChild(list);
+    }
+    
+    // --- XỬ LÝ SỰ KIỆN ---
+    addItemBtn.addEventListener('click', () => {
+        currentEditingItemId = null;
+        itemForm.reset();
+        document.getElementById('itemModalLabel').textContent = 'Thêm Món Mới';
+        deleteItemBtn.style.display = 'none';
+
+        const categorySelect = document.getElementById('itemCategory');
+        categorySelect.innerHTML = '';
+        allCategories.forEach(cat => categorySelect.innerHTML += `<option value="${cat.id}">${cat.ten_danh_muc}</option>`);
+        
+        dinhLuongContainer.innerHTML = '';
+        itemModal.show();
+    });
+
+    menuContainer.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-item-btn');
+        if (editBtn) {
+            const itemId = editBtn.dataset.id;
+            const item = allMenuItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            currentEditingItemId = itemId;
+            itemForm.reset();
+            document.getElementById('itemModalLabel').textContent = `Sửa Món: ${item.ten_mon}`;
+            deleteItemBtn.style.display = 'block';
+
+            document.getElementById('itemId').value = item.id;
+            document.getElementById('itemName').value = item.ten_mon;
+            document.getElementById('itemPrice').value = parseFloat(item.don_gia);
+            document.getElementById('itemIsAvailable').checked = item.is_available;
+            
+            const categorySelect = document.getElementById('itemCategory');
+            categorySelect.innerHTML = '';
+            allCategories.forEach(cat => categorySelect.innerHTML += `<option value="${cat.id}" ${cat.id == item.danh_muc ? 'selected' : ''}>${cat.ten_danh_muc}</option>`);
+
+            dinhLuongContainer.innerHTML = '';
+            item.dinh_luong.forEach(dl => createDinhLuongRow(dl));
+
+            itemModal.show();
+        }
+    });
+
+    addDinhLuongBtn.addEventListener('click', () => createDinhLuongRow());
+
+    dinhLuongContainer.addEventListener('click', e => {
+        if (e.target.closest('.remove-dinh-luong-btn')) {
+            e.target.closest('.dinh-luong-row').remove();
+        }
+    });
+    
+    dinhLuongContainer.addEventListener('change', e => {
+        if (e.target.classList.contains('nguyen-lieu-select')) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const unitSpan = e.target.closest('.dinh-luong-row').querySelector('.don-vi-tinh');
+            unitSpan.textContent = selectedOption.dataset.unit || '';
+        }
+    });
+
+    itemForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = currentEditingItemId ? `/api/dashboard/menu/items/${currentEditingItemId}/` : '/api/dashboard/menu/items/';
+        const method = currentEditingItemId ? 'PUT' : 'POST';
+
+        const dinhLuongPayload = [];
+        document.querySelectorAll('.dinh-luong-row').forEach(row => {
+            const nguyenLieuId = row.querySelector('.nguyen-lieu-select').value;
+            const soLuong = row.querySelector('.so-luong-input').value;
+            if (nguyenLieuId && soLuong) {
+                dinhLuongPayload.push({
+                    nguyen_lieu: parseInt(nguyenLieuId),
+                    so_luong_can: parseFloat(soLuong)
+                });
+            }
+        });
+
+        const payload = {
+            ten_mon: document.getElementById('itemName').value,
+            don_gia: document.getElementById('itemPrice').value,
+            danh_muc: document.getElementById('itemCategory').value,
+            is_available: document.getElementById('itemIsAvailable').checked,
+            dinh_luong: dinhLuongPayload
+        };
+
+        try {
+            await apiClient(url, { method: method, body: JSON.stringify(payload) });
+            itemModal.hide();
+            await loadInitialData();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+    
+    deleteItemBtn.addEventListener('click', async () => {
+        if (!currentEditingItemId) return;
+        if (confirm('Bạn có chắc muốn xóa món này không?')) {
+            try {
+                await apiClient(`/api/dashboard/menu/items/${currentEditingItemId}/`, { method: 'DELETE' });
+                itemModal.hide();
+                await loadInitialData();
+            } catch (error) {
+                alert(`Lỗi khi xóa: ${error.message}`);
+            }
+        }
+    });
+
+    categoryModalEl.addEventListener('shown.bs.modal', () => {
+        renderCategories();
+        document.getElementById('newCategoryName').focus();
+    });
+
+    categoryForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const newNameInput = document.getElementById('newCategoryName');
+        const newName = newNameInput.value.trim();
+        if (!newName) return;
+
+        try {
+            const newCategory = await apiClient('/api/dashboard/menu/categories/', {
+                method: 'POST',
+                body: JSON.stringify({ ten_danh_muc: newName })
+            });
+            
+            allCategories.push(newCategory);
+            allCategories.sort((a, b) => a.ten_danh_muc.localeCompare(b.ten_danh_muc));
+            renderCategories();
+            
+            newNameInput.value = '';
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+    
+    categoryListContainer.addEventListener('click', async e => {
+        const deleteBtn = e.target.closest('.delete-cat-btn');
+        if (deleteBtn) {
+            const catId = deleteBtn.dataset.id;
+            const category = allCategories.find(c => c.id == catId);
+            if (!category) return;
+            
+            if (confirm(`Bạn có chắc muốn xóa danh mục "${category.ten_danh_muc}"?\nHành động này có thể thất bại nếu vẫn còn món ăn thuộc danh mục này.`)) {
+                try {
+                    await apiClient(`/api/dashboard/menu/categories/${catId}/`, { method: 'DELETE' });
+                    
+                    allCategories = allCategories.filter(c => c.id != catId);
+                    renderCategories();
+                } catch (error) {
+                    alert(`Lỗi khi xóa: ${error.message}\n(Có thể do vẫn còn món ăn thuộc danh mục này)`);
+                }
+            }
+        }
+    });
+
+    // --- KHỞI CHẠY ---
+    loadInitialData();
+});
+</script>
+{% endblock %}

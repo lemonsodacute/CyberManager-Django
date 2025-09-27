@@ -1,0 +1,228 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Quản Lý Người Dùng{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Quản Lý Người Dùng</h4>
+        <div>
+           <a href="{% url 'dashboard_add_user' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle-fill me-2"></i>Thêm Người Dùng Mới
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="text" id="user-search" class="form-control" placeholder="Tìm theo tên đăng nhập...">
+            </div>
+            <div class="col-md-4">
+                <select id="user-type-filter" class="form-select">
+                    <option value="all">Tất cả loại tài khoản</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Nhân viên">Nhân viên</option>
+                    <option value="Khách hàng">Khách hàng</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Tên Đăng Nhập</th>
+                        <th>Loại Tài Khoản</th>
+                        <th class="text-end">Số Dư</th>
+                        <th class="text-center">Trạng Thái</th>
+                        <th class="text-center">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody">
+                    <tr><td colspan="5" class="text-center p-5"><div class="spinner-border"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Biến & Hằng ---
+    const usersTbody = document.getElementById('users-tbody');
+    const searchInput = document.getElementById('user-search');
+    const typeFilter = document.getElementById('user-type-filter');
+    const resetPasswordModalEl = document.getElementById('resetPasswordModal');
+    const resetPasswordModal = new bootstrap.Modal(resetPasswordModalEl);
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+    let usersData = [];
+    let selectedUserId = null;
+
+    // --- Hàm tiện ích & API ---
+    const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+    function getCookie(name) { let cV=null;if(document.cookie&&document.cookie!==''){const c=document.cookie.split(';');for(let i=0;i<c.length;i++){const cK=c[i].trim();if(cK.substring(0,name.length+1)===(name+'=')){cV=decodeURIComponent(cK.substring(name.length+1));break;}}}return cV; }
+    
+    // <<< HÀM QUAN TRỌNG NHẤT - ĐÃ SỬA LỖI >>>
+    const apiRequest = async (url, options = {}) => {
+        try {
+            // Đảm bảo credentials luôn được gửi kèm
+            options.credentials = 'include';
+            
+            // Đặt các headers mặc định
+            options.headers = { 
+                'Content-Type': 'application/json', 
+                'X-CSRFToken': getCookie('csrftoken'), 
+                ...options.headers 
+            };
+            
+            const response = await fetch(url, options);
+            
+            // Xử lý các phản hồi không có nội dung (ví dụ: DELETE)
+            if (response.status === 204) return null;
+
+            // Xử lý các phản hồi lỗi
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Ưu tiên lấy thông báo lỗi 'detail' của DRF
+                const errorMessage = errorData.detail || errorData.error || JSON.stringify(errorData);
+                throw new Error(errorMessage);
+            }
+            
+            // Trả về dữ liệu JSON nếu thành công
+            return await response.json();
+
+        } catch (e) {
+            console.error(`Lỗi khi gọi API ${url}:`, e);
+            // Ném lại lỗi để các hàm gọi nó có thể xử lý
+            throw e; 
+        }
+    };
+
+    // --- Logic & Render ---
+    function renderTable(data) {
+        usersTbody.innerHTML = '';
+        if (data.length === 0) {
+            usersTbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-muted">Không tìm thấy người dùng nào.</td></tr>';
+            return;
+        }
+        data.forEach(user => {
+            const isActive = user.is_active;
+            const badgeClass = {
+                'Admin': 'bg-danger',
+                'Nhân viên': 'bg-info',
+                'Khách hàng': 'bg-success'
+            }[user.loai_tai_khoan] || 'bg-secondary';
+
+            usersTbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${user.username}</td>
+                    <td><span class="badge ${badgeClass}">${user.loai_tai_khoan}</span></td>
+                    <td class="text-end">${user.so_du !== null ? formatCurrency(user.so_du) : 'N/A'}</td>
+                    <td class="text-center">
+                        <div class="form-check form-switch d-flex justify-content-center">
+                            <input class="form-check-input toggle-active-btn" type="checkbox" role="switch" data-id="${user.id}" ${isActive ? 'checked' : ''} ${user.loai_tai_khoan === 'Admin' ? 'disabled' : ''}>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-warning reset-pw-btn" data-id="${user.id}" data-username="${user.username}" ${user.loai_tai_khoan === 'Admin' ? 'disabled' : ''}>
+                            Đặt Lại Mật Khẩu
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    async function loadUsers() {
+        usersTbody.innerHTML = '<tr><td colspan="5" class="text-center p-5"><div class="spinner-border"></div></td></tr>';
+        try {
+            usersData = await apiRequest('/api/dashboard/users/');
+            applyFilters();
+        } catch(error) {
+            usersTbody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-danger">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+        }
+    }
+    
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const userType = typeFilter.value;
+        
+        let filtered = usersData.filter(user => user.username.toLowerCase().includes(searchTerm));
+        
+        if (userType !== 'all') {
+            filtered = filtered.filter(user => user.loai_tai_khoan === userType);
+        }
+        renderTable(filtered);
+    }
+
+    async function toggleUserActive(userId, isActive) {
+        try {
+            await apiRequest(`/api/dashboard/users/${userId}/action/`, {
+                method: 'PATCH',
+                body: JSON.stringify({ is_active: isActive })
+            });
+            // Cập nhật lại dữ liệu trong mảng local để không cần gọi lại API
+            const userIndex = usersData.findIndex(u => u.id == userId);
+            if (userIndex > -1) {
+                usersData[userIndex].is_active = isActive;
+            }
+        } catch(error) {
+            alert(`Lỗi khi thay đổi trạng thái: ${error.message}`);
+            // Đảo ngược lại checkbox nếu có lỗi
+            loadUsers();
+        }
+    }
+
+    // --- Sự kiện ---
+    searchInput.addEventListener('input', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+    
+    usersTbody.addEventListener('click', e => {
+        const target = e.target;
+        if (target.classList.contains('toggle-active-btn')) {
+            const userId = target.dataset.id;
+            const isActive = target.checked;
+            toggleUserActive(userId, isActive);
+        }
+        if (target.classList.contains('reset-pw-btn')) {
+            const userId = target.dataset.id;
+            const username = target.dataset.username;
+            document.getElementById('reset-pw-username').textContent = username;
+            document.getElementById('reset-pw-userid').value = userId;
+            resetPasswordForm.reset();
+            document.getElementById('reset-pw-error').classList.add('d-none');
+            resetPasswordModal.show();
+        }
+    });
+
+    resetPasswordForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const userId = document.getElementById('reset-pw-userid').value;
+        const newPassword = document.getElementById('new-password').value;
+        const errorDiv = document.getElementById('reset-pw-error');
+        const submitBtn = e.submitter;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+
+        try {
+            await apiRequest(`/api/dashboard/users/${userId}/action/`, {
+                method: 'PATCH',
+                body: JSON.stringify({ new_password: newPassword })
+            });
+            resetPasswordModal.hide();
+            alert('Đặt lại mật khẩu thành công!');
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.classList.remove('d-none');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Lưu Mật Khẩu Mới';
+        }
+    });
+
+    // --- Khởi chạy ---
+    loadUsers();
+});
+</script>
+{% endblock %}

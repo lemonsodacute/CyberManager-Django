@@ -18,5 +18,9 @@ urlpatterns = [
         auth_views.LogoutView.as_view(next_page='/accounts/login/'), 
         name='logout'
     ),
+      path('api/dashboard/', include('dashboard.api_urls')),
+        path('dashboard/', include('dashboard.urls')),
+        
+       
 ]
 LOGOUT_ON_GET = True

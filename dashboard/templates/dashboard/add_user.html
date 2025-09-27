@@ -1,0 +1,40 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Thêm Người Dùng Mới{% endblock %}
+
+{% block content %}
+<div class="col-lg-6 mx-auto">
+    <div class="card shadow-sm">
+        <div class="card-header"><h4 class="mb-0">Tạo Tài Khoản Mới</h4></div>
+        <div class="card-body">
+            <form id="add-user-form">
+                <div class="mb-3">
+                    <label class="form-label">Loại tài khoản</label>
+                    <select id="user-role" class="form-select" required>
+                        <option value="" selected disabled>-- Chọn loại --</option>
+                        <option value="khach_hang">Khách hàng</option>
+                        <option value="nhan_vien">Nhân viên</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input type="text" id="username" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <div id="form-error" class="alert alert-danger d-none"></div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Tạo Tài Khoản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // JavaScript để xử lý form submit, gọi API tạo nhân viên/khách hàng tương ứng
+</script>
+{% endblock %}

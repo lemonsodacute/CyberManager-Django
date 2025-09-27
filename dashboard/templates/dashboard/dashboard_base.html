@@ -1,0 +1,93 @@
+<!-- dashboard/templates/dashboard/dashboard_base.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} - Quản Net Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root { --sidebar-width: 280px; }
+        body { background-color: #f0f2f5; }
+        .sidebar { width: var(--sidebar-width); background-color: #212529; color: white; height: 100vh; position: fixed; top: 0; left: 0; }
+        .sidebar .nav-link { color: #adb5bd; border-radius: .3rem; transition: all 0.2s; padding: 0.75rem 1rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: #495057; }
+        .main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        .top-bar { background-color: white; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; }
+        .content-wrapper { padding: 1.5rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar d-flex flex-column p-3">
+        <a href="{% url 'dashboard_home' %}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
+            <i class="bi bi-shield-shaded fs-4 me-2"></i>
+            <span class="fs-4 fw-bold">Admin Control</span>
+        </a>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="{% url 'dashboard_home' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_home' %}active{% endif %}">
+                    <i class="bi bi-house-door-fill me-2"></i> Bảng Điều Khiển
+                </a>
+            </li>
+            <!-- Các link này sẽ được tạo sau -->
+            <li><a href="#" class="nav-link"><i class="bi bi-bar-chart-line-fill me-2"></i> Báo Cáo Chi Tiết</a></li>
+            <!-- <<< THÊM DÒNG NÀY >>> -->
+    <li><a href="{% url 'dashboard_menu' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_menu' %}active{% endif %}"><i class="bi bi-journal-text me-2"></i> Quản Lý Menu</a></li>
+           <li><a href="{% url 'dashboard_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_inventory' %}active{% endif %}"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho</a></li>
+          <li><a href="{% url 'dashboard_users' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_users' %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Quản Lý Người Dùng</a></li>
+        </ul>
+        <hr>
+        <div class="dropdown">
+             <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-person-circle fs-4 me-2"></i>
+                <strong>{{ user.username }}</strong>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                <li><a class="dropdown-item" href="{% url 'pos-view' %}">Về trang POS</a></li>
+                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{% url 'logout' %}">Đăng xuất</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/api_client.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    <!-- Modal Đặt Lại Mật Khẩu -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="resetPasswordForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đặt Lại Mật Khẩu cho <span id="reset-pw-username" class="text-primary"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reset-pw-userid">
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input type="password" id="new-password" class="form-control" required>
+                    </div>
+                    <div id="reset-pw-error" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Lưu Mật Khẩu Mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

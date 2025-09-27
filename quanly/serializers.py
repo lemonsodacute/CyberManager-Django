@@ -1,4 +1,3 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db.models import Sum
@@ -9,15 +8,34 @@ from accounts.models import TaiKhoan
 # Import tất cả các model cần thiết từ app 'quanly'
 from .models import (
     NhanVien, KhachHang, LoaiMay, May, PhienSuDung,
-    CaLamViec, LoaiCa, GiaoDichTaiChinh,
+    CaLamViec, LoaiCa, GiaoDichTaiChinh, HoaDon,
     MenuItem, DonHangDichVu, ChiTietDonHang,
-    NguyenLieu, ChiTietKiemKe
+    NguyenLieu, PhieuKiemKe, ChiTietKiemKe
 )
 
 # -----------------------------------------------------------------------------
 # SERIALIZERS DÙNG CHUNG / NỀN TẢNG
 # -----------------------------------------------------------------------------
+# quanly/serializers.py
+# ...
 
+class UserAdminSerializer(serializers.ModelSerializer):
+    """Serializer để Admin xem và quản lý tất cả người dùng."""
+    loai_tai_khoan = serializers.SerializerMethodField()
+    so_du = serializers.DecimalField(source='khachhang.so_du', max_digits=12, decimal_places=2, read_only=True, default=None)
+
+    class Meta:
+        model = TaiKhoan # Sử dụng custom user model của bạn
+        fields = ['id', 'username', 'email', 'is_active', 'loai_tai_khoan', 'so_du']
+    
+    def get_loai_tai_khoan(self, obj):
+        if hasattr(obj, 'nhanvien'):
+            return "Nhân viên"
+        if hasattr(obj, 'khachhang'):
+            return "Khách hàng"
+        if obj.is_superuser:
+            return "Admin"
+        return "Chưa phân loại"
 class NhanVienSerializer(serializers.ModelSerializer):
     """Serializer đơn giản cho Nhân Viên, hiển thị username."""
     tai_khoan = serializers.StringRelatedField()
@@ -110,7 +128,7 @@ class ChiTietPhienSerializer(serializers.ModelSerializer):
     cac_don_hang = DonHangDichVuSerializer(many=True, read_only=True)
     loai_may = LoaiMaySerializer(source='may.loai_may', read_only=True)
     ten_may = serializers.CharField(source='may.ten_may', read_only=True)
-    khach_hang = KhachHangSerializer(read_only=True) # <<< Bổ sung để hiển thị tên khách hàng
+    khach_hang = KhachHangSerializer(read_only=True)
     
     class Meta:
         model = PhienSuDung
@@ -127,7 +145,7 @@ class NguyenLieuSerializer(serializers.ModelSerializer):
         fields = ['id', 'ten_nguyen_lieu', 'don_vi_tinh', 'so_luong_ton']
 
 class ChiTietKiemKeSerializer(serializers.ModelSerializer):
-    """Serializer dùng trong API tạo phiếu kiểm kê."""
+    """Serializer dùng trong API tạo phiếu kiểm kê của nhân viên."""
     nguyen_lieu_id = serializers.IntegerField()
     ton_thuc_te = serializers.FloatField()
 
@@ -158,22 +176,17 @@ class CaLamViecSerializer(serializers.ModelSerializer):
         if obj.trang_thai == 'DA_KET_THUC':
             return obj.tong_doanh_thu_he_thong
 
-        # Chỉ tính tiền mặt và chuyển khoản, không tính tiền nạp vào tài khoản
         giao_dich_thu_tien = GiaoDichTaiChinh.objects.filter(
             ca_lam_viec=obj,
             loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE', 'NAP_TIEN']
         )
         total = giao_dich_thu_tien.aggregate(total=Sum('so_tien'))['total']
         return total or 0
+
 class ChiTietCaLamViecSerializer(serializers.ModelSerializer):
-    """
-    Serializer siêu chi tiết cho một ca làm việc, dùng cho báo cáo.
-    (Phiên bản đã sửa lỗi logic tính toán doanh thu)
-    """
+    """Serializer siêu chi tiết cho một ca làm việc, dùng cho trang báo cáo."""
     nhan_vien = serializers.CharField(source='nhan_vien.tai_khoan.username', read_only=True)
     loai_ca = serializers.CharField(source='loai_ca.ten_ca', read_only=True)
-    
-    # Các trường tính toán động
     tong_tien_gio = serializers.SerializerMethodField()
     tong_tien_dich_vu = serializers.SerializerMethodField()
     chi_tiet_dich_vu = serializers.SerializerMethodField()
@@ -188,18 +201,9 @@ class ChiTietCaLamViecSerializer(serializers.ModelSerializer):
         ]
 
     def get_tong_tien_gio(self, obj):
-        """Tính tổng tiền giờ từ tất cả các hóa đơn trong ca."""
-        # Tiền giờ chỉ có trong HoaDon, nên cách tính này vẫn đúng.
         return obj.cac_hoa_don.aggregate(total=Sum('tong_tien_gio'))['total'] or 0
 
     def get_tong_tien_dich_vu(self, obj):
-        """
-        Tính tổng tiền dịch vụ từ TẤT CẢ các nguồn trong ca:
-        1. Tiền dịch vụ trong các hóa đơn (khách chơi máy).
-        2. Tiền từ các đơn hàng bán lẻ.
-        """
-        # Lấy tổng tiền dịch vụ từ các giao dịch tài chính
-        # Đây là cách chính xác nhất vì nó bao gồm cả bán lẻ và bán cho khách chơi máy
         tong_dv = GiaoDichTaiChinh.objects.filter(
             ca_lam_viec=obj, 
             loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE']
@@ -207,17 +211,40 @@ class ChiTietCaLamViecSerializer(serializers.ModelSerializer):
             total_dv_in_hoa_don=Sum('hoa_don__tong_tien_dich_vu'),
             total_dv_le=Sum('don_hang_le__tong_tien')
         )
-        
         total_dv1 = tong_dv.get('total_dv_in_hoa_don') or 0
         total_dv2 = tong_dv.get('total_dv_le') or 0
-        
         return total_dv1 + total_dv2
 
     def get_chi_tiet_dich_vu(self, obj):
-        """Lấy tất cả chi tiết đơn hàng (cả bán lẻ và ghi nợ) trong ca."""
         chi_tiet_items = ChiTietDonHang.objects.filter(don_hang__ca_lam_viec=obj)
         report = chi_tiet_items.values('mon__ten_mon').annotate(
             so_luong_ban=Sum('so_luong'),
             doanh_thu=Sum('thanh_tien')
         ).order_by('-doanh_thu')
         return report
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS CHO ADMIN DASHBOARD
+# -----------------------------------------------------------------------------
+class ChiTietKiemKeAdminSerializer(serializers.ModelSerializer):
+    """Serializer để hiển thị chi tiết kiểm kê trong trang Admin."""
+    nguyen_lieu = serializers.CharField(source='nguyen_lieu.ten_nguyen_lieu', read_only=True)
+    don_vi_tinh = serializers.CharField(source='nguyen_lieu.don_vi_tinh', read_only=True)
+    
+    # <<< THÊM CÁC DÒNG NÀY ĐỂ ĐẢM BẢO KIỂU DỮ LIỆU ĐÚNG >>>
+    ton_he_thong = serializers.FloatField()
+    ton_thuc_te = serializers.FloatField()
+    chenh_lech = serializers.FloatField()
+
+    class Meta:
+        model = ChiTietKiemKe
+        fields = ['nguyen_lieu', 'don_vi_tinh', 'ton_he_thong', 'ton_thuc_te', 'chenh_lech']
+class PhieuKiemKeAdminSerializer(serializers.ModelSerializer):
+    """Serializer để hiển thị danh sách phiếu kiểm kê cho Admin."""
+    nhan_vien = serializers.CharField(source='nhan_vien.tai_khoan.username', read_only=True)
+    ca_lam_viec_info = serializers.CharField(source='ca_lam_viec.__str__', read_only=True)
+    chi_tiet = ChiTietKiemKeAdminSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PhieuKiemKe
+        fields = ['id', 'ca_lam_viec_info', 'nhan_vien', 'thoi_gian_tao', 'da_xac_nhan', 'chi_tiet']
