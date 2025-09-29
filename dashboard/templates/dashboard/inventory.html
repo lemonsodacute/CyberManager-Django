@@ -14,6 +14,10 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="kiem-ke-tab" data-bs-toggle="tab" data-bs-target="#kiem-ke-pane" type="button" role="tab">Xử Lý Kiểm Kê</button>
     </li>
+    <!-- <<< DÒNG MỚI: TAB LỊCH SỬ KHO >>> -->
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="lich-su-tab" data-bs-toggle="tab" data-bs-target="#lich-su-pane" type="button" role="tab">Lịch Sử Thay Đổi Kho</button>
+    </li>
 </ul>
 
 <!-- Tabs Content -->
@@ -50,6 +54,64 @@
         <div class="card shadow-sm">
             <div class="card-body" id="stocktake-list">
                  <div class="text-center p-5"><div class="spinner-border text-primary"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <<< TAB 3: LỊCH SỬ THAY ĐỔI KHO >>> -->
+    <div class="tab-pane fade" id="lich-su-pane" role="tabpanel">
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0">Bộ Lọc</h5></div>
+            <div class="card-body">
+                <form id="history-filter-form" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small">Từ ngày</label>
+                        <input type="date" class="form-control" id="history-start-date">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Đến ngày</label>
+                        <input type="date" class="form-control" id="history-end-date">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Loại thay đổi</label>
+                        <select class="form-select" id="history-loai-thay-doi">
+                            <option value="all">Tất cả</option>
+                            <option value="NHAP_KHO">Nhập kho</option>
+                            <option value="HUY_HANG">Hủy hàng</option>
+                            <option value="DIEU_CHINH">Điều chỉnh</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Nhân viên</label>
+                        <select class="form-select" id="history-nhan-vien">
+                             <!-- Options sẽ được load bằng JS -->
+                            <option value="all">Tất cả</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-3">
+            <div class="card-header"><h5 class="mb-0">Lịch Sử Chi Tiết</h5></div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                    <table class="table table-striped table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Thời Gian</th>
+                                <th>Nhân Viên</th>
+                                <th>Nguyên Liệu</th>
+                                <th class="text-end">Số Lượng</th>
+                                <th>Loại Thay Đổi</th>
+                                <th>Lý Do</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <tr><td colspan="6" class="text-center p-4"><div class="spinner-border spinner-border-sm"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -164,9 +226,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmBtn = document.getElementById('confirm-stocktake-btn');
     let stocktakeData = [];
     let selectedPhieuId = null;
+    
+    // <<< DÒNG MỚI: TAB 3 LỊCH SỬ KHO >>>
+    const historyTbody = document.getElementById('history-tbody');
+    const historyFilterForm = document.getElementById('history-filter-form');
+    const historyNhanVienSelect = document.getElementById('history-nhan-vien');
+    
+    let allStaffs = [];
 
+    // --- HÀM TIỆN ÍCH ---
+    const formatDate = (isoString) => {
+        if (!isoString) return 'N/A';
+        const date = new Date(isoString);
+        return date.toLocaleTimeString('vi-VN') + ' ' + date.toLocaleDateString('vi-VN');
+    };
+    
     // --- LOGIC CHO TAB 1: TỒN KHO ---
     
+    // ... (Giữ nguyên các hàm: renderInventory, loadIngredients, xử lý sự kiện cho Tab 1) ...
     function renderInventory() {
         inventoryTbody.innerHTML = '';
         if (allIngredients.length === 0) {
@@ -261,6 +338,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- LOGIC CHO TAB 2: KIỂM KÊ ---
+    
+    // ... (Giữ nguyên các hàm: loadStocktakes, xử lý sự kiện cho Tab 2) ...
     async function loadStocktakes() {
         stocktakeListDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
         try {
@@ -356,9 +435,90 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- LOGIC CHO TAB 3: LỊCH SỬ KHO ---
+    
+    // Hàm tải danh sách nhân viên để lọc
+    async function loadStaffsForFilter() {
+         try {
+            // Sử dụng API list users (chỉ lấy NhanVien/Admin)
+            const users = await apiClient('/api/dashboard/users/');
+            allStaffs = users.filter(u => u.loai_tai_khoan === 'Nhân viên' || u.loai_tai_khoan === 'Admin');
+            
+            // Xóa nội dung cũ và thêm option 'Tất cả'
+            historyNhanVienSelect.innerHTML = '<option value="all">Tất cả</option>';
+            
+            allStaffs.forEach(user => {
+                historyNhanVienSelect.innerHTML += `<option value="${user.id}">${user.username}</option>`;
+            });
+        } catch (error) {
+            console.error("Lỗi tải danh sách nhân viên:", error);
+        }
+    }
+    
+    // Hàm render lịch sử kho
+    function renderInventoryHistory(data) {
+        historyTbody.innerHTML = '';
+        if (data.length === 0) {
+            historyTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">Không tìm thấy lịch sử thay đổi nào.</td></tr>';
+            return;
+        }
+
+        data.forEach(item => {
+            const rowClass = parseFloat(item.so_luong_thay_doi) > 0 ? 'table-success' : (parseFloat(item.so_luong_thay_doi) < 0 ? 'table-danger' : '');
+            
+            historyTbody.innerHTML += `
+                <tr class="${rowClass}">
+                    <td>${formatDate(item.thoi_gian)}</td>
+                    <td>${item.nhan_vien}</td>
+                    <td>${item.nguyen_lieu} (${item.don_vi_tinh})</td>
+                    <td class="text-end fw-bold">${parseFloat(item.so_luong_thay_doi).toFixed(2)}</td>
+                    <td>${item.loai_thay_doi_display}</td>
+                    <td>${item.ly_do}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Hàm tải và áp dụng bộ lọc cho lịch sử kho
+    async function loadInventoryHistory() {
+        historyTbody.innerHTML = '<tr><td colspan="6" class="text-center p-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        
+        const params = {
+            start_date: document.getElementById('history-start-date').value,
+            end_date: document.getElementById('history-end-date').value,
+            loai_thay_doi: document.getElementById('history-loai-thay-doi').value,
+            nhan_vien_id: document.getElementById('history-nhan-vien').value,
+        };
+        
+        // Loại bỏ các tham số rỗng để API query sạch hơn
+        const queryString = Object.keys(params)
+            .filter(key => params[key] && params[key] !== 'all')
+            .map(key => `${key}=${params[key]}`)
+            .join('&');
+            
+        try {
+            const data = await apiClient(`/api/dashboard/inventory/history/?${queryString}`);
+            renderInventoryHistory(data);
+        } catch (error) {
+            historyTbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger p-4">Lỗi: ${error.message}</td></tr>`;
+        }
+    }
+    
+    // Gắn sự kiện thay đổi cho form lọc lịch sử kho
+    historyFilterForm.addEventListener('change', loadInventoryHistory);
+    
+    // Gắn sự kiện để tải lịch sử kho khi tab được click/hiển thị lần đầu
+    document.getElementById('lich-su-tab').addEventListener('shown.bs.tab', async () => {
+         // Chỉ tải dữ liệu nếu chưa có (hoặc nếu bạn muốn luôn tải lại)
+         await loadInventoryHistory(); 
+    });
+
+
     // --- KHỞI CHẠY BAN ĐẦU ---
     loadIngredients(); 
     loadStocktakes();
+    loadStaffsForFilter(); // Tải danh sách nhân viên
+    // loadInventoryHistory() sẽ được gọi khi người dùng chuyển sang tab
 });
 </script>
 {% endblock %}

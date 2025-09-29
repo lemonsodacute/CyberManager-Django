@@ -85,6 +85,27 @@ class KhuyenMai(models.Model):
     ngay_ket_thuc = models.DateTimeField()
     is_active = models.BooleanField(default=True)
     def __str__(self): return self.ma_khuyen_mai
+# Chu kỳ lặp lại
+    LOAI_CHU_KY_CHOICES = [
+        ('MOT_LAN', 'Áp dụng một lần (theo ngày bắt đầu/kết thúc)'),
+        ('HANG_NGAY', 'Lặp lại Hằng ngày'),
+        ('HANG_TUAN', 'Lặp lại Hàng tuần'),
+        ('HANG_THANG', 'Lặp lại Hàng tháng'),
+    ]
+    chu_ky_lap_lai = models.CharField(
+        max_length=20, 
+        choices=LOAI_CHU_KY_CHOICES, 
+        default='MOT_LAN',
+        verbose_name="Chu kỳ lặp lại"
+    )
+    
+    # Áp dụng cho các ngày trong tuần (Thứ 2 = 1, Chủ nhật = 7). Lưu dưới dạng chuỗi '3,5,7' (Thứ 3, Thứ 5, CN)
+    ngay_trong_tuan = models.CharField(
+        max_length=15, 
+        blank=True, 
+        null=True, 
+        verbose_name="Các ngày trong tuần"
+    )
 
 # -----------------------------------------------------------------------------
 # KHU VỰC 3: CA LÀM VIỆC

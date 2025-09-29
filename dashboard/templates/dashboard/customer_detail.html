@@ -1,0 +1,184 @@
+<!-- dashboard/templates/dashboard/customer_detail.html -->
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Chi Tiết Khách Hàng{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">Chi Tiết Khách Hàng: <span id="customer-username" class="text-primary">Đang tải...</span></h3>
+
+<div id="loading-view" class="text-center p-5">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+    <p class="mt-3">Đang tải dữ liệu chi tiết khách hàng...</p>
+</div>
+
+<div id="main-view" class="d-none">
+    <!-- Thẻ Tổng Quan -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-wallet-fill me-2"></i>SỐ DƯ HIỆN TẠI</h6>
+                    <h3 class="card-text fw-bold" id="detail-so-du">0 VNĐ</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-arrow-down-circle-fill me-2"></i>TỔNG TIỀN ĐÃ NẠP</h6>
+                    <h3 class="card-text fw-bold" id="detail-tong-nap">0 VNĐ</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="bi bi-arrow-up-circle-fill me-2"></i>TỔNG CHI TIÊU</h6>
+                    <h3 class="card-text fw-bold" id="detail-tong-chi-tieu">0 VNĐ</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Cột Top Sản Phẩm Yêu Thích -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header"><h5 class="mb-0">Top Sản Phẩm Yêu Thích</h5></div>
+                <ul class="list-group list-group-flush" id="top-products-list">
+                    <!-- Dữ liệu JS -->
+                </ul>
+            </div>
+        </div>
+        <!-- Cột Lịch Sử Phiên Gần Đây -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header"><h5 class="mb-0">10 Phiên Sử Dụng Gần Nhất</h5></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Máy</th>
+                                    <th>Bắt Đầu</th>
+                                    <th>Kết Thúc</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="session-history-tbody">
+                                <!-- Dữ liệu JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lấy ID khách hàng từ Django Context
+    const customerId = {{ customer_id }};
+    const API_URL = `/api/dashboard/reports/customers/${customerId}/`;
+
+    // --- SELECTORS ---
+    const loadingView = document.getElementById('loading-view');
+    const mainView = document.getElementById('main-view');
+    const usernameEl = document.getElementById('customer-username');
+    const soDuEl = document.getElementById('detail-so-du');
+    const tongNapEl = document.getElementById('detail-tong-nap');
+    const tongChiTieuEl = document.getElementById('detail-tong-chi-tieu');
+    const topProductsList = document.getElementById('top-products-list');
+    const sessionHistoryTbody = document.getElementById('session-history-tbody');
+    
+    // --- HÀM TIỆN ÍCH ---
+    const formatCurrency = (val) => {
+        const number = parseFloat(val);
+        if (isNaN(number) || val === null) {
+            return (0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+        }
+        return number.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    };
+    
+    const formatDateTime = (isoString) => {
+        if (!isoString) return 'Đang chạy';
+        const date = new Date(isoString);
+        return date.toLocaleTimeString('vi-VN') + ' ' + date.toLocaleDateString('vi-VN');
+    };
+
+    const getStatusBadge = (status) => {
+        const map = {
+            'DANG_DIEN_RA': '<span class="badge bg-success">Đang chạy</span>',
+            'DA_KET_THUC': '<span class="badge bg-primary">Đã kết thúc</span>',
+            'DA_HUY': '<span class="badge bg-warning text-dark">Đã hủy</span>',
+        };
+        return map[status] || `<span class="badge bg-secondary">${status}</span>`;
+    };
+
+    // --- LOGIC CHÍNH ---
+    async function loadCustomerDetail() {
+        if (!customerId) {
+            loadingView.innerHTML = '<div class="alert alert-danger">Lỗi: Không tìm thấy ID khách hàng.</div>';
+            return;
+        }
+
+        try {
+            const data = await apiClient(API_URL);
+
+            // 1. Cập nhật Thông tin cơ bản và Thẻ Tổng quan
+            usernameEl.textContent = data.username;
+            soDuEl.textContent = formatCurrency(data.so_du);
+            tongNapEl.textContent = formatCurrency(data.tong_nap_tien);
+            tongChiTieuEl.textContent = formatCurrency(data.tong_chi_tieu);
+
+            // 2. Render Top Sản Phẩm Yêu Thích
+            topProductsList.innerHTML = '';
+            if (data.top_mon_an && data.top_mon_an.length > 0) {
+                data.top_mon_an.forEach(item => {
+                    topProductsList.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${item.mon__ten_mon}
+                            <span class="badge bg-primary rounded-pill">${item.so_luong_da_mua}</span>
+                        </li>
+                    `;
+                });
+            } else {
+                topProductsList.innerHTML = '<li class="list-group-item text-muted text-center">Chưa có dữ liệu sản phẩm.</li>';
+            }
+
+            // 3. Render Lịch Sử Phiên Gần Đây
+            sessionHistoryTbody.innerHTML = '';
+            if (data.lich_su_phien && data.lich_su_phien.length > 0) {
+                data.lich_su_phien.forEach(phien => {
+                    sessionHistoryTbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">${phien.may_ten}</td>
+                            <td>${formatDateTime(phien.thoi_gian_bat_dau)}</td>
+                            <td>${phien.thoi_gian_ket_thuc ? formatDateTime(phien.thoi_gian_ket_thuc) : '—'}</td>
+                            <td>${getStatusBadge(phien.trang_thai)}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                sessionHistoryTbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Chưa có phiên sử dụng nào.</td></tr>';
+            }
+
+
+            // Hiển thị nội dung chính
+            loadingView.classList.add('d-none');
+            mainView.classList.remove('d-none');
+
+        } catch (error) {
+            console.error("Lỗi khi tải chi tiết khách hàng:", error);
+            usernameEl.textContent = 'Lỗi tải dữ liệu';
+            loadingView.innerHTML = `<div class="alert alert-danger">Lỗi: ${error.message}. Vui lòng kiểm tra lại ID khách hàng.</div>`;
+        }
+    }
+
+    // --- KHỞI CHẠY ---
+    loadCustomerDetail();
+});
+</script>
+{% endblock %}

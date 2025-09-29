@@ -40,7 +40,9 @@
     <!-- <<< THÊM DÒNG NÀY >>> -->
     <li><a href="{% url 'dashboard_machines' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_machines' %}active{% endif %}"><i class="bi bi-display me-2"></i> Quản Lý Máy</a></li>
            <li><a href="{% url 'dashboard_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_inventory' %}active{% endif %}"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho</a></li>
+           <li><a href="{% url 'dashboard_promotions' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_promotions' %}active{% endif %}"><i class="bi bi-gift-fill me-2"></i> Quản Lý Khuyến Mãi</a></li>
           <li><a href="{% url 'dashboard_users' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_users' %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Quản Lý Người Dùng</a></li>
+          <li><a href="{% url 'dashboard_customers' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_customers' %}active{% endif %}"><i class="bi bi-person-lines-fill me-2"></i> Phân Tích Khách Hàng</a></li>
         </ul>
         <hr>
         <div class="dropdown">

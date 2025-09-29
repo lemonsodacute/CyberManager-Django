@@ -1,5 +1,6 @@
 # dashboard/api_views.py
 
+from django.forms import DecimalField
 from rest_framework import generics, status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,9 +10,19 @@ from django.db.models import Sum, F # <<< ĐÃ THÊM 'F'
 from django.utils import timezone
 from datetime import datetime, timedelta
 from quanly.models import CaLamViec, ChiTietDonHang, HoaDon, LoaiMay, May # Thêm import này
-from quanly.serializers import CaLamViecSerializer, ChiTietCaLamViecSerializer # Import các serializer đã có
+# <<< THÊM COALESCE VÀO ĐÂY >>>
+from django.db.models.functions import Coalesce 
+from decimal import Decimal
+
+# Import các serializer đã có (ĐÃ CẬP NHẬT)
+from quanly.serializers import (
+    CaLamViecSerializer, ChiTietCaLamViecSerializer,
+    PhienSuDungSimpleSerializer, CustomerDetailSerializer, KhuyenMaiSerializer # <<< SERIALIZER MỚI ĐÃ ĐƯỢC THÊM >>>
+)
 from django.db.models.functions import TruncMonth
 from django.db.models.functions import ExtractHour
+from django.db.models.expressions import OuterRef, Subquery
+from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Prefetch # Cần thêm Prefetch
 
 
 # Import models từ các app khác
@@ -19,13 +30,14 @@ from accounts.models import TaiKhoan
 from quanly.models import (
     GiaoDichTaiChinh, PhienSuDung, NguyenLieu, PhieuKiemKe,
     LichSuThayDoiKho, May, NhanVien, KhachHang,
-    MenuItem, DanhMucMenu, DinhLuong
+    MenuItem, DanhMucMenu, DinhLuong,
+    LichSuThayDoiKho, KhuyenMai
 )
 
 # Import các serializer cần thiết
 from quanly.serializers import (
     UserAdminSerializer, PhieuKiemKeAdminSerializer, DoiMatKhauSerializer,
-    NguyenLieuSerializer # <<< ĐÃ THÊM 'NguyenLieuSerializer'
+    NguyenLieuSerializer,LichSuThayDoiKhoSerializer # <<< ĐÃ THÊM 'NguyenLieuSerializer'
 )
 
 # -----------------------------------------------------------------------------
@@ -598,3 +610,160 @@ class PeakHoursAPIView(APIView):
         report_data = [float(val) for val in report_data]
 
         return Response(report_data)
+    
+    # <<< THÊM SERIALIZER MỚI NÀY VÀO KHU VỰC SERIALIZER >>>
+class CustomerAnalyticsSerializer(serializers.ModelSerializer):
+    """Serializer để hiển thị dữ liệu phân tích khách hàng."""
+    username = serializers.CharField(source='tai_khoan.username', read_only=True)
+    
+    # Khai báo các trường được tính toán từ annotate
+    tong_nap_tien = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
+    tong_chi_tieu = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = KhachHang
+        fields = ['tai_khoan_id', 'username', 'so_du', 'tong_nap_tien', 'tong_chi_tieu']
+class CustomerAnalyticsAPIView(generics.ListAPIView):
+    """
+    API cung cấp dữ liệu phân tích khách hàng, bao gồm tổng nạp và tổng chi tiêu.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = CustomerAnalyticsSerializer
+
+    def get_queryset(self):
+        # Tạo subquery để tính tổng tiền nạp cho mỗi khách hàng
+        tong_nap_subquery = GiaoDichTaiChinh.objects.filter(
+            khach_hang=OuterRef('pk'),
+            loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.NAP_TIEN
+        ).values('khach_hang').annotate(total=Sum('so_tien')).values('total')
+
+        # Tạo subquery để tính tổng tiền chi tiêu (thanh toán qua tài khoản)
+        tong_chi_tieu_subquery = GiaoDichTaiChinh.objects.filter(
+            khach_hang=OuterRef('pk'),
+            loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_TK
+        ).values('khach_hang').annotate(total=Sum('so_tien')).values('total')
+        
+        # Annotate queryset chính với các giá trị từ subquery
+        queryset = KhachHang.objects.select_related('tai_khoan').annotate(
+            tong_nap_tien=Subquery(tong_nap_subquery, output_field=DecimalField()),
+            tong_chi_tieu=Subquery(tong_chi_tieu_subquery, output_field=DecimalField())
+        ).order_by('-tong_chi_tieu') # Sắp xếp theo khách hàng chi tiêu nhiều nhất
+
+        return queryset
+
+# -----------------------------------------------------------------------------
+# API VIEWS MỚI CHO PHÂN TÍCH KHÁCH HÀNG (CRM)
+# -----------------------------------------------------------------------------
+# <<< CLASS NÀY ĐÃ ĐƯỢC CHÈN VÀO VỊ TRÍ ĐÚNG >>>
+class CustomerDetailAPIView(generics.RetrieveAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = CustomerDetailSerializer
+    lookup_field = 'pk' # pk là TaiKhoan.id
+
+    def get_queryset(self):
+        # 1. Tính toán Tổng Nạp và Tổng Chi Tiêu (giống Analytics View)
+        tong_nap_subquery = GiaoDichTaiChinh.objects.filter(
+            khach_hang=OuterRef('pk'),
+            loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.NAP_TIEN
+        ).values('khach_hang').annotate(total=Sum('so_tien')).values('total')
+
+        tong_chi_tieu_subquery = GiaoDichTaiChinh.objects.filter(
+            khach_hang=OuterRef('pk'),
+            loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.THANH_TOAN_TK
+        ).values('khach_hang').annotate(total=Sum('so_tien')).values('total')
+        
+        # 2. Prefetch các phiên gần đây (Top 10)
+        # Prefetch sẽ được gọi tự động khi truy vấn đối tượng chính
+        
+        # 3. Kết hợp Annotate và Prefetch
+        queryset = KhachHang.objects.select_related('tai_khoan').annotate(
+            tong_nap_tien=Coalesce(Subquery(tong_nap_subquery, output_field=DecimalField()), Decimal(0)),
+            tong_chi_tieu=Coalesce(Subquery(tong_chi_tieu_subquery, output_field=DecimalField()), Decimal(0)),
+        ).prefetch_related(
+            # <<< DÒNG ĐÃ SỬA: Thay 'cac_phien_su_dung' bằng 'phiensudung_set' >>>
+            Prefetch(
+                'phiensudung_set', # Tên quan hệ ngược mặc định nếu không đặt related_name
+                queryset=PhienSuDung.objects.select_related('may').order_by('-thoi_gian_bat_dau')[:10],
+                to_attr='lich_su_phien'
+            )
+        )
+        
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # 4. Tính toán Top Sản Phẩm yêu thích (Top 5)
+        top_mon_an = ChiTietDonHang.objects.filter(
+            don_hang__phien_su_dung__khach_hang=instance # Chỉ lấy đơn hàng từ phiên của KH
+        ).values('mon__ten_mon').annotate(
+            so_luong_da_mua=Sum('so_luong')
+        ).order_by('-so_luong_da_mua')[:5]
+        
+        # Gán kết quả vào instance để Serializer có thể sử dụng
+        instance.top_mon_an = list(top_mon_an)
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    
+class LichSuKhoAPIView(generics.ListAPIView):
+    """
+    API cung cấp lịch sử thay đổi kho, hỗ trợ lọc theo ngày, loại thay đổi, và nhân viên.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = LichSuThayDoiKhoSerializer
+
+    def get_queryset(self):
+        queryset = LichSuThayDoiKho.objects.select_related(
+            'nhan_vien__tai_khoan', 'nguyen_lieu'
+        ).order_by('-thoi_gian')
+
+        # --- Lọc theo Ngày tháng ---
+        start_date_str = self.request.query_params.get('start_date')
+        end_date_str = self.request.query_params.get('end_date')
+        
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                start_datetime = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+                queryset = queryset.filter(thoi_gian__gte=start_datetime)
+            except ValueError:
+                pass # Bỏ qua nếu định dạng ngày sai
+
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                end_datetime = timezone.make_aware(datetime.combine(end_date, datetime.max.time()))
+                queryset = queryset.filter(thoi_gian__lte=end_datetime)
+            except ValueError:
+                pass # Bỏ qua nếu định dạng ngày sai
+
+        # --- Lọc theo Loại thay đổi ---
+        loai_thay_doi = self.request.query_params.get('loai_thay_doi')
+        if loai_thay_doi and loai_thay_doi != 'all':
+            queryset = queryset.filter(loai_thay_doi=loai_thay_doi)
+
+        # --- Lọc theo Nhân viên ---
+        nhan_vien_id = self.request.query_params.get('nhan_vien_id')
+        if nhan_vien_id and nhan_vien_id != 'all':
+            # nhan_vien_id là TaiKhoan.id, NhanVien.tai_khoan là TaiKhoan
+            queryset = queryset.filter(nhan_vien__tai_khoan_id=nhan_vien_id)
+
+        return queryset
+    
+# -----------------------------------------------------------------------------
+# API VIEWS MỚI CHO QUẢN LÝ KHUYẾN MÃI (Ưu tiên 1 - Chức năng 3)
+# -----------------------------------------------------------------------------
+
+class KhuyenMaiListCreateAPIView(generics.ListCreateAPIView):
+    """API để lấy danh sách và tạo mới mã khuyến mãi."""
+    permission_classes = [IsAdminUser]
+    serializer_class = KhuyenMaiSerializer
+    queryset = KhuyenMai.objects.all().order_by('-ngay_bat_dau')
+
+class KhuyenMaiDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """API để xem, sửa, xóa mã khuyến mãi."""
+    permission_classes = [IsAdminUser]
+    serializer_class = KhuyenMaiSerializer
+    queryset = KhuyenMai.objects.all()

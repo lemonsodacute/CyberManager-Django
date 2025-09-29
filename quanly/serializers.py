@@ -10,14 +10,13 @@ from .models import (
     NhanVien, KhachHang, LoaiMay, May, PhienSuDung,
     CaLamViec, LoaiCa, GiaoDichTaiChinh, HoaDon,
     MenuItem, DonHangDichVu, ChiTietDonHang,
-    NguyenLieu, PhieuKiemKe, ChiTietKiemKe
+    NguyenLieu, PhieuKiemKe, ChiTietKiemKe,
+    LichSuThayDoiKho,  KhuyenMai
 )
 
 # -----------------------------------------------------------------------------
 # SERIALIZERS DÙNG CHUNG / NỀN TẢNG
 # -----------------------------------------------------------------------------
-# quanly/serializers.py
-# ...
 
 class UserAdminSerializer(serializers.ModelSerializer):
     """Serializer để Admin xem và quản lý tất cả người dùng."""
@@ -36,6 +35,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         if obj.is_superuser:
             return "Admin"
         return "Chưa phân loại"
+        
 class NhanVienSerializer(serializers.ModelSerializer):
     """Serializer đơn giản cho Nhân Viên, hiển thị username."""
     tai_khoan = serializers.StringRelatedField()
@@ -239,6 +239,7 @@ class ChiTietKiemKeAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChiTietKiemKe
         fields = ['nguyen_lieu', 'don_vi_tinh', 'ton_he_thong', 'ton_thuc_te', 'chenh_lech']
+        
 class PhieuKiemKeAdminSerializer(serializers.ModelSerializer):
     """Serializer để hiển thị danh sách phiếu kiểm kê cho Admin."""
     nhan_vien = serializers.CharField(source='nhan_vien.tai_khoan.username', read_only=True)
@@ -248,3 +249,89 @@ class PhieuKiemKeAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhieuKiemKe
         fields = ['id', 'ca_lam_viec_info', 'nhan_vien', 'thoi_gian_tao', 'da_xac_nhan', 'chi_tiet']
+        
+        
+        
+# -----------------------------------------------------------------------------
+# SERIALIZERS MỚI CHO LỊCH SỬ KHO (DASHBOARD)
+# -----------------------------------------------------------------------------
+class LichSuThayDoiKhoSerializer(serializers.ModelSerializer):
+    """Serializer để hiển thị chi tiết lịch sử thay đổi kho."""
+    
+    # Sử dụng StringRelatedField để hiển thị tên thay vì ID
+    nhan_vien = serializers.CharField(source='nhan_vien.tai_khoan.username', read_only=True)
+    nguyen_lieu = serializers.CharField(source='nguyen_lieu.ten_nguyen_lieu', read_only=True)
+    don_vi_tinh = serializers.CharField(source='nguyen_lieu.don_vi_tinh', read_only=True)
+    
+    # Hiển thị tên đầy đủ của loại thay đổi (VD: Nhập kho từ nhà cung cấp)
+    loai_thay_doi_display = serializers.CharField(source='get_loai_thay_doi_display', read_only=True)
+    
+    class Meta:
+        model = LichSuThayDoiKho
+        fields = [
+            'thoi_gian', 'nhan_vien', 'nguyen_lieu', 'don_vi_tinh',
+            'so_luong_thay_doi', 'loai_thay_doi_display', 'ly_do'
+        ]
+
+# ... (Các Serializer khác) ...
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS MỚI CHO DASHBOARD CRM
+# -----------------------------------------------------------------------------
+# <<< VỊ TRÍ CHÍNH XÁC CỦA CÁC SERIALIZER CRM MỚI >>>
+class PhienSuDungSimpleSerializer(serializers.ModelSerializer):
+    """Serializer rút gọn cho Lịch sử phiên trên trang chi tiết khách hàng."""
+    may_ten = serializers.CharField(source='may.ten_may', read_only=True)
+    
+    class Meta:
+        model = PhienSuDung
+        fields = ['id', 'may_ten', 'thoi_gian_bat_dau', 'thoi_gian_ket_thuc', 'trang_thai']
+
+# quanly/serializers.py (Đảm bảo có class Meta này)
+
+class CustomerDetailSerializer(serializers.ModelSerializer):
+    """Serializer Chi tiết cho Khách Hàng (Dùng cho Dashboard)."""
+    username = serializers.CharField(source='tai_khoan.username', read_only=True)
+    
+    # Các trường được Annotate (tính toán ở API View)
+    tong_nap_tien = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
+    tong_chi_tieu = serializers.DecimalField(max_digits=15, decimal_places=2, read_only=True)
+    
+    # Các trường mới được tính toán (Top món và Lịch sử phiên)
+    top_mon_an = serializers.SerializerMethodField()
+    # Dùng tên trường đã được Prefetch trong API View
+    lich_su_phien = PhienSuDungSimpleSerializer(many=True, read_only=True) 
+
+    class Meta: # <<< DÒNG BỊ THIẾU/MẤT LÀ ĐÂY >>>
+        model = KhachHang
+        fields = ['tai_khoan_id', 'username', 'so_du', 'tong_nap_tien', 'tong_chi_tieu', 'top_mon_an', 'lich_su_phien']
+        
+    def get_top_mon_an(self, obj):
+        # Top món ăn đã được tính và gán vào obj.top_mon_an trong API View
+        return obj.top_mon_an if hasattr(obj, 'top_mon_an') else []
+    
+    
+class KhuyenMaiSerializer(serializers.ModelSerializer):
+    """Serializer cho việc quản lý Khuyến mãi."""
+    
+    # Custom field để hiển thị loại giảm giá một cách thân thiện
+    loai_giam_gia_display = serializers.CharField(source='get_loai_giam_gia_display', read_only=True)
+    
+    class Meta:
+        model = KhuyenMai
+        fields = [
+            'id', 'ma_khuyen_mai', 'mo_ta', 'loai_giam_gia', 'loai_giam_gia_display', 
+            'gia_tri', 'ngay_bat_dau', 'ngay_ket_thuc', 'is_active'
+        ]
+        read_only_fields = ['loai_giam_gia_display']
+    chu_ky_lap_lai_display = serializers.CharField(source='get_chu_ky_lap_lai_display', read_only=True)
+    
+    class Meta:
+        model = KhuyenMai
+        fields = [
+            'id', 'ma_khuyen_mai', 'mo_ta', 'loai_giam_gia', 'loai_giam_gia_display', 
+            'gia_tri', 'ngay_bat_dau', 'ngay_ket_thuc', 'is_active',
+            # <<< CÁC TRƯỜNG MỚI >>>
+            'chu_ky_lap_lai', 'chu_ky_lap_lai_display', 'ngay_trong_tuan' 
+        ]
+        read_only_fields = ['loai_giam_gia_display', 'chu_ky_lap_lai_display']

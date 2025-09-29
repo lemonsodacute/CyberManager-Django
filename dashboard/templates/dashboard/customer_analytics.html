@@ -1,0 +1,92 @@
+<!-- dashboard/templates/dashboard/customer_analytics.html -->
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Phân Tích Khách Hàng{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">Phân Tích & Xếp Hạng Khách Hàng</h3>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Bảng xếp hạng khách hàng (Sắp xếp theo tổng chi tiêu)</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Tên Khách Hàng</th>
+                        <th scope="col" class="text-end">Số Dư Hiện Tại</th>
+                        <th scope="col" class="text-end">Tổng Tiền Nạp</th>
+                        <th scope="col" class="text-end">Tổng Chi Tiêu</th>
+                    </tr>
+                </thead>
+                <tbody id="customers-tbody">
+                    <tr>
+                        <td colspan="5" class="text-center p-5">
+                            <div class="spinner-border text-primary"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const customersTbody = document.getElementById('customers-tbody');
+
+    // --- HÀM TIỆN ÍCH ---
+    const formatCurrency = (val) => {
+        const number = parseFloat(val);
+        if (isNaN(number) || val === null) {
+            return (0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+        }
+        return number.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    };
+
+    // --- HÀM TẢI VÀ RENDER DỮ LIỆU ---
+    async function loadCustomers() {
+        customersTbody.innerHTML = '<tr><td colspan="5" class="text-center p-5"><div class="spinner-border text-primary"></div></td></tr>';
+        try {
+            const customers = await apiClient('/api/dashboard/reports/customers/');
+            
+            customersTbody.innerHTML = '';
+            if (customers.length === 0) {
+                customersTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-4">Không có dữ liệu khách hàng.</td></tr>';
+                return;
+            }
+
+            customers.forEach((customer, index) => {
+                // <<< DÒNG ĐƯỢC SỬA: Thêm thẻ <a> và sử dụng URL Django >>>
+                const detailUrl = "{% url 'dashboard_customer_detail' 0 %}".replace('0', customer.tai_khoan_id);
+                // <<< END SỬA >>>
+
+                customersTbody.innerHTML += `
+                    <tr>
+                        <th scope="row">${index + 1}</th>
+                        <td class="fw-bold">
+                            <a href="${detailUrl}" class="text-decoration-none">${customer.username}</a>
+                        </td>
+                        <td class="text-end">${formatCurrency(customer.so_du)}</td>
+                        <td class="text-end text-success">${formatCurrency(customer.tong_nap_tien)}</td>
+                        <td class="text-end text-danger">${formatCurrency(customer.tong_chi_tieu)}</td>
+                    </tr>
+                `;
+            });
+
+        } catch (error) {
+            console.error("Lỗi khi tải dữ liệu khách hàng:", error);
+            customersTbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger p-4">Lỗi khi tải dữ liệu: ${error.message}</td></tr>`;
+        }
+    }
+
+    // --- KHỞI CHẠY ---
+    loadCustomers();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,336 @@
+{% extends 'dashboard/dashboard_base.html' %}
+{% block title %}Quản Lý Khuyến Mãi{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="mb-0">Quản Lý Khuyến Mãi</h3>
+    <button class="btn btn-primary" id="add-promotion-btn">
+        <i class="bi bi-plus-circle-fill me-2"></i>Thêm Mã Khuyến Mãi
+    </button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã KM</th>
+                        <th>Mô Tả</th>
+                        <th>Loại Giảm</th>
+                        <th class="text-end">Giá Trị</th>
+                        <th>Hiệu Lực</th>
+                        <th>Trạng Thái</th>
+                        <th class="text-center">Sửa</th>
+                    </tr>
+                </thead>
+                <tbody id="promotions-tbody">
+                     <tr><td colspan="7" class="text-center p-4"><div class="spinner-border spinner-border-sm"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Khuyến Mãi -->
+<div class="modal fade" id="promotionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="promotionForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="promotionModalLabel">Thêm Mã Khuyến Mãi Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="promotionId">
+                    <div class="mb-3">
+                        <label class="form-label">Mã Khuyến Mãi</label>
+                        <input type="text" id="maKhuyenMai" class="form-control" required>
+                    </div>
+                     <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <input type="text" id="moTa" class="form-control">
+                    </div>
+                     <!-- PHẦN CHU KỲ MỚI -->
+                    <div class="mb-3">
+                        <label class="form-label">Chu kỳ áp dụng</label>
+                        <select id="chuKyLapLai" class="form-select" required>
+                            <option value="MOT_LAN">Áp dụng một lần (theo ngày)</option>
+                            <option value="HANG_NGAY">Lặp lại Hằng ngày</option>
+                            <option value="HANG_TUAN">Lặp lại Hàng tuần</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="ngayTrongTuanContainer" style="display: none;">
+                        <label class="form-label">Chọn các ngày trong tuần</label>
+                        <div id="ngayTrongTuanCheckboxes" class="d-flex flex-wrap gap-3">
+                            <!-- JS sẽ render các checkbox ở đây -->
+                        </div>
+                    </div>
+                    <!-- END PHẦN CHU KỲ MỚI -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Loại Giảm Giá</label>
+                            <select id="loaiGiamGia" class="form-select" required>
+                                <option value="SO_TIEN">Số tiền cố định</option>
+                                <option value="PHAN_TRAM">Phần trăm (%)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Giá Trị</label>
+                            <input type="number" step="0.01" min="0" id="giaTri" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày Bắt Đầu</label>
+                            <input type="date" id="ngayBatDau" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ngày Kết Thúc</label>
+                            <input type="date" id="ngayKetThuc" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">Kích hoạt (Đang áp dụng)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger me-auto" id="deletePromotionBtn" style="display: none;">Xóa Mã</button>
+                    <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+// ... (Phần trên của script giữ nguyên) ...
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- KHAI BÁO BIẾN ---
+    const promotionsTbody = document.getElementById('promotions-tbody');
+    const promotionModalEl = document.getElementById('promotionModal');
+    const promotionModal = new bootstrap.Modal(promotionModalEl);
+    const promotionForm = document.getElementById('promotionForm');
+    const addPromotionBtn = document.getElementById('add-promotion-btn');
+    const deletePromotionBtn = document.getElementById('deletePromotionBtn');
+
+    // <<< BIẾN MỚI >>>
+    const chuKyLapLaiSelect = document.getElementById('chuKyLapLai');
+    const ngayTrongTuanContainer = document.getElementById('ngayTrongTuanContainer');
+    const ngayTrongTuanCheckboxesDiv = document.getElementById('ngayTrongTuanCheckboxes');
+
+    let allPromotions = [];
+    let currentPromotionId = null;
+    
+    const DAYS_OF_WEEK = [
+        { id: 1, name: 'Thứ 2' },
+        { id: 2, name: 'Thứ 3' },
+        { id: 3, name: 'Thứ 4' },
+        { id: 4, name: 'Thứ 5' },
+        { id: 5, name: 'Thứ 6' },
+        { id: 6, name: 'Thứ 7' },
+        { id: 7, name: 'Chủ Nhật' },
+    ];
+    
+    // --- HÀM TIỆN ÍCH ---
+    // ... (formatCurrency, formatDate, getBadge giữ nguyên) ...
+    const formatCurrency = (val) => {
+        const number = parseFloat(val);
+        if (isNaN(number) || val === null) return (0).toLocaleString('vi-VN') + ' VNĐ';
+        return number.toLocaleString('vi-VN') + ' VNĐ';
+    };
+    
+    const formatDate = (isoString) => {
+        if (!isoString) return 'N/A';
+        const date = new Date(isoString);
+        // Lấy ngày ở định dạng D/M/Y
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${d}/${m}/${y}`;
+    };
+    
+    const getBadge = (isActive) => isActive ? '<span class="badge bg-success">Đang hoạt động</span>' : '<span class="badge bg-danger">Đã khóa</span>';
+    
+    // Helper để chuyển đổi Date Object thành YYYY-MM-DD
+    const dateToInputFormat = (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+    
+    // --- CÁC HÀM RENDER ---
+    function renderDaysOfWeekCheckboxes(selectedDays = []) {
+        ngayTrongTuanCheckboxesDiv.innerHTML = '';
+        DAYS_OF_WEEK.forEach(day => {
+            const isChecked = selectedDays.includes(String(day.id));
+            ngayTrongTuanCheckboxesDiv.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input ngay-trong-tuan-checkbox" type="checkbox" value="${day.id}" id="day-${day.id}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="day-${day.id}">${day.name}</label>
+                </div>
+            `;
+        });
+    }
+
+    function renderPromotions() {
+        promotionsTbody.innerHTML = '';
+        if (allPromotions.length === 0) {
+            promotionsTbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted p-4">Chưa có mã khuyến mãi nào.</td></tr>';
+            return;
+        }
+
+        allPromotions.forEach(promo => {
+            let valueDisplay;
+            if (promo.loai_giam_gia === 'PHAN_TRAM') {
+                valueDisplay = `${promo.gia_tri}%`;
+            } else {
+                valueDisplay = formatCurrency(promo.gia_tri);
+            }
+            
+            const start = formatDate(promo.ngay_bat_dau);
+            const end = formatDate(promo.ngay_ket_thuc);
+            
+            promotionsTbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${promo.ma_khuyen_mai}</td>
+                    <td>${promo.mo_ta}</td>
+                    <td>${promo.loai_giam_gia_display}</td>
+                    <td class="text-end fw-bold">${valueDisplay}</td>
+                    <td>${start} - ${end}</td>
+                    <td>${getBadge(promo.is_active)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary edit-promotion-btn" data-id="${promo.id}"><i class="bi bi-pencil-fill"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- CÁC HÀM TƯƠNG TÁC DỮ LIỆU ---
+    async function loadPromotions() {
+        promotionsTbody.innerHTML = '<tr><td colspan="7" class="text-center p-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+        try {
+            allPromotions = await apiClient('/api/dashboard/promotions/');
+            renderPromotions();
+        } catch (error) {
+            promotionsTbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger p-4">Lỗi tải dữ liệu: ${error.message}</td></tr>`;
+        }
+    }
+    
+    // --- XỬ LÝ SỰ KIỆN ---
+    
+    // Logic hiển thị/ẩn checkbox ngày trong tuần
+    chuKyLapLaiSelect.addEventListener('change', () => {
+        const isWeekly = chuKyLapLaiSelect.value === 'HANG_TUAN';
+        ngayTrongTuanContainer.style.display = isWeekly ? 'block' : 'none';
+        
+        if (isWeekly && ngayTrongTuanCheckboxesDiv.innerHTML === '') {
+             renderDaysOfWeekCheckboxes();
+        }
+    });
+
+    addPromotionBtn.addEventListener('click', () => {
+        currentPromotionId = null;
+        promotionForm.reset();
+        document.getElementById('promotionModalLabel').textContent = 'Thêm Mã Khuyến Mãi Mới';
+        deletePromotionBtn.style.display = 'none';
+        
+        // Thiết lập UI mặc định khi tạo mới
+        chuKyLapLaiSelect.value = 'MOT_LAN';
+        ngayTrongTuanContainer.style.display = 'none';
+        renderDaysOfWeekCheckboxes(); // Reset các checkbox
+        
+        promotionModal.show();
+    });
+
+    promotionsTbody.addEventListener('click', e => {
+        const editBtn = e.target.closest('.edit-promotion-btn');
+        if (editBtn) {
+            currentPromotionId = editBtn.dataset.id;
+            const promo = allPromotions.find(p => p.id == currentPromotionId);
+            
+            document.getElementById('promotionModalLabel').textContent = 'Sửa Mã Khuyến Mãi';
+            deletePromotionBtn.style.display = 'block';
+
+            document.getElementById('promotionId').value = promo.id;
+            document.getElementById('maKhuyenMai').value = promo.ma_khuyen_mai;
+            document.getElementById('moTa').value = promo.mo_ta;
+            document.getElementById('loaiGiamGia').value = promo.loai_giam_gia;
+            document.getElementById('giaTri').value = promo.gia_tri;
+            document.getElementById('ngayBatDau').value = dateToInputFormat(promo.ngay_bat_dau);
+            document.getElementById('ngayKetThuc').value = dateToInputFormat(promo.ngay_ket_thuc);
+            document.getElementById('isActive').checked = promo.is_active;
+            
+            // Thiết lập chu kỳ và ngày trong tuần
+            chuKyLapLaiSelect.value = promo.chu_ky_lap_lai;
+            const selectedDays = promo.ngay_trong_tuan ? promo.ngay_trong_tuan.split(',') : [];
+            renderDaysOfWeekCheckboxes(selectedDays);
+            ngayTrongTuanContainer.style.display = (promo.chu_ky_lap_lai === 'HANG_TUAN') ? 'block' : 'none';
+
+            promotionModal.show();
+        }
+    });
+
+    promotionForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = currentPromotionId ? `/api/dashboard/promotions/${currentPromotionId}/` : '/api/dashboard/promotions/';
+        const method = currentPromotionId ? 'PUT' : 'POST';
+        
+        const chuKy = document.getElementById('chuKyLapLai').value;
+        let ngayTrongTuanValue = null;
+        
+        if (chuKy === 'HANG_TUAN') {
+            const selectedDays = Array.from(document.querySelectorAll('.ngay-trong-tuan-checkbox:checked')).map(cb => cb.value);
+            ngayTrongTuanValue = selectedDays.join(',');
+        }
+        
+        const payload = {
+            ma_khuyen_mai: document.getElementById('maKhuyenMai').value,
+            mo_ta: document.getElementById('moTa').value,
+            loai_giam_gia: document.getElementById('loaiGiamGia').value,
+            gia_tri: parseFloat(document.getElementById('giaTri').value),
+            // Lấy giá trị từ input date (YYYY-MM-DD)
+            ngay_bat_dau: document.getElementById('ngayBatDau').value, 
+            ngay_ket_thuc: document.getElementById('ngayKetThuc').value,
+            is_active: document.getElementById('isActive').checked,
+            // <<< TRƯỜNG DỮ LIỆU MỚI >>>
+            chu_ky_lap_lai: chuKy,
+            ngay_trong_tuan: ngayTrongTuanValue // Gửi chuỗi '3,5,7' hoặc null
+        };
+        
+        try {
+            await apiClient(url, { method: method, body: JSON.stringify(payload) });
+            promotionModal.hide();
+            await loadPromotions();
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        }
+    });
+    
+    deletePromotionBtn.addEventListener('click', async () => {
+        if (!currentPromotionId) return;
+        if (confirm('Bạn có chắc muốn xóa mã khuyến mãi này không?')) {
+            try {
+                await apiClient(`/api/dashboard/promotions/${currentPromotionId}/`, { method: 'DELETE' });
+                promotionModal.hide();
+                await loadPromotions();
+            } catch (error) {
+                alert(`Lỗi khi xóa: ${error.message}`);
+            }
+        }
+    });
+
+    // --- KHỞI CHẠY ---
+    renderDaysOfWeekCheckboxes(); // Render lần đầu (mặc định không chọn gì)
+    loadPromotions();
+});
+</script>
+{% endblock %}

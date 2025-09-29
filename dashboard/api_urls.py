@@ -39,4 +39,15 @@ urlpatterns = [
     
       # <<< THÊM URL MỚI CHO BÁO CÁO GIỜ CAO ĐIỂM >>>
     path('reports/peak-hours/', api_views.PeakHoursAPIView.as_view(), name='dashboard_report_peakhours'),
+     path('reports/customers/', api_views.CustomerAnalyticsAPIView.as_view(), name='dashboard_report_customers'),
+      path('reports/customers/', api_views.CustomerAnalyticsAPIView.as_view(), name='api_report_customers'),
+      # <<< DÒNG MỚI CẦN THÊM >>>
+    path('reports/customers/<int:pk>/', api_views.CustomerDetailAPIView.as_view(), name='dashboard_customer_detail_api'),
+    # <<< DÒNG MỚI CẦN THÊM >>>
+    path('inventory/history/', api_views.LichSuKhoAPIView.as_view(), name='dashboard_inventory_history'),
+      # <<< APIs MỚI CHO KHUYẾN MÃI >>>
+    path('promotions/', api_views.KhuyenMaiListCreateAPIView.as_view(), name='dashboard_promotion_list'),
+    path('promotions/<int:pk>/', api_views.KhuyenMaiDetailAPIView.as_view(), name='dashboard_promotion_detail'),
+    
+    path('menu/items/', api_views.MenuItemListCreateAPIView.as_view(), name='dashboard_menuitem_list'),
 ]
