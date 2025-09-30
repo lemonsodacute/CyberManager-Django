@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     # 1. App giao diện admin (phải nằm trên cùng)
     'jazzmin',
     'dashboard',
+    'channels',
     # 2. Các app mặc định của Django
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,7 +56,17 @@ INSTALLED_APPS = [
     
     
 ]
+# <<< CẤU HÌNH ASGI VÀ CHANNELS >>>
+ASGI_APPLICATION = 'quanlynet.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer', 
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6380)], # Đảm bảo Redis đang chạy trên cổng 6379
+        },
+    },
+}
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

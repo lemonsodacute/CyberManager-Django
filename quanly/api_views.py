@@ -17,7 +17,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+# Cần import cho Channels
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
+# Cần import API View từ ứng dụng Dashboard
+from dashboard.api_views import DashboardSummaryAPIView
 # Import Quyền tùy chỉnh
 from .permissions import IsNhanVien
 
@@ -165,16 +170,35 @@ class MoMayAPIView(BaseNhanVienAPIView):
             message = f"Đã mở máy {may.ten_may} cho khách vãng lai."
             if khach_hang:
                 message = f"Đã mở máy {may.ten_may} cho khách hàng \"{khach_hang.username}\"."
+            
+            
+            # **********************************************
+            # <<< BƯỚC MỚI: GỬI THÔNG ĐIỆP WEBSOCKET >>>
+            # **********************************************
+            
+            channel_layer = get_channel_layer()
+            
+            # Lấy dữ liệu tổng quan mới nhất sau khi mở máy
+            # Gọi hàm helper đã tách ra từ DashboardSummaryAPIView
+            new_summary_data = DashboardSummaryAPIView().calculate_summary() 
 
+            async_to_sync(channel_layer.group_send)(
+                "dashboard_summary", # Tên group
+                {
+                    "type": "send_summary_update", # Tên hàm trong Consumer (dashboard/consumers.py)
+                    "data": new_summary_data,
+                },
+            )
+            # **********************************************
+            
             return Response({'success': message})
+            
         except May.DoesNotExist:
             return Response({'error': 'Không tìm thấy máy.'}, status=status.HTTP_404_NOT_FOUND)
-
 class ChiTietPhienAPIView(generics.RetrieveAPIView):
     serializer_class = ChiTietPhienSerializer
     lookup_field = 'pk'
     queryset = PhienSuDung.objects.filter(trang_thai=PhienSuDung.TrangThai.DANG_DIEN_RA).prefetch_related('cac_don_hang__chi_tiet__mon')
-
 class KetThucPhienAPIView(BaseNhanVienAPIView):
     @transaction.atomic
     def post(self, request, pk, format=None):
@@ -234,13 +258,27 @@ class KetThucPhienAPIView(BaseNhanVienAPIView):
             phien.trang_thai = PhienSuDung.TrangThai.DA_KET_THUC
             phien.save()
 
+            # **********************************************
+            # <<< GỬI THÔNG ĐIỆP WEBSOCKET >>>
+            # **********************************************
+            channel_layer = get_channel_layer()
+            new_summary_data = DashboardSummaryAPIView().calculate_summary() 
+
+            async_to_sync(channel_layer.group_send)(
+                "dashboard_summary",
+                {
+                    "type": "send_summary_update",
+                    "data": new_summary_data,
+                },
+            )
+            # **********************************************
+
             return Response({
                 'success': 'Thanh toán thành công!',
                 'hoa_don': {'id': hoa_don.id, 'tong_tien': hoa_don.tong_cong}
             })
         except PhienSuDung.DoesNotExist:
             return Response({'error': 'Không tìm thấy phiên đang chạy hoặc đã được xử lý.'}, status=status.HTTP_404_NOT_FOUND)
-
 class KetThucCaAPIView(BaseNhanVienAPIView):
     def post(self, request, format=None):
         nhan_vien = self.get_nhan_vien(request)
@@ -326,6 +364,7 @@ class TaoDonHangAPIView(BaseNhanVienAPIView):
             )
             tong_tien += thanh_tien
 
+            # Trừ kho nguyên liệu
             for dinh_luong in mon.dinh_luong.all():
                 NguyenLieu.objects.filter(pk=dinh_luong.nguyen_lieu.pk).update(
                     so_luong_ton=F('so_luong_ton') - (dinh_luong.so_luong_can * so_luong_ban)
@@ -346,9 +385,26 @@ class TaoDonHangAPIView(BaseNhanVienAPIView):
                 so_tien=tong_tien,
                 ghi_chu=f"Thanh toán cho đơn hàng bán lẻ #{don_hang.id}"
             )
+        
+        # **********************************************
+        # <<< GỬI THÔNG ĐIỆP WEBSOCKET >>>
+        # Chỉ gửi khi có giao dịch tài chính (BAN_LE) hoặc là GHI NỢ (vì nó trừ kho)
+        # Nếu là GHI NỢ, chỉ cần update khi session kết thúc, nhưng chúng ta vẫn update để phản ánh trừ kho
+        # Dùng điều kiện đơn giản nhất:
+        if loai_don_hang == DonHangDichVu.LoaiDonHang.BAN_LE: 
+            channel_layer = get_channel_layer()
+            new_summary_data = DashboardSummaryAPIView().calculate_summary() 
+
+            async_to_sync(channel_layer.group_send)(
+                "dashboard_summary",
+                {
+                    "type": "send_summary_update",
+                    "data": new_summary_data,
+                },
+            )
+        # **********************************************
 
         return Response({'success': 'Tạo đơn hàng thành công!', 'don_hang_id': don_hang.id}, status=status.HTTP_201_CREATED)
-
 class DanhSachNguyenLieuAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NguyenLieuSerializer
@@ -466,6 +522,8 @@ class KhachHangDetailAPIView(BaseNhanVienAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class NapTienAPIView(BaseNhanVienAPIView):
+  # quanly/api_views.py - Trong class NapTienAPIView
+# ...
     @transaction.atomic
     def post(self, request, pk, format=None):
         nhan_vien = self.get_nhan_vien(request)
@@ -492,10 +550,24 @@ class NapTienAPIView(BaseNhanVienAPIView):
             loai_giao_dich=GiaoDichTaiChinh.LoaiGiaoDich.NAP_TIEN,
             so_tien=so_tien
         )
+        
+        # **********************************************
+        # <<< GỬI THÔNG ĐIỆP WEBSOCKET >>>
+        # **********************************************
+        channel_layer = get_channel_layer()
+        new_summary_data = DashboardSummaryAPIView().calculate_summary() 
+
+        async_to_sync(channel_layer.group_send)(
+            "dashboard_summary",
+            {
+                "type": "send_summary_update",
+                "data": new_summary_data,
+            },
+        )
+        # **********************************************
 
         khach_hang.refresh_from_db()
         return Response(KhachHangSerializer(khach_hang).data)
-
 class LichSuCaAPIView(BaseNhanVienAPIView, generics.ListAPIView):
     serializer_class = CaLamViecSerializer
 

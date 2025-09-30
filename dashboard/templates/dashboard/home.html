@@ -77,65 +77,98 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Biến & Hằng ---
     const loadingView = document.getElementById('loading-view');
     const mainView = document.getElementById('main-view');
-    const API_BASE_URL = '/api/dashboard';
+    // const API_BASE_URL = '/api/dashboard'; // KHÔNG DÙNG NỮA
     let revenueChartInstance = null;
     
     // --- Hàm tiện ích ---
     const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
+    
+    // --- LẮNG NGHE WEBSOCKET ---
+    
+    // Xây dựng URL WebSocket (sử dụng ws:// hoặc wss://)
+  const wsHost = window.location.host.split(':')[0]; 
+const wsPort = "8000"; // <<< CỐ ĐỊNH CỔNG CỦA DAPHNE >>>
+const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+const wsUrl = wsProtocol + wsHost + ":" + wsPort + "/ws/dashboard/summary/";
 
-    // --- Logic chính ---
-    async function loadDashboardData() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/summary/`);
-            if (!response.ok) throw new Error('Không thể tải dữ liệu dashboard.');
-            const data = await response.json();
+console.log("Connecting to:", wsUrl); // (Debug)
+const dashboardSocket = new WebSocket(wsUrl);
 
-            // Cập nhật summary cards
-            document.getElementById('summary-revenue').textContent = formatCurrency(data.summary_today.doanh_thu);
-            document.getElementById('summary-active-machines').textContent = `${data.summary_today.so_may_dang_chay} / ${data.summary_today.tong_so_may}`;
-            document.getElementById('summary-inventory-warnings').textContent = data.inventory_warnings.length;
-            document.getElementById('summary-pending-stocktakes').textContent = data.summary_today.kiem_ke_cho_xu_ly;
+    // Hàm cập nhật toàn bộ giao diện từ dữ liệu nhận được
+    function updateDashboardUI(data) {
+        // Cập nhật summary cards
+        document.getElementById('summary-revenue').textContent = formatCurrency(data.summary_today.doanh_thu);
+        document.getElementById('summary-active-machines').textContent = `${data.summary_today.so_may_dang_chay} / ${data.summary_today.tong_so_may}`;
+        document.getElementById('summary-inventory-warnings').textContent = data.inventory_warnings.length;
+        document.getElementById('summary-pending-stocktakes').textContent = data.summary_today.kiem_ke_cho_xu_ly;
 
-            // Cập nhật danh sách cảnh báo kho
-            const warningList = document.getElementById('inventory-warning-list');
-            warningList.innerHTML = '';
-            if (data.inventory_warnings.length > 0) {
-                data.inventory_warnings.forEach(item => {
-                    warningList.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${item.ten} <span class="badge bg-danger rounded-pill">${item.ton_kho} ${item.don_vi}</span></li>`;
-                });
-            } else {
-                warningList.innerHTML = '<li class="list-group-item">Không có cảnh báo nào.</li>';
-            }
-
-            // Vẽ biểu đồ
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            if (revenueChartInstance) revenueChartInstance.destroy();
-            revenueChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.revenue_chart.labels,
-                    datasets: [{
-                        label: 'Doanh thu (VNĐ)',
-                        data: data.revenue_chart.data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
+        // Cập nhật danh sách cảnh báo kho
+        const warningList = document.getElementById('inventory-warning-list');
+        warningList.innerHTML = '';
+        if (data.inventory_warnings.length > 0) {
+            data.inventory_warnings.forEach(item => {
+                warningList.innerHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">${item.ten} <span class="badge bg-danger rounded-pill">${item.ton_kho} ${item.don_vi}</span></li>`;
             });
-
-            // Hiển thị nội dung
-            loadingView.classList.add('d-none');
-            mainView.classList.remove('d-none');
-
-        } catch (error) {
-            loadingView.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+        } else {
+            warningList.innerHTML = '<li class="list-group-item">Không có cảnh báo nào.</li>';
         }
+
+        // Vẽ/Cập nhật biểu đồ
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChartInstance) revenueChartInstance.destroy(); // Hủy biểu đồ cũ nếu có
+        
+        revenueChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.revenue_chart.labels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: data.revenue_chart.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        // Hiển thị nội dung chính
+        loadingView.classList.add('d-none');
+        mainView.classList.remove('d-none');
     }
 
-    // --- Khởi chạy ---
-    loadDashboardData();
+    dashboardSocket.onopen = function(e) {
+        console.log("WebSocket connection established.");
+        // Không cần gửi gì, Consumer sẽ tự động gửi Initial Data
+    };
+
+    dashboardSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === 'initial_summary' || data.type === 'summary_update') {
+            updateDashboardUI(data.data);
+            
+            // Xử lý khi có cập nhật, có thể thêm thông báo nhỏ cho Admin
+            if (data.type === 'summary_update') {
+                console.log("Real-time update received!");
+                // (Optional: Thêm logic toast/alert để báo Admin)
+            }
+        }
+    };
+
+    dashboardSocket.onclose = function(e) {
+        console.error('WebSocket closed unexpectedly');
+        // Có thể thêm logic tự động kết nối lại ở đây
+        loadingView.innerHTML = `<div class="alert alert-danger">Mất kết nối với Real-time Server. Vui lòng tải lại trang hoặc kiểm tra Server.</div>`;
+    };
+
+    dashboardSocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+    };
+
+    // --- KHỞI CHẠY ---
+    // Hủy bỏ hàm loadDashboardData() cũ, mọi thứ được xử lý bởi WebSocket
+    // Không cần code gọi API ban đầu, chỉ cần đợi WebSocket gửi dữ liệu.
 });
 </script>
 {% endblock %}

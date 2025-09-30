@@ -85,12 +85,12 @@ class MenuItemDetailSerializer(serializers.ModelSerializer):
 # -----------------------------------------------------------------------------
 # API VIEWS CHO TRANG CHỦ DASHBOARD
 # -----------------------------------------------------------------------------
-
 class DashboardSummaryAPIView(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self, request, *args, **kwargs):
-        # ... (Nội dung hàm này giữ nguyên, không có lỗi) ...
+    # <<< HÀM HELPER MỚI: Chỉ tính toán và trả về dict >>>
+    def calculate_summary(self):
+        # Đây là logic tính toán ĐÃ TÁCH KHỎI HÀM GET BÊN DƯỚI
         today = timezone.now().date()
         giao_dich_hom_nay = GiaoDichTaiChinh.objects.filter(thoi_gian_giao_dich__date=today)
         doanh_thu_hom_nay = giao_dich_hom_nay.filter(
@@ -125,8 +125,11 @@ class DashboardSummaryAPIView(APIView):
             'inventory_warnings': [ {'ten': nl.ten_nguyen_lieu, 'ton_kho': nl.so_luong_ton, 'don_vi': nl.don_vi_tinh} for nl in canh_bao_kho ],
             'revenue_chart': { 'labels': chart_labels, 'data': chart_data, }
         }
-        return Response(data)
+        return data # Trả về dict
 
+    def get(self, request, *args, **kwargs):
+        data = self.calculate_summary() # Gọi hàm helper
+        return Response(data) # Trả về Response
 # -----------------------------------------------------------------------------
 # API VIEWS CHO QUẢN LÝ KHO (KIỂM KÊ)
 # -----------------------------------------------------------------------------
