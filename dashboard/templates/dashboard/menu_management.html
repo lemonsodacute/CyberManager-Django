@@ -61,7 +61,7 @@
                     </button>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger me-auto" id="deleteItemBtn" style="display: none;">Xóa Món</button>
+                <button type="button" class="btn btn-danger me-auto" id="deleteItemBtn" style="display: none;">Xóa Món</button>
                     <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
                 </div>
             </form>
@@ -316,18 +316,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    deleteItemBtn.addEventListener('click', async () => {
-        if (!currentEditingItemId) return;
-        if (confirm('Bạn có chắc muốn xóa món này không?')) {
-            try {
-                await apiClient(`/api/dashboard/menu/items/${currentEditingItemId}/`, { method: 'DELETE' });
-                itemModal.hide();
-                await loadInitialData();
-            } catch (error) {
-                alert(`Lỗi khi xóa: ${error.message}`);
-            }
+   
+deleteItemBtn.addEventListener('click', async () => {
+    // <<< LOGIC PHÂN QUYỀN MỚI >>>
+    if (!USER_ROLE_CONTEXT.is_admin) {
+        alert('Chỉ Quản lý cấp cao (Admin) mới có quyền xóa món.');
+        return;
+    }
+    // <<< END LOGIC PHÂN QUYỀN MỚI >>>
+
+    if (!currentEditingItemId) return;
+    if (confirm('Bạn có chắc muốn xóa món này không?')) {
+        try {
+            await apiClient(`/api/dashboard/menu/items/${currentEditingItemId}/`, { method: 'DELETE' });
+            itemModal.hide();
+            await loadInitialData();
+        } catch (error) {
+            alert(`Lỗi khi xóa: ${error.message}`);
         }
-    });
+    }
+});
 
     categoryModalEl.addEventListener('shown.bs.modal', () => {
         renderCategories();

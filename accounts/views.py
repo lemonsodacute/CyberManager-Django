@@ -1,25 +1,28 @@
-# # accounts/views.py
+# accounts/views.py
 
-# from django.urls import reverse_lazy
-# from django.contrib.auth.views import LoginView
+from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.contrib.auth.views import LoginView
 
-# # ĐÂY LÀ CLASS MÀ FILE URLS.PY ĐANG TÌM KIẾM
-# class CustomLoginView(LoginView):
-#     """
-#     Tùy chỉnh LoginView để chuyển hướng người dùng dựa trên vai trò của họ.
-#     """
-#     def get_success_url(self):
-#         # Lấy thông tin người dùng vừa đăng nhập thành công
-#         user = self.request.user
+class CustomLoginView(LoginView):
+    template_name = 'accounts/login.html' 
+
+    def get_success_url(self):
+        user = self.request.user
         
-#         # Kiểm tra vai trò (loai_tai_khoan) và quyết định URL
-#         if user.is_authenticated:
-#             if user.loai_tai_khoan == 'ADMIN' or user.loai_tai_khoan == 'NHANVIEN':
-#                 # Nếu là Admin hoặc Nhân viên, chuyển đến trang Dashboard
-#                 return reverse_lazy('dashboard') 
-#             elif user.loai_tai_khoan == 'KHACHHANG':
-#                 # Nếu là Khách hàng, sau này sẽ chuyển đến trang profile
-#                 return reverse_lazy('dashboard') # Tạm thời
-        
-#         # Nếu không rơi vào các trường hợp trên, dùng URL mặc định
-#         return super().get_success_url()
+        if user.is_authenticated:
+            
+           # 1. Nếu user là Admin Cấp cao
+            if user.loai_tai_khoan == 'ADMIN':
+                return reverse_lazy('dashboard_home') # <<< ĐI ĐẾN DASHBOARD
+                
+            # 2. Nếu user là Staff/Nhân viên (KHÔNG phải ADMIN)
+            elif user.is_staff and user.loai_tai_khoan == 'NHANVIEN':
+                return reverse_lazy('pos-view') # <<< ĐI ĐẾN POS
+            
+            # Nếu là Khách hàng
+            elif user.loai_tai_khoan == 'KHACHHANG':
+                 # Chuyển hướng mặc định đến trang dành cho Khách hàng
+                 return reverse_lazy('home') 
+            
+        return super().get_success_url()

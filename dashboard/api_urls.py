@@ -50,4 +50,8 @@ urlpatterns = [
     path('promotions/<int:pk>/', api_views.KhuyenMaiDetailAPIView.as_view(), name='dashboard_promotion_detail'),
     
     path('menu/items/', api_views.MenuItemListCreateAPIView.as_view(), name='dashboard_menuitem_list'),
+    # APIs mới cho HỆ THỐNG THÔNG BÁO
+    path('notifications/', api_views.NotificationListAPIView.as_view(), name='dashboard_notification_list'),
+    path('notifications/mark-read/', api_views.NotificationMarkReadAPIView.as_view(), name='dashboard_notification_mark_all_read'),
+    path('notifications/<int:pk>/mark-read/', api_views.NotificationMarkReadAPIView.as_view(), name='dashboard_notification_mark_one_read'),
 ]

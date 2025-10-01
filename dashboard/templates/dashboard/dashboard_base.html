@@ -1,3 +1,4 @@
+
 <!-- dashboard/templates/dashboard/dashboard_base.html -->
 {% load static %}
 <!DOCTYPE html>
@@ -15,12 +16,38 @@
         .sidebar .nav-link { color: #adb5bd; border-radius: .3rem; transition: all 0.2s; padding: 0.75rem 1rem; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: #495057; }
         .main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
-        .top-bar { background-color: white; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; }
+        .top-bar { background-color: white; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; display: flex; justify-content: flex-end; align-items: center;}
         .content-wrapper { padding: 1.5rem; }
+         
+        /* Styles cho Notification */
+        .notification-icon-container {
+            position: relative;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 2px 5px;
+            border-radius: 50%;
+            background-color: red;
+            color: white;
+            font-size: 0.7rem;
+            z-index: 10;
+        }
+        .notification-dropdown {
+            max-height: 400px;
+            overflow-y: auto;
+            width: 350px; /* Tăng chiều rộng dropdown */
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- FORM LOGOUT ẨN (BẮT BUỘC CHO POST LOGOUT) -->
+    <form id="logout-form" method="post" action="{% url 'logout' %}" style="display: none;">
+        {% csrf_token %}
+    </form>
+
     <div class="sidebar d-flex flex-column p-3">
         <a href="{% url 'dashboard_home' %}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
             <i class="bi bi-shield-shaded fs-4 me-2"></i>
@@ -33,16 +60,14 @@
                     <i class="bi bi-house-door-fill me-2"></i> Bảng Điều Khiển
                 </a>
             </li>
-            <!-- Các link này sẽ được tạo sau -->
+            
             <li><a href="{% url 'dashboard_reports' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_reports' %}active{% endif %}"><i class="bi bi-bar-chart-line-fill me-2"></i> Báo Cáo Doanh Thu</a></li>
-            <!-- <<< THÊM DÒNG NÀY >>> -->
-    <li><a href="{% url 'dashboard_menu' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_menu' %}active{% endif %}"><i class="bi bi-journal-text me-2"></i> Quản Lý Menu</a></li>
-    <!-- <<< THÊM DÒNG NÀY >>> -->
-    <li><a href="{% url 'dashboard_machines' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_machines' %}active{% endif %}"><i class="bi bi-display me-2"></i> Quản Lý Máy</a></li>
-           <li><a href="{% url 'dashboard_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_inventory' %}active{% endif %}"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho</a></li>
-           <li><a href="{% url 'dashboard_promotions' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_promotions' %}active{% endif %}"><i class="bi bi-gift-fill me-2"></i> Quản Lý Khuyến Mãi</a></li>
-          <li><a href="{% url 'dashboard_users' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_users' %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Quản Lý Người Dùng</a></li>
-          <li><a href="{% url 'dashboard_customers' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_customers' %}active{% endif %}"><i class="bi bi-person-lines-fill me-2"></i> Phân Tích Khách Hàng</a></li>
+            <li><a href="{% url 'dashboard_menu' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_menu' %}active{% endif %}"><i class="bi bi-journal-text me-2"></i> Quản Lý Menu</a></li>
+            <li><a href="{% url 'dashboard_machines' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_machines' %}active{% endif %}"><i class="bi bi-display me-2"></i> Quản Lý Máy</a></li>
+            <li><a href="{% url 'dashboard_inventory' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_inventory' %}active{% endif %}"><i class="bi bi-box-seam-fill me-2"></i> Quản Lý Kho</a></li>
+            <li><a href="{% url 'dashboard_promotions' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_promotions' %}active{% endif %}"><i class="bi bi-gift-fill me-2"></i> Quản Lý Khuyến Mãi</a></li>
+            <li><a href="{% url 'dashboard_users' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_users' %}active{% endif %}"><i class="bi bi-people-fill me-2"></i> Quản Lý Người Dùng</a></li>
+            <li><a href="{% url 'dashboard_customers' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard_customers' %}active{% endif %}"><i class="bi bi-person-lines-fill me-2"></i> Phân Tích Khách Hàng</a></li>
         </ul>
         <hr>
         <div class="dropdown">
@@ -52,46 +77,196 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
                 <li><a class="dropdown-item" href="{% url 'pos-view' %}">Về trang POS</a></li>
-                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{% url 'logout' %}">Đăng xuất</a></li>
+                <li><a class="dropdown-item" href="{% url 'admin:logout' %}">Đăng xuất Admin</a></li>
+        
+        <li><hr class="dropdown-divider"></li>
+        
+        <!-- NÚT LOGOUT CHÍNH: Dùng JS để gọi luồng logout của ứng dụng chính -->
+        <li><a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit();">Đăng xuất Ứng dụng</a></li>
             </ul>
         </div>
     </div>
 
     <main class="main-content">
+        <!-- TOP BAR VỚI CHUÔNG THÔNG BÁO -->
+        <div class="top-bar" id="top-bar-sticky">
+            <div class="ms-auto notification-icon-container dropdown">
+                 <button class="btn btn-outline-secondary border-0" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell-fill fs-5"></i>
+                    <span id="notification-count" class="notification-badge d-none">0</span>
+                </button>
+                
+                <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" id="notification-list-container">
+                    <li class="p-3 text-center"><div class="spinner-border spinner-border-sm"></div> Đang tải...</li>
+                </ul>
+            </div>
+        </div>
         <div class="content-wrapper">
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    <!-- Modal Đặt Lại Mật Khẩu -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="resetPasswordForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Đặt Lại Mật Khẩu cho <span id="reset-pw-username" class="text-primary"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="reset-pw-userid">
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu mới</label>
+                            <input type="password" id="new-password" class="form-control" required>
+                        </div>
+                        <div id="reset-pw-error" class="alert alert-danger d-none"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Lưu Mật Khẩu Mới</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts chính -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/api_client.js' %}"></script>
+    
     {% block extra_js %}{% endblock %}
-    <!-- Modal Đặt Lại Mật Khẩu -->
-<div class="modal fade" id="resetPasswordModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="resetPasswordForm">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đặt Lại Mật Khẩu cho <span id="reset-pw-username" class="text-primary"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="reset-pw-userid">
-                    <div class="mb-3">
-                        <label class="form-label">Mật khẩu mới</label>
-                        <input type="password" id="new-password" class="form-control" required>
-                    </div>
-                    <div id="reset-pw-error" class="alert alert-danger d-none"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Lưu Mật Khẩu Mới</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
+    <!-- <<< USER CONTEXT VÀ LOGIC CHUÔNG CHUNG >>> -->
+    {% if user.is_authenticated %}
+    <script>
+        // 1. BIẾN GLOBAL CHO PHÂN QUYỀN
+        const USER_ROLE_CONTEXT = {
+            is_admin: '{{ user.loai_tai_khoan }}' === 'ADMIN',
+            loai_tai_khoan: '{{ user.loai_tai_khoan }}',
+            is_staff: {{ user.is_staff|yesno:"true,false" }},
+        };
+        
+        // 2. LOGIC CHUÔNG (ĐÃ ĐƯỢC CHUYỂN VÀ DỌN DẸP)
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationCountEl = document.getElementById('notification-count');
+            const notificationListContainer = document.getElementById('notification-list-container');
+            const notificationDropdownBtn = document.getElementById('notificationDropdown');
+            let unreadCount = 0;
+            
+            // --- WEBSOCKET LISTENER CHO CHUÔNG ---
+            const wsHost = window.location.host.split(':')[0]; 
+            const wsPort = "8000"; 
+            const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+            const wsUrl = wsProtocol + wsHost + ":" + wsPort + "/ws/dashboard/summary/";
+            const dashboardSocket = new WebSocket(wsUrl);
+
+            dashboardSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'new_notification_signal') {
+                    loadNotificationCount(true); 
+                }
+            };
+            
+            // --- RENDER LOGIC ---
+            const getIcon = (loai) => {
+                const map = {'KHO': 'bi-box-seam-fill', 'TIEN': 'bi-cash-stack', 'HE_THONG': 'bi-gear-fill'};
+                return map[loai] || 'bi-info-circle';
+            };
+
+            const renderNotificationList = (notifications) => {
+                if (notifications.length === 0) {
+                    notificationListContainer.innerHTML = '<li class="p-3 text-center text-muted">Không có thông báo mới.</li>';
+                    return;
+                }
+                
+                notificationListContainer.innerHTML = '';
+                notificationListContainer.innerHTML += `
+                    <li class="dropdown-header d-flex justify-content-between align-items-center">
+                        Thông báo mới (${notifications.length})
+                        <button class="btn btn-sm btn-outline-secondary mark-all-read-btn">Đánh dấu đã đọc</button>
+                    </li>
+                    <li><hr class="dropdown-divider m-0"></li>
+                `;
+
+                notifications.forEach(n => {
+                    const icon = getIcon(n.loai_canh_bao);
+                    const time = new Date(n.thoi_gian_tao).toLocaleString('vi-VN');
+                    
+                    notificationListContainer.innerHTML += `
+                        <li>
+                            <a class="dropdown-item d-flex align-items-start ${n.link_xu_ly ? '' : 'text-muted'}" 
+                                href="${n.link_xu_ly || '#'}">
+                                <i class="bi ${icon} fs-5 me-2 text-danger"></i>
+                                <div>
+                                    <strong class="d-block">${n.tieu_de}</strong>
+                                    <small class="text-wrap">${n.noi_dung.substring(0, 50)}...</small>
+                                    <small class="d-block text-muted">${time}</small>
+                                </div>
+                            </a>
+                        </li>
+                    `;
+                });
+            };
+
+            // --- API LOGIC ---
+            async function loadNotificationCount(isRealtimePush = false) {
+                try {
+                    const notifications = await apiClient('/api/dashboard/notifications/'); 
+                    unreadCount = notifications.length;
+
+                    if (unreadCount > 0) {
+                        notificationCountEl.textContent = unreadCount;
+                        notificationCountEl.classList.remove('d-none');
+                    } else {
+                        notificationCountEl.classList.add('d-none');
+                    }
+                    
+                    if (isRealtimePush) {
+                        alert(`[CẢNH BÁO MỚI] ${notifications[0].tieu_de}`); 
+                        renderNotificationList(notifications);
+                    }
+                    
+                    return notifications;
+                    
+                } catch (error) {
+                    console.error("Lỗi khi tải thông báo:", error);
+                    return [];
+                }
+            }
+            
+            async function markAllAsRead() {
+                 try {
+                    const response = await apiClient('/api/dashboard/notifications/mark-read/', { method: 'POST' });
+                    alert(response.success);
+                    loadNotificationCount(false);
+                    renderNotificationList([]);
+                } catch(error) {
+                    alert(`Lỗi khi đánh dấu đã đọc: ${error.message}`);
+                }
+            }
+
+            // --- SỰ KIỆN UI ---
+            notificationDropdownBtn.addEventListener('click', async () => {
+                notificationListContainer.innerHTML = '<li class="p-3 text-center"><div class="spinner-border spinner-border-sm"></div> Đang tải...</li>';
+                const notifications = await loadNotificationCount();
+                renderNotificationList(notifications);
+            });
+            
+            notificationListContainer.addEventListener('click', e => {
+                const btn = e.target.closest('.mark-all-read-btn');
+                if (btn) {
+                    markAllAsRead();
+                }
+            });
+
+            // --- KHỞI CHẠY ---
+            loadNotificationCount(); 
+        });
+    </script>
+    {% endif %}
+    <!-- <<< KẾT THÚC CHÈN USER CONTEXT VÀ LOGIC CHUÔNG CHUNG >>> -->
+
 </body>
 </html>

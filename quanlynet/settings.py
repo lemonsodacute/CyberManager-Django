@@ -174,10 +174,8 @@ JAZZMIN_SETTINGS = {
 # ... các cài đặt khác của bạn
 
 # URL để chuyển hướng người dùng đến khi họ chưa đăng nhập
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = 'login' 
+LOGIN_REDIRECT_URL = '/dashboard/' 
 
-# URL để chuyển hướng người dùng đến sau khi họ đăng nhập thành công
-LOGIN_REDIRECT_URL = '/pos/' # Chuyển đến trang POS sau khi login
-
-# URL để chuyển hướng người dùng đến sau khi họ đăng xuất
-LOGOUT_REDIRECT_URL = '/accounts/login/' # Quay về trang login sau khi logout
+# Django sẽ chuyển hướng đến URL này sau khi LOGOUT thành công
+LOGOUT_REDIRECT_URL = '/accounts/login/' # Quay về trang login tùy chỉnh

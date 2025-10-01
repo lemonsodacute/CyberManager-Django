@@ -1,5 +1,5 @@
 # dashboard/api_views.py
-
+from quanly.permissions import IsAdminRole 
 from django.forms import DecimalField
 from rest_framework import generics, status, serializers
 from rest_framework.views import APIView
@@ -31,13 +31,13 @@ from quanly.models import (
     GiaoDichTaiChinh, PhienSuDung, NguyenLieu, PhieuKiemKe,
     LichSuThayDoiKho, May, NhanVien, KhachHang,
     MenuItem, DanhMucMenu, DinhLuong,
-    LichSuThayDoiKho, KhuyenMai
+    LichSuThayDoiKho, KhuyenMai, ThongBao
 )
 
 # Import các serializer cần thiết
 from quanly.serializers import (
     UserAdminSerializer, PhieuKiemKeAdminSerializer, DoiMatKhauSerializer,
-    NguyenLieuSerializer,LichSuThayDoiKhoSerializer # <<< ĐÃ THÊM 'NguyenLieuSerializer'
+    NguyenLieuSerializer,LichSuThayDoiKhoSerializer, ThongBaoSerializer # <<< ĐÃ THÊM 'NguyenLieuSerializer'
 )
 
 # -----------------------------------------------------------------------------
@@ -147,7 +147,7 @@ class PhieuKiemKeListAPIView(APIView):
         return Response(serializer.data)
 
 class XacNhanPhieuKiemKeAPIView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole] 
 
     @transaction.atomic
     def post(self, request, pk, *args, **kwargs):
@@ -205,7 +205,7 @@ class UserActionAPIView(APIView):
 # -----------------------------------------------------------------------------
 
 class DanhMucMenuListAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole] 
     serializer_class = DanhMucMenuSerializer
     queryset = DanhMucMenu.objects.all().order_by('ten_danh_muc')
 
@@ -221,7 +221,7 @@ class MenuItemListCreateAPIView(generics.ListCreateAPIView):
         return MenuItem.objects.select_related('danh_muc').prefetch_related('dinh_luong__nguyen_lieu').all().order_by('ten_mon')
 
 class MenuItemDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole]
     serializer_class = MenuItemDetailSerializer
     queryset = MenuItem.objects.select_related('danh_muc').prefetch_related('dinh_luong__nguyen_lieu').all()
 
@@ -321,7 +321,7 @@ class LoaiMayListCreateAPIView(generics.ListCreateAPIView):
 
 class LoaiMayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """API để xem, sửa, xóa một Loại Máy."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole]
     serializer_class = LoaiMayDashboardSerializer
     queryset = LoaiMay.objects.all()
 
@@ -333,7 +333,7 @@ class MayListCreateAPIView(generics.ListCreateAPIView):
 
 class MayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """API để xem, sửa, xóa một Máy."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole] 
     serializer_class = MayDashboardSerializer
     queryset = May.objects.all()
     
@@ -761,7 +761,7 @@ class LichSuKhoAPIView(generics.ListAPIView):
 
 class KhuyenMaiListCreateAPIView(generics.ListCreateAPIView):
     """API để lấy danh sách và tạo mới mã khuyến mãi."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser, IsAdminRole]
     serializer_class = KhuyenMaiSerializer
     queryset = KhuyenMai.objects.all().order_by('-ngay_bat_dau')
 
@@ -770,3 +770,44 @@ class KhuyenMaiDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = KhuyenMaiSerializer
     queryset = KhuyenMai.objects.all()
+    
+class NotificationListAPIView(generics.ListAPIView):
+    """
+    API để lấy danh sách các thông báo chưa đọc cho Admin.
+    Hỗ trợ lọc theo da_doc và giới hạn số lượng.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = ThongBaoSerializer
+
+    def get_queryset(self):
+        # Thông báo chỉ dành cho người dùng hiện tại (người đang đăng nhập)
+        user = self.request.user
+        
+        # Lấy thông báo CHƯA ĐỌC, giới hạn 100 thông báo gần nhất
+        queryset = ThongBao.objects.filter(
+            nguoi_nhan=user,
+            da_doc=False 
+        ).order_by('-thoi_gian_tao')[:100]
+
+        return queryset
+
+class NotificationMarkReadAPIView(APIView):
+    """
+    API để đánh dấu một thông báo là đã đọc hoặc đánh dấu tất cả là đã đọc.
+    """
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, pk=None, *args, **kwargs):
+        user = request.user
+        
+        if pk is not None:
+            # Đánh dấu một thông báo cụ thể là đã đọc
+            try:
+                ThongBao.objects.filter(pk=pk, nguoi_nhan=user).update(da_doc=True)
+                return Response({'success': f'Đã đánh dấu thông báo #{pk} là đã đọc.'})
+            except Exception:
+                return Response({'error': 'Thông báo không tồn tại hoặc không thuộc về bạn.'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Đánh dấu TẤT CẢ thông báo chưa đọc là đã đọc
+            count = ThongBao.objects.filter(nguoi_nhan=user, da_doc=False).update(da_doc=True)
+            return Response({'success': f'Đã đánh dấu {count} thông báo là đã đọc.'})

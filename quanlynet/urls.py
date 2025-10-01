@@ -1,26 +1,19 @@
-# quanlynet/urls.py
+# quanlynet/urls.py (Project Root)
+
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    # Cần phải đặt một trang mặc định (/) để chuyển hướng đến login
+    path('', include('accounts.urls')), # <<< SỬA: Bắt đầu từ trang accounts/urls/ (nơi login được định nghĩa)
+    
     path('admin/', admin.site.urls),
     path('pos/', include('quanly.urls')), 
+    path('dashboard/', include('dashboard.urls')),
+    path('api/dashboard/', include('dashboard.api_urls')),
     
-    path(
-        'accounts/login/', 
-        auth_views.LoginView.as_view(template_name='accounts/login.html'), 
-        name='login'
-    ),
-    # DÒNG QUAN TRỌNG NẰM Ở ĐÂY
-     path(
-        'accounts/logout/', 
-        auth_views.LogoutView.as_view(next_page='/accounts/login/'), 
-        name='logout'
-    ),
-      path('api/dashboard/', include('dashboard.api_urls')),
-        path('dashboard/', include('dashboard.urls')),
-        
-       
+    # <<< DÒNG NÀY PHẢI ĐƯỢC GIỮ LẠI VÀ CHỈ ĐỊNH RÕ RÀNG >>>
+     path('', include('accounts.urls')),
+     path('accounts/', include('accounts.urls')), 
+    # XÓA HOẶC COMMENT CÁC DÒNG LOGIN/LOGOUT CŨ TẠI ĐÂY NẾU CÓ
 ]
-LOGOUT_ON_GET = True

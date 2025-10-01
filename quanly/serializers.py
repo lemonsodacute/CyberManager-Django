@@ -11,7 +11,7 @@ from .models import (
     CaLamViec, LoaiCa, GiaoDichTaiChinh, HoaDon,
     MenuItem, DonHangDichVu, ChiTietDonHang,
     NguyenLieu, PhieuKiemKe, ChiTietKiemKe,
-    LichSuThayDoiKho,  KhuyenMai
+    LichSuThayDoiKho,  KhuyenMai, ThongBao
 )
 
 # -----------------------------------------------------------------------------
@@ -335,3 +335,18 @@ class KhuyenMaiSerializer(serializers.ModelSerializer):
             'chu_ky_lap_lai', 'chu_ky_lap_lai_display', 'ngay_trong_tuan' 
         ]
         read_only_fields = ['loai_giam_gia_display', 'chu_ky_lap_lai_display']
+
+# -----------------------------------------------------------------------------
+# SERIALIZERS MỚI CHO HỆ THỐNG THÔNG BÁO (DASHBOARD)
+# -----------------------------------------------------------------------------
+class ThongBaoSerializer(serializers.ModelSerializer):
+    """Serializer để hiển thị thông báo cho Admin."""
+    
+    loai_canh_bao_display = serializers.CharField(source='get_loai_canh_bao_display', read_only=True)
+    
+    class Meta:
+        model = ThongBao
+        fields = [
+            'id', 'tieu_de', 'noi_dung', 'loai_canh_bao', 'loai_canh_bao_display',
+            'thoi_gian_tao', 'da_doc', 'link_xu_ly'
+        ]

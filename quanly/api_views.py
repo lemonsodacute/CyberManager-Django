@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from os import truncate
 from django.forms import ValidationError
+from django.urls import reverse_lazy
 import pandas as pd
 from accounts.models import TaiKhoan
 from decimal import Decimal, InvalidOperation
@@ -25,7 +26,8 @@ from channels.layers import get_channel_layer
 from dashboard.api_views import DashboardSummaryAPIView
 # Import Quyền tùy chỉnh
 from .permissions import IsNhanVien
-
+from .models import KhachHang, ThongBao, NguyenLieu 
+from asgiref.sync import async_to_sync, sync_to_async 
 # Import Models
 from .models import (
     May, PhienSuDung, NhanVien, HoaDon,
@@ -48,16 +50,55 @@ from .serializers import (
     DoiMatKhauSerializer
 )
 
+@sync_to_async
+def create_inventory_notification_if_needed(nguyen_lieu_id, nguong_canh_bao=10):
+    """Kiểm tra tồn kho và tạo thông báo mới nếu dưới ngưỡng (Hàm Helper)."""
+    from datetime import timedelta
+    from django.contrib.auth import get_user_model
+    TaiKhoan = get_user_model()
+    
+    try:
+        nguyen_lieu = NguyenLieu.objects.get(pk=nguyen_lieu_id)
+        if nguyen_lieu.so_luong_ton <= nguong_canh_bao:
+            thoi_gian_canh_bao_lai = timezone.now() - timedelta(hours=24)
+            admin_users = TaiKhoan.objects.filter(is_staff=True)
+            
+            for admin in admin_users:
+                can_tao_moi = not ThongBao.objects.filter(
+                    nguoi_nhan=admin,
+                    loai_canh_bao=ThongBao.LOAI_CANH_BAO_CHOICES[0][0], # 'KHO'
+                    thoi_gian_tao__gte=thoi_gian_canh_bao_lai
+                ).exists()
+
+                if can_tao_moi:
+                    ThongBao.objects.create(
+                        nguoi_nhan=admin,
+                        tieu_de=f"CẢNH BÁO KHO: {nguyen_lieu.ten_nguyen_lieu} sắp hết!",
+                        noi_dung=f"Nguyên liệu {nguyen_lieu.ten_nguyen_lieu} chỉ còn {nguyen_lieu.so_luong_ton} {nguyen_lieu.don_vi_tinh}. Cần nhập thêm.",
+                        loai_canh_bao='KHO',
+                        link_xu_ly=reverse_lazy('dashboard_inventory') 
+                    )
+            return True
+        return False
+    except NguyenLieu.DoesNotExist:
+        return False
+    except Exception as e:
+        print(f"Lỗi tạo thông báo kho: {e}")
+        return False
 # -----------------------------------------------------------------------------
 # LỚP CHA
 # -----------------------------------------------------------------------------
 class BaseNhanVienAPIView(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAuthenticated, IsNhanVien] # Áp dụng quyền bảo mật
+    permission_classes = [IsNhanVien]  # <<< SỬ DỤNG CLASS ĐÃ FIX
 
     def get_nhan_vien(self, request):
-        return request.user.nhanvien
-
+            # Thêm kiểm tra ở đây để tránh lỗi khi người dùng không có object nhanvien
+        try:
+            return request.user.nhanvien
+        except:
+            # Nếu không có object nhanvien (chỉ là is_staff=True mà thôi)
+            return None 
     def get_ca_hien_tai(self, nhan_vien):
         try:
             return CaLamViec.objects.get(nhan_vien=nhan_vien, trang_thai=CaLamViec.TrangThai.DANG_DIEN_RA)
@@ -280,6 +321,8 @@ class KetThucPhienAPIView(BaseNhanVienAPIView):
         except PhienSuDung.DoesNotExist:
             return Response({'error': 'Không tìm thấy phiên đang chạy hoặc đã được xử lý.'}, status=status.HTTP_404_NOT_FOUND)
 class KetThucCaAPIView(BaseNhanVienAPIView):
+   # quanly/api_views.py - Trong class KetThucCaAPIView
+# ...
     def post(self, request, format=None):
         nhan_vien = self.get_nhan_vien(request)
         ca_hien_tai = self.get_ca_hien_tai(nhan_vien)
@@ -312,10 +355,46 @@ class KetThucCaAPIView(BaseNhanVienAPIView):
         ca_hien_tai.chenh_lech = chenh_lech
         ca_hien_tai.save()
 
+        # **********************************************
+        # <<< LOGIC TẠO CẢNH BÁO CHÊNH LỆCH TIỀN >>>
+        # **********************************************
+        nguong_chenh_lech = Decimal('50000.00') # Ngưỡng 50,000 VNĐ
+        
+        if abs(chenh_lech) >= nguong_chenh_lech:
+            from django.contrib.auth import get_user_model
+            TaiKhoan = get_user_model()
+            
+            loai_chenh_lech = "THIẾU" if chenh_lech < 0 else "THỪA"
+            admin_users = TaiKhoan.objects.filter(is_staff=True)
+            
+            for admin in admin_users:
+                ThongBao.objects.create(
+                    nguoi_nhan=admin,
+                    tieu_de=f"CẢNH BÁO TIỀN: Ca {ca_hien_tai.nhan_vien.tai_khoan.username} có chênh lệch {loai_chenh_lech}",
+                    noi_dung=f"Ca làm việc kết thúc lúc {timezone.localtime(ca_hien_tai.thoi_gian_ket_thuc_thuc_te).strftime('%H:%M')} có chênh lệch {loai_chenh_lech}: {abs(chenh_lech):,.0f} VNĐ.",
+                    loai_canh_bao='TIEN',
+                    link_xu_ly=reverse_lazy('dashboard_reports') 
+                )
+                
+        # **********************************************
+        # <<< GỬI TÍN HIỆU WEBSOCKET (MỚI) >>>
+        # **********************************************
+        channel_layer = get_channel_layer()
+        
+        # Gửi tín hiệu mới để Frontend biết có thông báo mới (và có thể là cập nhật summary dashboard)
+        async_to_sync(channel_layer.group_send)(
+            "dashboard_summary",
+            {
+                "type": "new_notification_signal", 
+            },
+        )
+        # **********************************************
+        
         serializer = CaLamViecSerializer(ca_hien_tai)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 class TaoDonHangAPIView(BaseNhanVienAPIView):
+# quanly/api_views.py - Trong class TaoDonHangAPIView
+# ...
     @transaction.atomic
     def post(self, request, format=None):
         nhan_vien = self.get_nhan_vien(request)
@@ -366,9 +445,17 @@ class TaoDonHangAPIView(BaseNhanVienAPIView):
 
             # Trừ kho nguyên liệu
             for dinh_luong in mon.dinh_luong.all():
-                NguyenLieu.objects.filter(pk=dinh_luong.nguyen_lieu.pk).update(
-                    so_luong_ton=F('so_luong_ton') - (dinh_luong.so_luong_can * so_luong_ban)
+                nguyen_lieu_id = dinh_luong.nguyen_lieu.pk
+                so_luong_tru = dinh_luong.so_luong_can * so_luong_ban
+                
+                NguyenLieu.objects.filter(pk=nguyen_lieu_id).update(
+                    so_luong_ton=F('so_luong_ton') - so_luong_tru
                 )
+                
+                # **********************************************
+                # <<< GỌI HELPER TẠO CẢNH BÁO KHO >>>
+                # **********************************************
+                async_to_sync(create_inventory_notification_if_needed)(nguyen_lieu_id) 
 
         if not chi_tiet_don_hang_list:
             transaction.set_rollback(True)
@@ -387,10 +474,8 @@ class TaoDonHangAPIView(BaseNhanVienAPIView):
             )
         
         # **********************************************
-        # <<< GỬI THÔNG ĐIỆP WEBSOCKET >>>
-        # Chỉ gửi khi có giao dịch tài chính (BAN_LE) hoặc là GHI NỢ (vì nó trừ kho)
-        # Nếu là GHI NỢ, chỉ cần update khi session kết thúc, nhưng chúng ta vẫn update để phản ánh trừ kho
-        # Dùng điều kiện đơn giản nhất:
+        # <<< GỬI TÍN HIỆU WEBSOCKET CHUNG >>>
+        # **********************************************
         if loai_don_hang == DonHangDichVu.LoaiDonHang.BAN_LE: 
             channel_layer = get_channel_layer()
             new_summary_data = DashboardSummaryAPIView().calculate_summary() 

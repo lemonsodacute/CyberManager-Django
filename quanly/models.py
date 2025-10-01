@@ -3,6 +3,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.conf import settings
 
 # -----------------------------------------------------------------------------
 # KHU VỰC 1: CÁC MODEL NỀN TẢNG
@@ -277,3 +278,49 @@ class LichSuThayDoiKho(models.Model):
 
     def __str__(self):
         return f"[{self.get_loai_thay_doi_display()}] {self.so_luong_thay_doi} {self.nguyen_lieu.don_vi_tinh} {self.nguyen_lieu.ten_nguyen_lieu}"
+# -----------------------------------------------------------------------------
+# KHU VỰC MỚI (HOẶC 7): HỆ THỐNG THÔNG BÁO
+# -----------------------------------------------------------------------------
+
+class ThongBao(models.Model):
+    
+    # Định nghĩa các loại cảnh báo
+    LOAI_CANH_BAO_CHOICES = [
+        ('KHO', 'Cảnh báo Tồn kho'),
+        ('TIEN', 'Cảnh báo Tiền mặt/Chênh lệch'),
+        ('HE_THONG', 'Cảnh báo Hệ thống/Vận hành'),
+    ]
+    
+    # Người nhận (Admin) - Dùng settings.AUTH_USER_MODEL
+    # Chúng ta sẽ lọc thông báo cho tất cả người dùng is_staff
+    nguoi_nhan = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        limit_choices_to={'is_staff': True}, # Chỉ chọn người dùng có quyền Staff
+        related_name='cac_thong_bao',
+        verbose_name="Người nhận"
+    )
+    
+    tieu_de = models.CharField(max_length=255, verbose_name="Tiêu đề")
+    noi_dung = models.TextField(verbose_name="Nội dung chi tiết")
+    
+    loai_canh_bao = models.CharField(
+        max_length=10, 
+        choices=LOAI_CANH_BAO_CHOICES, 
+        default='HE_THONG',
+        verbose_name="Phân loại cảnh báo"
+    )
+    
+    thoi_gian_tao = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian tạo")
+    da_doc = models.BooleanField(default=False, verbose_name="Đã đọc")
+    
+    # Link để Admin có thể bấm vào và đi đến trang xử lý (Ví dụ: /dashboard/inventory/kiem-ke/)
+    link_xu_ly = models.CharField(max_length=255, blank=True, null=True, verbose_name="Link xử lý")
+
+    class Meta:
+        verbose_name = "Thông báo/Cảnh báo"
+        verbose_name_plural = "Hệ thống Thông báo"
+        ordering = ['-thoi_gian_tao']
+
+    def __str__(self):
+        return f"[{self.get_loai_canh_bao_display()}] {self.tieu_de}"
