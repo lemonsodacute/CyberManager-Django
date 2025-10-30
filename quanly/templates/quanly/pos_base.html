@@ -21,8 +21,6 @@
         background-attachment: fixed;
         background-position: center;
         
-        /* Tùy chỉnh độ mờ và độ sáng/tối */
-       
     } 
     /* <<< PHẦN FIX MÀU TEXT MỚI >>> */
     /* Ép tất cả các tiêu đề và đoạn văn cơ bản có màu sáng */
@@ -127,21 +125,28 @@
     </div>
 
     <main class="main-content">
-        <div class="top-bar" id="top-bar-sticky">
-            <div id="ca-lam-viec-info" class="fw-bold">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                <span class="ms-2">Đang tải thông tin ca...</span>
-            </div>
-            <div>
-                <button class="btn btn-danger d-none" id="ket-thuc-ca-btn"><i class="bi bi-door-closed-fill me-2"></i>Kết Thúc Ca</button>
-            </div>
+    <div class="top-bar" id="top-bar-sticky">
+        <div id="ca-lam-viec-info" class="fw-bold">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2">Đang tải thông tin ca...</span>
         </div>
-        <div class="content-wrapper">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
+        <div>
+             <!-- NÚT NỢ DỊCH VỤ -->
+            <button class="btn btn-warning me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#debtOffcanvas" aria-controls="debtOffcanvas" id="debt-count-btn">
+                <i class="bi bi-wallet-fill me-1"></i> Nợ Dịch Vụ 
+                <span class="badge bg-danger rounded-pill" id="debt-count">0</span>
+            </button>
+             <!-- KẾT THÚC NÚT -->
 
-    <!-- Modals (Bạn cần đảm bảo đã include partials/deposit_modal.html ở đâu đó) -->
+            <button class="btn btn-danger d-none" id="ket-thuc-ca-btn"><i class="bi bi-door-closed-fill me-2"></i>Kết Thúc Ca</button>
+        </div>
+    </div>
+    <div class="content-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+
     <!-- Modal Bắt đầu Ca (Đã có sẵn) -->
     <div class="modal fade" id="startShiftModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog">
@@ -169,8 +174,6 @@
     </div>
     
     <!-- Modal Nạp Tiền (PHẢI ĐƯỢC INCLUDE Ở ĐÂU ĐÓ) -->
-    <!-- {% include 'quanly/partials/deposit_modal.html' %} -->
-    
     <!-- Modal Mở Máy Cho Thành Viên (Giữ nguyên) -->
     <div class="modal fade" id="openForMemberModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -188,139 +191,237 @@
             </div>
         </div>
     </div>
+    
+    <!-- <<< OFFCANVAS NỢ DỊCH VỤ >>> -->
+     <div class="offcanvas offcanvas-end" tabindex="-1" id="debtOffcanvas" style="width: 450px;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title fw-bold">Danh Sách Nợ Dịch Vụ</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" id="debt-list-container">
+            <!-- ĐÃ THÊM HEADER TỔNG CỘNG -->
+            <div class="d-flex justify-content-between mb-3 p-2 bg-light rounded shadow-sm">
+                <span class="fs-5 fw-bold">TỔNG TIỀN NỢ:</span>
+                <span class="fs-5 fw-bold text-danger" id="total-debt-amount">0 VNĐ</span>
+            </div>
+            <div id="debt-orders-list">
+                <div class="text-center p-5"><div class="spinner-border"></div></div>
+            </div>
+        </div>
+    </div>
+ 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- KHAI BÁO BIẾN CHUNG ---
+        const caLamViecInfo = document.getElementById('ca-lam-viec-info');
+        const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
+        const startShiftModalEl = document.getElementById('startShiftModal');
+        // KHỞI TẠO MODAL VỚI KIỂM TRA AN TOÀN ĐỂ TRÁNH LỖI UNDEFINED
+        const startShiftModal = startShiftModalEl ? new bootstrap.Modal(startShiftModalEl) : null;
+        const startShiftForm = document.getElementById('startShiftForm');
+        const API_BASE_URL = '/pos/api';
+        
+        // SELECTOR NỢ DỊCH VỤ
+        const debtCountBadge = document.getElementById('debt-count');
+        const debtListContainer = document.getElementById('debt-list-container');
+        const debtCountBtn = document.getElementById('debt-count-btn'); 
+        const totalDebtAmountEl = document.getElementById('total-debt-amount');
 
+        // --- CÁC HÀM TIỆN ÍCH CHUNG ---
+        function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+        const csrftoken = getCookie('csrftoken');
+        const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace(' VNĐ', ' VNĐ'); // Đảm bảo định dạng tiền tệ
+        
+        // CÁC HÀM API CHUNG
+        const fetchData = async (relativeUrl) => {
+            const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        };
+        const postData = async (relativeUrl, data) => {
+            return apiClient(`${API_BASE_URL}${relativeUrl}`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+        };
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- KHAI BÁO BIẾN CHUNG ---
-            const caLamViecInfo = document.getElementById('ca-lam-viec-info');
-            const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
-            const startShiftModalEl = document.getElementById('startShiftModal');
-            const startShiftModal = new bootstrap.Modal(startShiftModalEl);
-            const startShiftForm = document.getElementById('startShiftForm');
-            const API_BASE_URL = '/pos/api';
-
-            // --- CÁC HÀM TIỆN ÍCH CHUNG ---
-            function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
-            const csrftoken = getCookie('csrftoken');
-            const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
-            
-            // --- CÁC HÀM API CHUNG ---
-            const fetchData = async (relativeUrl) => {
-                const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                return await response.json();
-            };
-            const postData = async (relativeUrl, data) => {
-                const response = await fetch(`${API_BASE_URL}${relativeUrl}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.error || 'Lỗi không xác định.');
-                return result;
-            };
-
-            // --- LOGIC XỬ LÝ CA LÀM VIỆC (CHUNG) ---
-            async function openStartShiftModal() {
-                const selectEl = document.getElementById('loai_ca_id');
-                selectEl.innerHTML = '<option value="">Đang tải...</option>';
+        // --- LOGIC XỬ LÝ CA LÀM VIỆC ---
+        async function loadDebtList(renderToContainer = true) {
+            // Chỉ hiển thị spinner khi offcanvas đang mở
+            if (!document.getElementById('debtOffcanvas').classList.contains('show') && renderToContainer) {
                 try {
-                    const shiftTypes = await fetchData('/loai-ca/');
-                    selectEl.innerHTML = '<option value="" disabled selected>-- Chọn ca làm việc --</option>';
-                    shiftTypes.forEach(type => {
-                        selectEl.innerHTML += `<option value="${type.id}">${type.ten_ca} (${type.gio_bat_dau} - ${type.gio_ket_thuc})</option>`;
+                    const debtOrders = await fetchData('/order/debt-list/');
+                    debtCountBadge.textContent = debtOrders.length;
+                } catch (error) {
+                    debtCountBadge.textContent = '0';
+                }
+                return;
+            }
+            
+            if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+                 document.getElementById('debt-orders-list').innerHTML = '<div class="text-center p-5"><div class="spinner-border"></div></div>';
+            }
+
+            try {
+                const debtOrders = await fetchData('/order/debt-list/');
+                debtCountBadge.textContent = debtOrders.length;
+                
+                let totalDebt = 0;
+                let listHtml = '';
+                
+                if (debtOrders.length === 0) {
+                    listHtml = '<div class="alert alert-info">Không có Order nào đang nợ.</div>';
+                    totalDebtAmountEl.textContent = formatCurrency(0);
+                    
+                } else {
+                    debtOrders.forEach(order => {
+                        let detailsHtml = '';
+                        order.chi_tiet.forEach(detail => {
+                            detailsHtml += `<li>${detail.mon.ten_mon} x ${detail.so_luong}</li>`;
+                        });
+                        
+                        const machineInfo = order.ten_may ? ` - Máy ${order.ten_may}` : '';
+                        const hinhThucDisplay = order.phien_su_dung 
+                                                ? (order.phien_su_dung.hinh_thuc === 'TRA_TRUOC' ? 'Thành Viên' : 'Vãng Lai') 
+                                                : 'Bán Lẻ';
+                        
+                        const orderDebt = parseFloat(order.tong_tien) || 0;
+                        totalDebt += orderDebt;
+
+                        listHtml += `
+                            <div class="card mb-3 shadow-sm border-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-1">Order #${order.id}${machineInfo} (${order.loai_don_hang === 'BAN_LE' ? 'Bán Lẻ' : 'Ghi Nợ'})</h5>
+                                    <p class="card-text mb-1 small">
+                                        Hình thức: <span class="fw-bold">${hinhThucDisplay}</span>
+                                        | Mã KM: <span class="fw-bold">${order.ma_khuyen_mai_ap_dung || 'Không'}</span>
+                                    </p>
+                                    <p class="card-text fs-5 fw-bold text-danger">
+                                        Tổng nợ: ${formatCurrency(orderDebt)}
+                                    </p>
+                                    <h6 class="mt-2 small">Chi tiết:</h6>
+                                    <ul class="list-unstyled small ps-3">${detailsHtml}</ul>
+                                    <button class="btn btn-sm btn-success w-100 pay-debt-btn" data-id="${order.id}">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Xác Nhận Đã Thu Tiền
+                                    </button>
+                                </div>
+                            </div>
+                        `;
                     });
-                    startShiftModal.show();
-                } catch (error) {
-                    const errorDiv = document.getElementById('start-shift-error');
-                    errorDiv.textContent = 'Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
-                    errorDiv.classList.remove('d-none');
                 }
-            }
+                
+                if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+                    document.getElementById('debt-orders-list').innerHTML = listHtml;
+                }
+                totalDebtAmountEl.textContent = formatCurrency(totalDebt);
 
-            async function updateCaInfo() {
-                try {
-                    const currentShift = await fetchData('/ca/hien-tai/');
-                    if (startShiftModalEl.classList.contains('show')) startShiftModal.hide();
-                    
-                    const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
-                    
-                    caLamViecInfo.innerHTML = `
-                        <i class="bi bi-clock-fill text-success"></i> 
-                        <strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span> | 
-                        <strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan} | 
-                        <strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')} |
-                        <strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span>
-                    `;
-                    ketThucCaBtn.classList.remove('d-none');
-                } catch (error) {
-                    caLamViecInfo.innerHTML = `
-                        <div class="alert alert-warning py-1 px-3 mb-0 d-flex align-items-center">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            <strong>Chưa bắt đầu ca làm việc!</strong>
-                            <button class="btn btn-primary btn-sm ms-3" id="manual-start-shift-btn">Bắt Đầu Ca</button>
-                        </div>
-                    `;
-                    ketThucCaBtn.classList.add('d-none');
+            } catch (error) {
+                if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+                    document.getElementById('debt-orders-list').innerHTML = `<div class="alert alert-danger">Lỗi tải danh sách nợ: ${error.message}</div>`;
+                }
+                debtCountBadge.textContent = '0';
+                totalDebtAmountEl.textContent = formatCurrency(0);
+            }
+        }
+        
+        async function openStartShiftModal() {
+            const selectEl = document.getElementById('loai_ca_id');
+            selectEl.innerHTML = '<option value="">Đang tải...</option>';
+            try {
+                const shiftTypes = await fetchData('/loai-ca/');
+                selectEl.innerHTML = '<option value="" disabled selected>-- Chọn ca làm việc --</option>';
+                shiftTypes.forEach(type => {
+                    selectEl.innerHTML += `<option value="${type.id}">${type.ten_ca} (${type.gio_bat_dau} - ${type.gio_ket_thuc})</option>`;
+                });
+                if (startShiftModal) startShiftModal.show();
+            } catch (error) {
+                const errorDiv = document.getElementById('start-shift-error');
+                errorDiv.textContent = 'Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
+                errorDiv.classList.remove('d-none');
+            }
+        }
+        
+        async function updateCaInfo() {
+            try {
+                const currentShift = await fetchData('/ca/hien-tai/');
+                if (startShiftModal && startShiftModalEl.classList.contains('show')) startShiftModal.hide();
+                
+                const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
+                
+                caLamViecInfo.innerHTML = `
+                    <i class="bi bi-clock-fill text-success"></i> 
+                    <strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span> | 
+                    <strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan} | 
+                    <strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')} |
+                    <strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span>
+                `;
+                ketThucCaBtn.classList.remove('d-none');
+                debtCountBtn.disabled = false;
+                
+                loadDebtList(false); // Cập nhật badge Nợ
+                
+            } catch (error) {
+                caLamViecInfo.innerHTML = `
+                    <div class="alert alert-warning py-1 px-3 mb-0 d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Chưa bắt đầu ca làm việc!</strong>
+                        <button class="btn btn-primary btn-sm ms-3" id="manual-start-shift-btn">Bắt Đầu Ca</button>
+                    </div>
+                `;
+                ketThucCaBtn.classList.add('d-none');
+                debtCountBtn.disabled = true;
+                document.getElementById('manual-start-shift-btn')?.addEventListener('click', openStartShiftModal);
+                
+                if (!startShiftModalEl.classList.contains('show')) {
                     openStartShiftModal();
-                    // Dùng optional chaining (?) để tránh lỗi nếu không tìm thấy nút
-                    document.getElementById('manual-start-shift-btn')?.addEventListener('click', openStartShiftModal);
                 }
             }
+        }
+
+        async function payDebt(orderId) {
+            const orderCard = document.querySelector(`.pay-debt-btn[data-id="${orderId}"]`).closest('.card');
+            const totalText = orderCard.querySelector('.fs-5').textContent;
+
+            if (!confirm(`Xác nhận đã thu tiền Order #${orderId} (${totalText})? Hành động này không thể hoàn tác.`)) return;
+
+            const btn = orderCard.querySelector('.pay-debt-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
             
-            // --- GẮN SỰ KIỆN CHUNG ---
-            if (startShiftForm) {
-                startShiftForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const errorDiv = document.getElementById('start-shift-error');
-                    errorDiv.classList.add('d-none');
-                    const data = {
-                        loai_ca_id: document.getElementById('loai_ca_id').value,
-                        tien_mat_ban_dau: document.getElementById('tien_mat_ban_dau').value
-                    };
-                    if (!data.loai_ca_id) {
-                        errorDiv.textContent = 'Vui lòng chọn một ca làm việc.';
-                        errorDiv.classList.remove('d-none');
-                        return;
-                    }
-                    try {
-                        const result = await postData('/ca/bat-dau/', data);
-                        alert(`Đã bắt đầu ${result.loai_ca.ten_ca} thành công!`);
-                        startShiftModal.hide();
-                        location.reload();
-                    } catch (error) {
-                        errorDiv.textContent = `Lỗi: ${error.message}`;
-                        errorDiv.classList.remove('d-none');
-                    }
-                });
+            try {
+                const result = await postData(`/order/${orderId}/pay-debt/`, {});
+                alert(result.success);
+                await loadDebtList(true); // Tải lại danh sách và render
+                updateCaInfo(); // Cập nhật tổng thu trên top bar
+            } catch(error) {
+                alert(`Lỗi khi xác nhận thanh toán: ${error.message}`);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Xác Nhận Đã Thu Tiền';
             }
-
-           if (ketThucCaBtn) {
-                ketThucCaBtn.addEventListener('click', async () => {
-                    const tienMatStr = prompt("Nhập tổng số tiền mặt cuối ca bạn đếm được:", "0");
-                    if (tienMatStr === null) return;
-                    
-                    try {
-                        const result = await postData('/ca/ket-thuc/', { tien_mat_cuoi_ca: tienMatStr });
-                        alert(`Đã kết thúc ca thành công!\n- Doanh thu: ${formatCurrency(result.tong_doanh_thu_he_thong)}\n- Chênh lệch: ${formatCurrency(result.chenh_lech)}\n\nBạn sẽ được đăng xuất.`);
-                        
-                        // Kích hoạt form POST để đăng xuất an toàn
-                        document.getElementById('logout-form').submit();
-                        
-                    } catch (error) {
-                        alert(`Lỗi: ${error.message}`);
-                    }
-                });
-            }
-
-            // --- KHỞI CHẠY CHUNG ---
-            updateCaInfo();
-            setInterval(updateCaInfo, 30000);
+        }
+        
+        // SỰ KIỆN CHO OFFCANVAS
+        document.getElementById('debtOffcanvas').addEventListener('shown.bs.offcanvas', () => loadDebtList(true)); 
+        
+        debtListContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.pay-debt-btn');
+            if (btn) payDebt(btn.dataset.id);
         });
-    </script>
+        
+        // Tải danh sách nợ dịch vụ mỗi 60s để cập nhật badge
+        setInterval(() => loadDebtList(false), 60000);
+
+        // --- KHỞI CHẠY CHUNG ---
+        updateCaInfo();
+        setInterval(updateCaInfo, 30000);
+    });
+</script>
+<!-- ✅ Chỉ giữ MỘT bản api_client.js -->
+<script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
+
+<!-- ✅ Bootstrap Bundle (có cả Popper + Modal) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

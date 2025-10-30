@@ -86,7 +86,7 @@ class MenuItemDetailSerializer(serializers.ModelSerializer):
 # API VIEWS CHO TRANG CHỦ DASHBOARD
 # -----------------------------------------------------------------------------
 class DashboardSummaryAPIView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     # <<< HÀM HELPER MỚI: Chỉ tính toán và trả về dict >>>
     def calculate_summary(self):
@@ -135,7 +135,7 @@ class DashboardSummaryAPIView(APIView):
 # -----------------------------------------------------------------------------
 
 class PhieuKiemKeListAPIView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def get(self, request, *args, **kwargs):
         phieu_list = PhieuKiemKe.objects.prefetch_related(
@@ -147,7 +147,7 @@ class PhieuKiemKeListAPIView(APIView):
         return Response(serializer.data)
 
 class XacNhanPhieuKiemKeAPIView(APIView):
-    permission_classes = [IsAdminUser, IsAdminRole] 
+    permission_classes = [IsAdminRole] 
 
     @transaction.atomic
     def post(self, request, pk, *args, **kwargs):
@@ -172,13 +172,13 @@ class XacNhanPhieuKiemKeAPIView(APIView):
 
 class UserListAPIView(generics.ListAPIView):
     # ... (Nội dung class này giữ nguyên, không có lỗi) ...
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = UserAdminSerializer
     queryset = TaiKhoan.objects.prefetch_related('nhanvien', 'khachhang').all().order_by('username')
 
 class UserActionAPIView(APIView):
     # ... (Nội dung class này giữ nguyên, không có lỗi) ...
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     def get_user(self, pk):
         try: return TaiKhoan.objects.get(pk=pk)
         except TaiKhoan.DoesNotExist: return None
@@ -205,23 +205,23 @@ class UserActionAPIView(APIView):
 # -----------------------------------------------------------------------------
 
 class DanhMucMenuListAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAdminUser, IsAdminRole] 
+    permission_classes = [IsAdminRole] 
     serializer_class = DanhMucMenuSerializer
     queryset = DanhMucMenu.objects.all().order_by('ten_danh_muc')
 
 class DanhMucMenuDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = DanhMucMenuSerializer
     queryset = DanhMucMenu.objects.all()
 
 class MenuItemListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = MenuItemDetailSerializer
     def get_queryset(self):
         return MenuItem.objects.select_related('danh_muc').prefetch_related('dinh_luong__nguyen_lieu').all().order_by('ten_mon')
 
 class MenuItemDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdminUser, IsAdminRole]
+    permission_classes = [IsAdminRole]
     serializer_class = MenuItemDetailSerializer
     queryset = MenuItem.objects.select_related('danh_muc').prefetch_related('dinh_luong__nguyen_lieu').all()
 
@@ -230,19 +230,19 @@ class MenuItemDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 # -----------------------------------------------------------------------------
 
 class NguyenLieuListCreateAPIView(generics.ListCreateAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = NguyenLieuSerializer
     queryset = NguyenLieu.objects.all().order_by('ten_nguyen_lieu')
 
 class NguyenLieuDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = NguyenLieuSerializer
     queryset = NguyenLieu.objects.all()
 # dashboard/api_views.py
 
 class NhapKhoAPIView(APIView):
     """API chuyên dụng cho nghiệp vụ Nhập Kho."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -262,7 +262,14 @@ class NhapKhoAPIView(APIView):
         
         try:
             admin_user = request.user
-            nhan_vien_admin = NhanVien.objects.get(tai_khoan=admin_user)
+            try:
+                nhan_vien_admin = NhanVien.objects.get(tai_khoan=admin_user)
+            except NhanVien.DoesNotExist:
+                nhan_vien_admin = None # Gán là None nếu không có đối tượng liên kết
+                # THÊM MỘT CHECK ĐỂ KHÔNG CHO THAO TÁC NẾU USER KHÔNG PHẢI LÀ SUPERUSER
+                if not admin_user.is_superuser:
+                    return Response({'error': 'Tài khoản của bạn chưa được liên kết với một đối tượng Nhân viên. Vui lòng liên kết trong trang Django Admin.'}, status=status.HTTP_403_FORBIDDEN)
+            # <<< END LOGIC ĐÃ SỬA >>>
             nguyen_lieu = NguyenLieu.objects.get(pk=nguyen_lieu_id)
 
             NguyenLieu.objects.filter(pk=nguyen_lieu_id).update(so_luong_ton=F('so_luong_ton') + so_luong_nhap)
@@ -315,25 +322,25 @@ class MayDashboardSerializer(serializers.ModelSerializer):
 
 class LoaiMayListCreateAPIView(generics.ListCreateAPIView):
     """API để lấy và tạo Loại Máy."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = LoaiMayDashboardSerializer
     queryset = LoaiMay.objects.all().order_by('ten_loai')
 
 class LoaiMayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """API để xem, sửa, xóa một Loại Máy."""
-    permission_classes = [IsAdminUser, IsAdminRole]
+    permission_classes = [IsAdminRole, IsAdminRole]
     serializer_class = LoaiMayDashboardSerializer
     queryset = LoaiMay.objects.all()
 
 class MayListCreateAPIView(generics.ListCreateAPIView):
     """API để lấy và tạo Máy."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = MayDashboardSerializer
     queryset = May.objects.select_related('loai_may').all().order_by('ten_may')
 
 class MayDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """API để xem, sửa, xóa một Máy."""
-    permission_classes = [IsAdminUser, IsAdminRole] 
+    permission_classes = [IsAdminRole, IsAdminRole] 
     serializer_class = MayDashboardSerializer
     queryset = May.objects.all()
     
@@ -347,7 +354,7 @@ class ReportSummaryAPIView(APIView):
     """
     API cung cấp dữ liệu tóm tắt cho trang báo cáo, có thể lọc theo ngày.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def get(self, request, *args, **kwargs):
         start_date_str = request.query_params.get('start_date')
@@ -409,7 +416,7 @@ class ReportSummaryAPIView(APIView):
         return Response(data)
 class CaLamViecListAPIView(generics.ListAPIView):
     """API để lấy danh sách các ca làm việc đã kết thúc, có thể lọc theo ngày."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = CaLamViecSerializer # Dùng lại serializer đã có
 
     def get_queryset(self):
@@ -427,7 +434,7 @@ class CaLamViecListAPIView(generics.ListAPIView):
 
 class CaLamViecDetailAPIView(generics.RetrieveAPIView):
     """API để lấy chi tiết một ca làm việc."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = ChiTietCaLamViecSerializer # Dùng serializer chi tiết
     queryset = CaLamViec.objects.all()
     
@@ -448,7 +455,7 @@ class ReportSummaryAPIView(APIView):
     API cung cấp dữ liệu tóm tắt cho trang báo cáo, có thể lọc theo ngày.
     Đã nâng cấp để tính toán lợi nhuận.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def get(self, request, *args, **kwargs):
         start_date_str = request.query_params.get('start_date')
@@ -516,7 +523,7 @@ class ProductPerformanceAPIView(APIView):
     """
     API phân tích hiệu suất sản phẩm, đã nâng cấp để tính lợi nhuận.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def get(self, request, *args, **kwargs):
         start_date_str = request.query_params.get('start_date')
@@ -577,7 +584,7 @@ class PeakHoursAPIView(APIView):
     """
     API phân tích doanh thu theo từng giờ trong ngày (giờ cao điểm).
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def get(self, request, *args, **kwargs):
         start_date_str = request.query_params.get('start_date')
@@ -630,7 +637,7 @@ class CustomerAnalyticsAPIView(generics.ListAPIView):
     """
     API cung cấp dữ liệu phân tích khách hàng, bao gồm tổng nạp và tổng chi tiêu.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = CustomerAnalyticsSerializer
 
     def get_queryset(self):
@@ -659,7 +666,7 @@ class CustomerAnalyticsAPIView(generics.ListAPIView):
 # -----------------------------------------------------------------------------
 # <<< CLASS NÀY ĐÃ ĐƯỢC CHÈN VÀO VỊ TRÍ ĐÚNG >>>
 class CustomerDetailAPIView(generics.RetrieveAPIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = CustomerDetailSerializer
     lookup_field = 'pk' # pk là TaiKhoan.id
 
@@ -714,7 +721,7 @@ class LichSuKhoAPIView(generics.ListAPIView):
     """
     API cung cấp lịch sử thay đổi kho, hỗ trợ lọc theo ngày, loại thay đổi, và nhân viên.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = LichSuThayDoiKhoSerializer
 
     def get_queryset(self):
@@ -761,13 +768,13 @@ class LichSuKhoAPIView(generics.ListAPIView):
 
 class KhuyenMaiListCreateAPIView(generics.ListCreateAPIView):
     """API để lấy danh sách và tạo mới mã khuyến mãi."""
-    permission_classes = [IsAdminUser, IsAdminRole]
+    permission_classes = [IsAdminRole, IsAdminRole]
     serializer_class = KhuyenMaiSerializer
     queryset = KhuyenMai.objects.all().order_by('-ngay_bat_dau')
 
 class KhuyenMaiDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """API để xem, sửa, xóa mã khuyến mãi."""
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = KhuyenMaiSerializer
     queryset = KhuyenMai.objects.all()
     
@@ -776,7 +783,7 @@ class NotificationListAPIView(generics.ListAPIView):
     API để lấy danh sách các thông báo chưa đọc cho Admin.
     Hỗ trợ lọc theo da_doc và giới hạn số lượng.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
     serializer_class = ThongBaoSerializer
 
     def get_queryset(self):
@@ -795,7 +802,7 @@ class NotificationMarkReadAPIView(APIView):
     """
     API để đánh dấu một thông báo là đã đọc hoặc đánh dấu tất cả là đã đọc.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminRole]
 
     def post(self, request, pk=None, *args, **kwargs):
         user = request.user

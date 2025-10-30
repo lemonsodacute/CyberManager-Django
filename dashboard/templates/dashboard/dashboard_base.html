@@ -134,7 +134,8 @@
     <!-- Scripts chính -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{% static 'js/api_client.js' %}"></script>
+    <!-- Dùng đường dẫn tuyệt đối với cổng 9000 để đảm bảo tải từ Django Server -->
+<script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
     
     {% block extra_js %}{% endblock %}
 

@@ -51,19 +51,26 @@ INSTALLED_APPS = [
     # 3. Các app của bên thứ ba khác (nếu có)
     
     # 4. Các app của chính bạn (nằm ở cuối cùng)
+    'django_apscheduler',
     'accounts.apps.AccountsConfig',
-    'quanly.apps.QuanlyConfig',
+    'quanly.apps.QuanLyConfig',
     
     
 ]
 # <<< CẤU HÌNH ASGI VÀ CHANNELS >>>
 ASGI_APPLICATION = 'quanlynet.asgi.application'
-
+CELERY_BEAT_SCHEDULE = {
+    'auto-shutdown-sessions-every-30-seconds': {
+        'task': 'quanly.tasks.auto_shutdown_task',
+        'schedule': 30.0,  # chạy mỗi 30 giây
+    },
+}
+# settings.py
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer', 
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6380)], # Đảm bảo Redis đang chạy trên cổng 6379
+            "hosts": [('127.0.0.1', 6380)], # <-- Kiểm tra cổng này khớp với Redis của bạn
         },
     },
 }
@@ -150,6 +157,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

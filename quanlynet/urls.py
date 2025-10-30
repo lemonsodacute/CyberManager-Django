@@ -1,19 +1,19 @@
-# quanlynet/urls.py (Project Root)
-
+# quanlynet/urls.py
 from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    # Cần phải đặt một trang mặc định (/) để chuyển hướng đến login
-    path('', include('accounts.urls')), # <<< SỬA: Bắt đầu từ trang accounts/urls/ (nơi login được định nghĩa)
+    # URL gốc / sẽ xử lý login, logout, home của accounts
+    path('', include('accounts.urls')), 
     
     path('admin/', admin.site.urls),
     path('pos/', include('quanly.urls')), 
     path('dashboard/', include('dashboard.urls')),
     path('api/dashboard/', include('dashboard.api_urls')),
     
-    # <<< DÒNG NÀY PHẢI ĐƯỢC GIỮ LẠI VÀ CHỈ ĐỊNH RÕ RÀNG >>>
-     path('', include('accounts.urls')),
-     path('accounts/', include('accounts.urls')), 
-    # XÓA HOẶC COMMENT CÁC DÒNG LOGIN/LOGOUT CŨ TẠI ĐÂY NẾU CÓ
+    # ✅ Thêm dòng này để bật toàn bộ POS API
+    path('api/', include('quanly.api_urls')),  
+    
+    # GIỮ LẠI PATH ACCOUNTS ĐỂ XỬ LÝ /accounts/login, /accounts/logout, v.v.
+    path('accounts/', include('accounts.urls')), 
 ]

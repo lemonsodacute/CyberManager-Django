@@ -2,8 +2,19 @@
 
 from django.urls import path
 from . import api_views
+from django.db import models 
 
 urlpatterns = [
+  path('order/debt-list/', api_views.NhanVienNoDichVuListAPIView.as_view(), name='api_order_debt_list'),
+    # ...
+    path('order/<int:pk>/pay-debt/', api_views.ThanhToanNoDichVuAPIView.as_view(), name='api_order_pay_debt'),
+      # APIs cho Khuyến mãi
+    path('promotions/check/', api_views.CheckPromotionAPIView.as_view(), name='api_check_promotion'), # Cho đơn hàng dịch vụ
+    # <<< THÊM URL MỚI CHO KIỂM TRA KHUYẾN MÃI NẠP TIỀN >>>
+    path('promotions/check-topup/<int:pk>/', api_views.CheckTopupPromotionAPIView.as_view(), name='api_check_topup_promotion'), # Cho nạp tiền khách hàng (pk là khach_hang_id)
+   # <<< THÊM URL MỚI ĐỂ LẤY DANH SÁCH MÃ KM NẠP TIỀN HỢP LỆ >>>
+    path('promotions/active-topup-list/', api_views.GetActiveTopupPromotionsAPIView.as_view(), name='api_active_topup_promotions'),
+    # <<< KẾT THÚC THÊM URL MỚI >>>
     # APIs cho Máy và Phiên
     path('may/', api_views.DanhSachMayAPIView.as_view(), name='api_danh_sach_may'),
     path('may/<int:pk>/mo-may/', api_views.MoMayAPIView.as_view(), name='api_mo_may'),

@@ -1,4 +1,5 @@
 <!-- templates/admin/order.html -->
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -44,6 +45,27 @@
                     <div id="cart-container" class="list-group mb-3">
                         <div class="list-group-item text-muted text-center p-4" id="empty-cart-message">Chưa có sản phẩm.</div>
                     </div>
+                    
+                    <!-- PHẦN KHUYẾN MÃI -->
+                    <div class="mb-3">
+                        <label for="promo-code-input" class="form-label small">Mã Khuyến Mãi</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="promo-code-input" placeholder="Nhập mã KM">
+                            <button class="btn btn-outline-secondary" type="button" id="apply-promo-btn">Áp dụng</button>
+                        </div>
+                        <small id="promo-message" class="form-text text-muted d-block mt-1"></small>
+                    </div>
+                    <!-- KẾT THÚC PHẦN KHUYẾN MÃI -->
+
+                    <div class="d-flex justify-content-between">
+                        <span>Tổng tiền gốc:</span>
+                        <span id="cart-subtotal" class="text-secondary">0 VNĐ</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Giảm giá:</span>
+                        <span id="cart-discount" class="text-success">- 0 VNĐ</span>
+                    </div>
+                    <hr>
                     <div class="d-flex justify-content-between fs-4 fw-bold">
                         <span>Tổng cộng:</span>
                         <span id="cart-total" class="text-danger">0 VNĐ</span>
@@ -53,9 +75,9 @@
                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                             <i class="bi bi-cash-coin me-1"></i> Thanh Toán Ngay (Bán Lẻ)
                         </button>
-                        <button class="btn btn-info btn-lg text-white" id="checkout-debt-btn">
+                        <button class="btn btn-success btn-lg" id="checkout-debt-btn">
                              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            <i class="bi bi-receipt me-1"></i> Ghi Nợ Vào Phiên
+                            <i class="bi bi-receipt me-1"></i> Ghi Nợ / Order
                         </button>
                     </div>
                 </div>
@@ -70,10 +92,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuContainer = document.getElementById('menu-container');
     const cartContainer = document.getElementById('cart-container');
     const cartTotalEl = document.getElementById('cart-total');
+    const cartSubtotalEl = document.getElementById('cart-subtotal'); 
+    const cartDiscountEl = document.getElementById('cart-discount'); 
     const pageTitle = document.getElementById('page-title');
     const emptyCartMessage = document.getElementById('empty-cart-message');
     const checkoutCashBtn = document.getElementById('checkout-cash-btn');
-    const checkoutDebtBtn = document.getElementById('checkout-debt-btn');
+    const checkoutDebtBtn = document.getElementById('checkout-debt-btn'); // Nút Ghi Nợ/Order
+    
+    const promoCodeInput = document.getElementById('promo-code-input');
+    const applyPromoBtn = document.getElementById('apply-promo-btn');
+    const promoMessageEl = document.getElementById('promo-message');
+    let appliedPromotion = null;
 
     let menuData = [];
     let cart = {}; 
@@ -81,33 +110,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('phien_id');
     const machineName = urlParams.get('may_ten');
-     const API_BASE_URL = '/pos/api';
+    const hinhThuc = urlParams.get('hinh_thuc'); 
+    const API_BASE_URL = '/pos/api';
     
     // --- CÁC HÀM TIỆN ÍCH ---
     function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
     const csrftoken = getCookie('csrftoken');
     const formatCurrency = (v) => Math.ceil(v).toLocaleString('vi-VN') + ' VNĐ';
     
-    // --- LOGIC GIAO DIỆN ---
+    // --- LOGIC GIAO DIỆN (ĐÃ SỬA) ---
     if (sessionId && machineName) {
         pageTitle.innerHTML = `Order cho <span class="text-primary fw-bold">${machineName}</span>`;
-        checkoutCashBtn.style.display = 'none';
+        checkoutCashBtn.style.display = 'none'; // Ẩn nút thanh toán tiền mặt
+
+        // Đã sửa trong HTML thành btn-success
+        checkoutDebtBtn.innerHTML = '<span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span><i class="bi bi-receipt me-1"></i> Ghi Nợ / Order';
+        
+        promoCodeInput.disabled = false; // Bật khuyến mãi cho dịch vụ
+        applyPromoBtn.disabled = false;
+        promoMessageEl.textContent = "Khuyến mãi (nếu có) sẽ áp dụng cho Order này.";
+
     } else {
+        // Order Bán lẻ thuần túy
         pageTitle.textContent = 'Order Dịch Vụ / Bán Lẻ';
-        checkoutDebtBtn.style.display = 'none';
+        checkoutDebtBtn.style.display = 'none'; // Ẩn nút ghi nợ
+        
+        promoCodeInput.disabled = false; 
+        applyPromoBtn.disabled = false;
+        promoMessageEl.textContent = "Khuyến mãi (nếu có) sẽ áp dụng cho đơn hàng này.";
     }
 
     // --- CÁC HÀM RENDER ---
     function renderCart() {
         cartContainer.innerHTML = '';
-        let total = 0;
+        let subtotal = 0;
         const items = Object.values(cart);
 
         emptyCartMessage.style.display = items.length === 0 ? 'block' : 'none';
 
         items.forEach(item => {
             const itemTotal = item.data.don_gia * item.so_luong;
-            total += itemTotal;
+            subtotal += itemTotal; // Tính tổng tiền gốc
             cartContainer.innerHTML += `
                 <div class="list-group-item">
                     <div class="d-flex w-100 justify-content-between">
@@ -125,7 +168,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
-        cartTotalEl.textContent = formatCurrency(total);
+        
+        cartSubtotalEl.textContent = formatCurrency(subtotal);
+        let discountAmount = 0;
+        let finalTotal = subtotal;
+
+        if (appliedPromotion) {
+            discountAmount = appliedPromotion.applied_discount_amount;
+            finalTotal = appliedPromotion.total_after_discount;
+            promoMessageEl.textContent = appliedPromotion.message;
+            promoMessageEl.classList.remove('text-muted', 'text-danger');
+            promoMessageEl.classList.add('text-success');
+        } else if (promoCodeInput.value) {
+             promoMessageEl.textContent = "Chưa có mã khuyến mãi được áp dụng.";
+             promoMessageEl.classList.remove('text-success');
+             promoMessageEl.classList.add('text-muted');
+        } else {
+             promoMessageEl.textContent = "";
+        }
+        
+        cartDiscountEl.textContent = `- ${formatCurrency(discountAmount)}`;
+        cartTotalEl.textContent = formatCurrency(finalTotal);
     }
 
     // --- CÁC HÀM XỬ LÝ ---
@@ -137,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (cart[itemId] && cart[itemId].so_luong > 1) cart[itemId].so_luong--;
             else if (cart[itemId] && cart[itemId].so_luong === 1) delete cart[itemId];
         }
+        appliedPromotion = null;
         renderCart();
     }
 
@@ -148,6 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemData = menuData.find(item => item.id === itemId);
             if (itemData) cart[itemId] = { data: itemData, so_luong: 1 };
         }
+        appliedPromotion = null;
         renderCart();
     }
 
@@ -182,6 +247,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    async function checkPromotion() {
+        const promoCode = promoCodeInput.value.trim();
+        if (!promoCode) {
+            promoMessageEl.textContent = "Vui lòng nhập mã khuyến mãi.";
+            promoMessageEl.classList.remove('text-success', 'text-muted');
+            promoMessageEl.classList.add('text-danger');
+            appliedPromotion = null;
+            renderCart();
+            return;
+        }
+
+        const itemsToSend = Object.values(cart).map(item => ({ id: item.data.id, so_luong: item.so_luong }));
+        if (itemsToSend.length === 0) {
+            promoMessageEl.textContent = "Giỏ hàng đang trống, không thể áp dụng khuyến mãi.";
+            promoMessageEl.classList.remove('text-success', 'text-danger');
+            promoMessageEl.classList.add('text-muted');
+            appliedPromotion = null;
+            renderCart();
+            return;
+        }
+
+        applyPromoBtn.disabled = true;
+        promoCodeInput.disabled = true;
+        promoMessageEl.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang kiểm tra...';
+        promoMessageEl.classList.remove('text-success', 'text-danger');
+        promoMessageEl.classList.add('text-muted');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/promotions/check/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ ma_khuyen_mai: promoCode, items: itemsToSend })
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Lỗi không xác định khi kiểm tra mã.');
+            }
+            
+            appliedPromotion = {
+                ma_khuyen_mai: data.ma_khuyen_mai,
+                total_before_discount: parseFloat(data.total_before_discount),
+                total_after_discount: parseFloat(data.total_after_discount),
+                applied_discount_amount: parseFloat(data.applied_discount_amount),
+                message: data.success,
+                mo_ta: data.mo_ta
+            };
+            promoMessageEl.textContent = `Áp dụng thành công: ${data.mo_ta}. Bạn được giảm ${formatCurrency(appliedPromotion.applied_discount_amount)}.`;
+            promoMessageEl.classList.remove('text-muted', 'text-danger');
+            promoMessageEl.classList.add('text-success');
+
+        } catch (error) {
+            promoMessageEl.textContent = `Lỗi: ${error.message}`;
+            promoMessageEl.classList.remove('text-success', 'text-muted');
+            promoMessageEl.classList.add('text-danger');
+            appliedPromotion = null;
+        } finally {
+            applyPromoBtn.disabled = false;
+            promoCodeInput.disabled = false;
+            renderCart(); 
+        }
+    }
+
     async function checkout(loaiDonHang, buttonEl) {
         const items = Object.values(cart).map(item => ({ id: item.data.id, so_luong: item.so_luong }));
         if (items.length === 0) {
@@ -192,21 +320,51 @@ document.addEventListener('DOMContentLoaded', function() {
         buttonEl.disabled = true;
         buttonEl.querySelector('.spinner-border').classList.remove('d-none');
 
+        let finalLoaiDonHang = loaiDonHang;
+        
+        // <<< LOGIC SỬA LỖI QUAN TRỌNG: BUỘC GHI NỢ NẾU CÓ SESSION ID >>>
+        if (sessionId) {
+            finalLoaiDonHang = 'GHI_NO'; 
+        }
+        // <<< KẾT THÚC SỬA LOGIC >>>
+
+        const payload = { 
+            items, 
+            loai_don_hang: finalLoaiDonHang, 
+            phien_id: sessionId 
+        };
+        // Thêm mã khuyến mãi vào payload
+        if (appliedPromotion) {
+            payload.ma_khuyen_mai = appliedPromotion.ma_khuyen_mai;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/order/tao-moi/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                body: JSON.stringify({ items, loai_don_hang: loaiDonHang, phien_id: sessionId })
+                body: JSON.stringify(payload)
             });
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Lỗi không xác định.');
             
-            alert('Tạo đơn hàng thành công!');
-            // Gửi thông điệp để trang chính có thể tự cập nhật nếu cần
+            if (!response.ok) {
+                 throw new Error(data.error || 'Lỗi không xác định.');
+            }
+            
+            // Trường hợp thành công (BÁN LẺ THUẦN TÚY hoặc GHI NỢ)
+            let successMessage = `Tạo đơn hàng thành công! Tổng tiền: ${formatCurrency(data.tong_tien_cuoi)}.`;
+            if (finalLoaiDonHang === 'GHI_NO') {
+                successMessage = `Order đã được ghi nợ vào phiên! Tổng nợ: ${formatCurrency(data.tong_tien_cuoi)}.`;
+            } else if (data.tien_giam_gia > 0) {
+                 successMessage += ` (Giảm: ${formatCurrency(data.tien_giam_gia)})`;
+            }
+            
+            alert(successMessage);
+
             if (window.opener) {
                  window.opener.postMessage('order_successful', '*');
             }
             window.close();
+            
         } catch (error) {
             alert(`Lỗi: ${error.message}`);
         } finally {
@@ -225,12 +383,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const button = e.target.closest('.cart-item-controls');
         if (button) updateCart(button.dataset.itemId, button.dataset.action);
     });
+    
+    applyPromoBtn.addEventListener('click', checkPromotion);
+    promoCodeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            checkPromotion();
+        }
+    });
+    promoCodeInput.addEventListener('input', () => {
+        if (!promoCodeInput.value.trim()) {
+            appliedPromotion = null;
+            renderCart();
+        }
+    });
 
     checkoutCashBtn.addEventListener('click', (e) => checkout('BAN_LE', e.currentTarget));
     checkoutDebtBtn.addEventListener('click', (e) => checkout('GHI_NO', e.currentTarget));
 
     // --- KHỞI CHẠY ---
     loadMenu();
+    renderCart(); 
 });
 </script>
 </body>

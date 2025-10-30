@@ -5,7 +5,6 @@
         {
             "label": "1. Run Redis Server",
             "type": "shell",
-            // ĐƯỜNG DẪN CẦN SỬA: Dùng cổng 6380
             "command": "E:/Redis/redis-server.exe --port 6380",
             "group": "build",
             "isBackground": true,
@@ -19,12 +18,28 @@
             "problemMatcher": []
         },
         {
-            "label": "2. Run Daphne (ASGI/WebSockets)",
+            "label": "2. Run Django Runserver (Autoreload)",
             "type": "shell",
-            // Chạy Daphne trên cổng 8000
+            "command": "python manage.py runserver 9000",
+            "group": "build",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "3. Run Daphne (ASGI/WebSockets)",
+            "type": "shell",
             "command": "daphne quanlynet.asgi:application -b 127.0.0.1 -p 8000",
             "group": "build",
-            "dependsOn": ["1. Run Redis Server"],
+            "dependsOn": [
+                "1. Run Redis Server"
+            ],
             "isBackground": true,
             "presentation": {
                 "reveal": "always",
@@ -36,14 +51,19 @@
             "problemMatcher": []
         },
         {
-            "label": "3. Run Django Runserver (Autoreload)",
-    "type": "shell",
-    "command": "python manage.py runserver 9000", // <<< LỆNH NÀY LÀ ĐÚNG
+            "label": "4. Run Auto-Shutdown Worker",
+            "type": "shell",
+            // Lệnh runworker để chạy Worker Consumer của bạn
+            "command": "python manage.py runworker quanly.routing.worker_urlpatterns --threads 1", 
             "group": "build",
+            "dependsOn": [
+                "1. Run Redis Server"
+            ],
             "isBackground": true,
             "presentation": {
                 "reveal": "always",
-                "panel": "dedicated"
+                "panel": "dedicated",
+                "focus": false // Không cần focus, chỉ cần chạy
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -51,8 +71,13 @@
             "problemMatcher": []
         },
         {
-            "label": "Start All Services (Redis + Daphne + Django)",
-            "dependsOn": ["1. Run Redis Server", "2. Run Daphne (ASGI/WebSockets)", "3. Run Django Runserver (Autoreload)"],
+            "label": "Start All Services (Redis + Daphne + Django + Worker)",
+            "dependsOn": [
+                "1. Run Redis Server",
+                "2. Run Django Runserver (Autoreload)",
+                "3. Run Daphne (ASGI/WebSockets)",
+                "4. Run Auto-Shutdown Worker" // <<< THÊM WORKER VÀO DEPENDS ON
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true

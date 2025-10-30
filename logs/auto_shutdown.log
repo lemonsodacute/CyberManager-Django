@@ -1,0 +1,585 @@
+2025-10-30 20:39:34,471 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:39:34,477 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:39:34,478 [INFO] Scheduler started
+2025-10-30 20:39:35,161 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:39:35,168 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:39:35,168 [INFO] Scheduler started
+2025-10-30 20:39:35,193 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:40:05,168 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:40:05 +07)" (scheduled at 2025-10-30 20:40:05.161088+07:00)
+2025-10-30 20:40:05,168 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:40:05 +07)" (scheduled at 2025-10-30 20:40:05.161088+07:00)
+2025-10-30 20:40:05,196 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:40:05,446 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:40:05,450 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:40:35 +07)" executed successfully
+2025-10-30 20:40:05,634 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:40:05,640 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:40:35 +07)" executed successfully
+2025-10-30 20:40:35,166 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:05 +07)" (scheduled at 2025-10-30 20:40:35.161088+07:00)
+2025-10-30 20:40:35,170 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:05 +07)" (scheduled at 2025-10-30 20:40:35.161088+07:00)
+2025-10-30 20:40:35,251 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:40:35,257 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:05 +07)" executed successfully
+2025-10-30 20:40:35,315 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:40:35,325 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:05 +07)" executed successfully
+2025-10-30 20:41:05,174 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:35 +07)" (scheduled at 2025-10-30 20:41:05.161088+07:00)
+2025-10-30 20:41:05,174 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:35 +07)" (scheduled at 2025-10-30 20:41:05.161088+07:00)
+2025-10-30 20:41:05,209 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:41:05,213 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:35 +07)" executed successfully
+2025-10-30 20:41:05,232 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:41:05,240 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:41:35 +07)" executed successfully
+2025-10-30 20:41:35,173 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:05 +07)" (scheduled at 2025-10-30 20:41:35.161088+07:00)
+2025-10-30 20:41:35,245 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:41:35,250 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:05 +07)" executed successfully
+2025-10-30 20:41:35,293 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:41:35,300 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:05 +07)" executed successfully
+2025-10-30 20:42:05,167 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:35 +07)" (scheduled at 2025-10-30 20:42:05.161088+07:00)
+2025-10-30 20:42:05,253 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:42:05,259 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:35 +07)" executed successfully
+2025-10-30 20:42:05,318 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:42:05,325 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:35 +07)" executed successfully
+2025-10-30 20:42:08,241 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:42:08,244 [INFO] Scheduler has been shut down
+2025-10-30 20:42:09,765 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:42:09,776 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:42:09,777 [INFO] Scheduler started
+2025-10-30 20:42:09,812 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:42:11,643 [WARNING] Not Found: /
+2025-10-30 20:42:39,770 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:09 +07)" (scheduled at 2025-10-30 20:42:39.765491+07:00)
+2025-10-30 20:42:39,771 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:42:39 +07)" (scheduled at 2025-10-30 20:42:39.765491+07:00)
+2025-10-30 20:42:39,837 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:42:39,842 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:09 +07)" executed successfully
+2025-10-30 20:42:40,088 [ERROR] [ERROR] Lỗi khi xử lý phiên #12: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:42:40,091 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:09 +07)" executed successfully
+2025-10-30 20:43:09,775 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:39 +07)" (scheduled at 2025-10-30 20:43:09.765491+07:00)
+2025-10-30 20:43:09,776 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:39 +07)" (scheduled at 2025-10-30 20:43:09.765491+07:00)
+2025-10-30 20:43:09,782 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:39 +07)" executed successfully
+2025-10-30 20:43:09,782 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:43:39 +07)" executed successfully
+2025-10-30 20:43:09,799 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:43:39,775 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:09 +07)" (scheduled at 2025-10-30 20:43:39.765491+07:00)
+2025-10-30 20:43:39,776 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:09 +07)" (scheduled at 2025-10-30 20:43:39.765491+07:00)
+2025-10-30 20:43:39,782 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:09 +07)" executed successfully
+2025-10-30 20:43:39,783 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:09 +07)" executed successfully
+2025-10-30 20:43:39,797 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:44:09,767 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:39 +07)" (scheduled at 2025-10-30 20:44:09.765491+07:00)
+2025-10-30 20:44:09,790 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:39 +07)" executed successfully
+2025-10-30 20:44:09,801 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:44:39 +07)" executed successfully
+2025-10-30 20:44:39,777 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:09 +07)" (scheduled at 2025-10-30 20:44:39.765491+07:00)
+2025-10-30 20:44:39,786 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:09 +07)" (scheduled at 2025-10-30 20:44:39.765491+07:00)
+2025-10-30 20:44:39,832 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:09 +07)" executed successfully
+2025-10-30 20:44:39,845 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:09 +07)" executed successfully
+2025-10-30 20:45:09,775 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:39 +07)" (scheduled at 2025-10-30 20:45:09.765491+07:00)
+2025-10-30 20:45:09,776 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:39 +07)" (scheduled at 2025-10-30 20:45:09.765491+07:00)
+2025-10-30 20:45:09,797 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:39 +07)" executed successfully
+2025-10-30 20:45:09,806 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:45:39 +07)" executed successfully
+2025-10-30 20:45:39,778 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:09 +07)" (scheduled at 2025-10-30 20:45:39.765491+07:00)
+2025-10-30 20:45:39,778 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:09 +07)" (scheduled at 2025-10-30 20:45:39.765491+07:00)
+2025-10-30 20:45:39,821 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:09 +07)" executed successfully
+2025-10-30 20:45:39,835 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:09 +07)" executed successfully
+2025-10-30 20:46:09,770 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:39 +07)" (scheduled at 2025-10-30 20:46:09.765491+07:00)
+2025-10-30 20:46:09,770 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:39 +07)" (scheduled at 2025-10-30 20:46:09.765491+07:00)
+2025-10-30 20:46:09,794 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:39 +07)" executed successfully
+2025-10-30 20:46:09,800 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:46:39 +07)" executed successfully
+2025-10-30 20:46:39,773 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:09 +07)" (scheduled at 2025-10-30 20:46:39.765491+07:00)
+2025-10-30 20:46:39,803 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:09 +07)" executed successfully
+2025-10-30 20:46:39,818 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:09 +07)" executed successfully
+2025-10-30 20:47:09,779 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:39 +07)" (scheduled at 2025-10-30 20:47:09.765491+07:00)
+2025-10-30 20:47:09,779 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:39 +07)" (scheduled at 2025-10-30 20:47:09.765491+07:00)
+2025-10-30 20:47:09,803 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:39 +07)" executed successfully
+2025-10-30 20:47:09,813 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:47:39 +07)" executed successfully
+2025-10-30 20:47:39,783 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:09 +07)" (scheduled at 2025-10-30 20:47:39.765491+07:00)
+2025-10-30 20:47:39,785 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:09 +07)" (scheduled at 2025-10-30 20:47:39.765491+07:00)
+2025-10-30 20:47:39,812 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:09 +07)" executed successfully
+2025-10-30 20:47:39,825 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:09 +07)" executed successfully
+2025-10-30 20:48:09,779 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:39 +07)" (scheduled at 2025-10-30 20:48:09.765491+07:00)
+2025-10-30 20:48:09,779 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:39 +07)" (scheduled at 2025-10-30 20:48:09.765491+07:00)
+2025-10-30 20:48:09,827 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:39 +07)" executed successfully
+2025-10-30 20:48:09,847 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:48:39 +07)" executed successfully
+2025-10-30 20:48:24,329 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:48:24,331 [INFO] Scheduler has been shut down
+2025-10-30 20:48:26,810 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:48:26,836 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:48:26,836 [INFO] Scheduler started
+2025-10-30 20:48:26,906 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:48:56,812 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:26 +07)" (scheduled at 2025-10-30 20:48:56.810529+07:00)
+2025-10-30 20:48:56,829 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:26 +07)" (scheduled at 2025-10-30 20:48:56.810529+07:00)
+2025-10-30 20:48:56,840 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:48:56,851 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:26 +07)" executed successfully
+2025-10-30 20:48:56,891 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:26 +07)" executed successfully
+2025-10-30 20:49:26,817 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:56 +07)" (scheduled at 2025-10-30 20:49:26.810529+07:00)
+2025-10-30 20:49:26,818 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:56 +07)" (scheduled at 2025-10-30 20:49:26.810529+07:00)
+2025-10-30 20:49:26,850 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:56 +07)" executed successfully
+2025-10-30 20:49:26,866 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:49:56 +07)" executed successfully
+2025-10-30 20:49:56,822 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:26 +07)" (scheduled at 2025-10-30 20:49:56.810529+07:00)
+2025-10-30 20:49:56,823 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:26 +07)" (scheduled at 2025-10-30 20:49:56.810529+07:00)
+2025-10-30 20:49:56,842 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:49:56,892 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:49:56,894 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:26 +07)" executed successfully
+2025-10-30 20:49:56,945 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:49:56,947 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:26 +07)" executed successfully
+2025-10-30 20:50:26,824 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:56 +07)" (scheduled at 2025-10-30 20:50:26.810529+07:00)
+2025-10-30 20:50:26,824 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:56 +07)" (scheduled at 2025-10-30 20:50:26.810529+07:00)
+2025-10-30 20:50:26,897 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:50:26,900 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:56 +07)" executed successfully
+2025-10-30 20:50:26,936 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:50:26,939 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:50:56 +07)" executed successfully
+2025-10-30 20:50:56,825 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:51:26 +07)" (scheduled at 2025-10-30 20:50:56.810529+07:00)
+2025-10-30 20:50:56,825 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:51:26 +07)" (scheduled at 2025-10-30 20:50:56.810529+07:00)
+2025-10-30 20:50:56,865 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:50:56,867 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:51:26 +07)" executed successfully
+2025-10-30 20:50:56,885 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:50:56,887 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:51:26 +07)" executed successfully
+2025-10-30 20:51:00,670 [INFO] E:\1_Projects\Python_NET\quanly\models.py changed, reloading.
+2025-10-30 20:51:00,672 [INFO] Scheduler has been shut down
+2025-10-30 20:51:01,893 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:51:01,902 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:51:01,902 [INFO] Scheduler started
+2025-10-30 20:51:01,924 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:51:31,902 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:01 +07)" (scheduled at 2025-10-30 20:51:31.893396+07:00)
+2025-10-30 20:51:31,902 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:01 +07)" (scheduled at 2025-10-30 20:51:31.893396+07:00)
+2025-10-30 20:51:31,940 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:51:31,941 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:01 +07)" executed successfully
+2025-10-30 20:51:32,026 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:51:32,027 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:01 +07)" executed successfully
+2025-10-30 20:52:01,906 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:31 +07)" (scheduled at 2025-10-30 20:52:01.893396+07:00)
+2025-10-30 20:52:01,906 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:31 +07)" (scheduled at 2025-10-30 20:52:01.893396+07:00)
+2025-10-30 20:52:01,934 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:52:01,936 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:31 +07)" executed successfully
+2025-10-30 20:52:01,954 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:52:01,960 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:52:31 +07)" executed successfully
+2025-10-30 20:52:17,840 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:52:17,842 [INFO] Scheduler has been shut down
+2025-10-30 20:52:18,981 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:52:18,992 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:52:18,993 [INFO] Scheduler started
+2025-10-30 20:52:19,022 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:52:48,990 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:53:18 +07)" (scheduled at 2025-10-30 20:52:48.981472+07:00)
+2025-10-30 20:52:48,991 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:53:18 +07)" (scheduled at 2025-10-30 20:52:48.981472+07:00)
+2025-10-30 20:52:49,000 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:52:49,027 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:52:49,029 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:53:18 +07)" executed successfully
+2025-10-30 20:52:49,120 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:52:49,122 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:53:18 +07)" executed successfully
+2025-10-30 20:52:57,291 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:52:57,293 [INFO] Scheduler has been shut down
+2025-10-30 20:52:58,396 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:52:58,404 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:52:58,404 [INFO] Scheduler started
+2025-10-30 20:52:58,429 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:53:08,174 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:53:08,176 [INFO] Scheduler has been shut down
+2025-10-30 20:53:14,799 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:53:14,807 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:53:14,807 [INFO] Scheduler started
+2025-10-30 20:53:14,831 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:53:44,802 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:14 +07)" (scheduled at 2025-10-30 20:53:44.799863+07:00)
+2025-10-30 20:53:44,803 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:14 +07)" (scheduled at 2025-10-30 20:53:44.799863+07:00)
+2025-10-30 20:53:44,855 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:53:44,858 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:14 +07)" executed successfully
+2025-10-30 20:53:44,890 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:53:44,892 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:14 +07)" executed successfully
+2025-10-30 20:54:14,813 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:44 +07)" (scheduled at 2025-10-30 20:54:14.799863+07:00)
+2025-10-30 20:54:14,814 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:44 +07)" (scheduled at 2025-10-30 20:54:14.799863+07:00)
+2025-10-30 20:54:14,872 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:14,874 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:44 +07)" executed successfully
+2025-10-30 20:54:14,911 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:14,913 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:54:44 +07)" executed successfully
+2025-10-30 20:54:44,816 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:14 +07)" (scheduled at 2025-10-30 20:54:44.799863+07:00)
+2025-10-30 20:54:44,919 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:44,960 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:44,965 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:14 +07)" executed successfully
+2025-10-30 20:54:45,015 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:45,056 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:54:45,060 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:14 +07)" executed successfully
+2025-10-30 20:55:14,815 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:44 +07)" (scheduled at 2025-10-30 20:55:14.799863+07:00)
+2025-10-30 20:55:14,816 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:44 +07)" (scheduled at 2025-10-30 20:55:14.799863+07:00)
+2025-10-30 20:55:14,855 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:14,875 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:14,876 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:44 +07)" executed successfully
+2025-10-30 20:55:14,898 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:14,913 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:14,915 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:55:44 +07)" executed successfully
+2025-10-30 20:55:44,806 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:56:14 +07)" (scheduled at 2025-10-30 20:55:44.799863+07:00)
+2025-10-30 20:55:44,807 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:56:14 +07)" (scheduled at 2025-10-30 20:55:44.799863+07:00)
+2025-10-30 20:55:44,837 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:44,853 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:44,855 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:56:14 +07)" executed successfully
+2025-10-30 20:55:44,871 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:44,884 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:55:44,886 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:56:14 +07)" executed successfully
+2025-10-30 20:56:01,244 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:56:01,246 [INFO] Scheduler has been shut down
+2025-10-30 20:56:02,413 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:56:02,424 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:56:02,425 [INFO] Scheduler started
+2025-10-30 20:56:02,461 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:56:32,429 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:02 +07)" (scheduled at 2025-10-30 20:56:32.413001+07:00)
+2025-10-30 20:56:32,430 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:02 +07)" (scheduled at 2025-10-30 20:56:32.413001+07:00)
+2025-10-30 20:56:32,526 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:56:32,562 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:56:32,566 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:02 +07)" executed successfully
+2025-10-30 20:56:32,604 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:56:32,634 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:56:32,636 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:02 +07)" executed successfully
+2025-10-30 20:57:02,423 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:32 +07)" (scheduled at 2025-10-30 20:57:02.413001+07:00)
+2025-10-30 20:57:02,489 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:02,510 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:02,512 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:32 +07)" executed successfully
+2025-10-30 20:57:02,537 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:02,558 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:02,559 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:57:32 +07)" executed successfully
+2025-10-30 20:57:32,437 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:02 +07)" (scheduled at 2025-10-30 20:57:32.413001+07:00)
+2025-10-30 20:57:32,437 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:02 +07)" (scheduled at 2025-10-30 20:57:32.413001+07:00)
+2025-10-30 20:57:32,491 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:32,530 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:32,534 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:02 +07)" executed successfully
+2025-10-30 20:57:32,634 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:32,662 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:57:32,664 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:02 +07)" executed successfully
+2025-10-30 20:58:02,430 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:32 +07)" (scheduled at 2025-10-30 20:58:02.413001+07:00)
+2025-10-30 20:58:02,431 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:32 +07)" (scheduled at 2025-10-30 20:58:02.413001+07:00)
+2025-10-30 20:58:02,564 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:02,605 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:02,611 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:32 +07)" executed successfully
+2025-10-30 20:58:02,670 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:02,717 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:02,720 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:58:32 +07)" executed successfully
+2025-10-30 20:58:32,419 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:02 +07)" (scheduled at 2025-10-30 20:58:32.413001+07:00)
+2025-10-30 20:58:32,419 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:02 +07)" (scheduled at 2025-10-30 20:58:32.413001+07:00)
+2025-10-30 20:58:32,459 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:32,481 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:32,483 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:02 +07)" executed successfully
+2025-10-30 20:58:32,510 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:32,525 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:58:32,527 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:02 +07)" executed successfully
+2025-10-30 20:58:40,003 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:58:40,004 [INFO] Scheduler has been shut down
+2025-10-30 20:58:40,982 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:58:40,989 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:58:40,989 [INFO] Scheduler started
+2025-10-30 20:58:41,017 [INFO] Watching for file changes with StatReloader
+2025-10-30 20:59:10,988 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:40 +07)" (scheduled at 2025-10-30 20:59:10.982337+07:00)
+2025-10-30 20:59:10,990 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:40 +07)" (scheduled at 2025-10-30 20:59:10.982337+07:00)
+2025-10-30 20:59:11,013 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 20:59:11,111 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:59:11,146 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:59:11,148 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:40 +07)" executed successfully
+2025-10-30 20:59:11,187 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:59:11,209 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 20:59:11,211 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 20:59:40 +07)" executed successfully
+2025-10-30 20:59:35,647 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 20:59:35,650 [INFO] Scheduler has been shut down
+2025-10-30 20:59:37,841 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 20:59:37,853 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 20:59:37,853 [INFO] Scheduler started
+2025-10-30 20:59:37,923 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:00:07,847 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:00:37 +07)" (scheduled at 2025-10-30 21:00:07.840901+07:00)
+2025-10-30 21:00:07,847 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:00:37 +07)" (scheduled at 2025-10-30 21:00:07.840901+07:00)
+2025-10-30 21:00:07,941 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:07,967 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:07,970 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:00:37 +07)" executed successfully
+2025-10-30 21:00:08,009 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:08,036 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:08,039 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:00:37 +07)" executed successfully
+2025-10-30 21:00:37,851 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:07 +07)" (scheduled at 2025-10-30 21:00:37.840901+07:00)
+2025-10-30 21:00:37,851 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:07 +07)" (scheduled at 2025-10-30 21:00:37.840901+07:00)
+2025-10-30 21:00:37,928 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:37,958 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:37,959 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:07 +07)" executed successfully
+2025-10-30 21:00:37,996 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:38,041 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:00:38,043 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:07 +07)" executed successfully
+2025-10-30 21:01:07,852 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:37 +07)" (scheduled at 2025-10-30 21:01:07.840901+07:00)
+2025-10-30 21:01:07,853 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:37 +07)" (scheduled at 2025-10-30 21:01:07.840901+07:00)
+2025-10-30 21:01:07,913 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:07,935 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:07,937 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:37 +07)" executed successfully
+2025-10-30 21:01:07,964 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:07,988 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:07,990 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:01:37 +07)" executed successfully
+2025-10-30 21:01:37,846 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:07 +07)" (scheduled at 2025-10-30 21:01:37.840901+07:00)
+2025-10-30 21:01:37,939 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:37,981 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:37,985 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:07 +07)" executed successfully
+2025-10-30 21:01:38,028 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:38,069 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:01:38,072 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:07 +07)" executed successfully
+2025-10-30 21:02:07,856 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:37 +07)" (scheduled at 2025-10-30 21:02:07.840901+07:00)
+2025-10-30 21:02:07,856 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:37 +07)" (scheduled at 2025-10-30 21:02:07.840901+07:00)
+2025-10-30 21:02:07,931 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:07,966 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:07,969 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:37 +07)" executed successfully
+2025-10-30 21:02:08,007 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:08,028 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:08,029 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:02:37 +07)" executed successfully
+2025-10-30 21:02:37,856 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:07 +07)" (scheduled at 2025-10-30 21:02:37.840901+07:00)
+2025-10-30 21:02:37,857 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:07 +07)" (scheduled at 2025-10-30 21:02:37.840901+07:00)
+2025-10-30 21:02:37,867 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:02:37,918 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:37,944 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:37,945 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:07 +07)" executed successfully
+2025-10-30 21:02:37,974 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:37,994 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:02:37,995 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:07 +07)" executed successfully
+2025-10-30 21:03:07,849 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:37 +07)" (scheduled at 2025-10-30 21:03:07.840901+07:00)
+2025-10-30 21:03:07,850 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:37 +07)" (scheduled at 2025-10-30 21:03:07.840901+07:00)
+2025-10-30 21:03:07,971 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:08,011 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:08,015 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:37 +07)" executed successfully
+2025-10-30 21:03:08,059 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:08,091 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:08,093 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:03:37 +07)" executed successfully
+2025-10-30 21:03:37,843 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:07 +07)" (scheduled at 2025-10-30 21:03:37.840901+07:00)
+2025-10-30 21:03:37,843 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:07 +07)" (scheduled at 2025-10-30 21:03:37.840901+07:00)
+2025-10-30 21:03:37,929 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:37,960 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:37,963 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:07 +07)" executed successfully
+2025-10-30 21:03:38,014 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:38,051 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:03:38,054 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:07 +07)" executed successfully
+2025-10-30 21:03:55,090 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 21:03:55,092 [INFO] Scheduler has been shut down
+2025-10-30 21:03:56,138 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:03:56,145 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:03:56,146 [INFO] Scheduler started
+2025-10-30 21:03:56,170 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:04:26,155 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:56 +07)" (scheduled at 2025-10-30 21:04:26.138605+07:00)
+2025-10-30 21:04:26,156 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:56 +07)" (scheduled at 2025-10-30 21:04:26.138605+07:00)
+2025-10-30 21:04:26,254 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:26,293 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:26,296 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:56 +07)" executed successfully
+2025-10-30 21:04:26,362 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:26,396 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:26,400 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:04:56 +07)" executed successfully
+2025-10-30 21:04:56,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:26 +07)" (scheduled at 2025-10-30 21:04:56.138605+07:00)
+2025-10-30 21:04:56,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:26 +07)" (scheduled at 2025-10-30 21:04:56.138605+07:00)
+2025-10-30 21:04:56,250 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:56,285 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:56,287 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:26 +07)" executed successfully
+2025-10-30 21:04:56,338 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:56,392 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:04:56,394 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:26 +07)" executed successfully
+2025-10-30 21:05:26,150 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:56 +07)" (scheduled at 2025-10-30 21:05:26.138605+07:00)
+2025-10-30 21:05:26,150 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:56 +07)" (scheduled at 2025-10-30 21:05:26.138605+07:00)
+2025-10-30 21:05:26,249 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:26,294 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:26,299 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:56 +07)" executed successfully
+2025-10-30 21:05:26,356 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:26,403 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:26,406 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:05:56 +07)" executed successfully
+2025-10-30 21:05:56,155 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:26 +07)" (scheduled at 2025-10-30 21:05:56.138605+07:00)
+2025-10-30 21:05:56,155 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:26 +07)" (scheduled at 2025-10-30 21:05:56.138605+07:00)
+2025-10-30 21:05:56,176 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:05:56,243 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:56,282 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:56,286 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:26 +07)" executed successfully
+2025-10-30 21:05:56,333 [ERROR] [ERROR] Lỗi khi xử lý phiên #16: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:56,374 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:05:56,377 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:26 +07)" executed successfully
+2025-10-30 21:06:26,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:56 +07)" (scheduled at 2025-10-30 21:06:26.138605+07:00)
+2025-10-30 21:06:26,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:56 +07)" (scheduled at 2025-10-30 21:06:26.138605+07:00)
+2025-10-30 21:06:26,209 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:06:26,211 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:56 +07)" executed successfully
+2025-10-30 21:06:26,248 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:06:26,250 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:06:56 +07)" executed successfully
+2025-10-30 21:06:56,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:07:26 +07)" (scheduled at 2025-10-30 21:06:56.138605+07:00)
+2025-10-30 21:06:56,145 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:07:26 +07)" (scheduled at 2025-10-30 21:06:56.138605+07:00)
+2025-10-30 21:06:56,227 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:06:56,229 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:07:26 +07)" executed successfully
+2025-10-30 21:06:56,274 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:06:56,276 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:07:26 +07)" executed successfully
+2025-10-30 21:07:20,489 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 21:07:20,491 [INFO] Scheduler has been shut down
+2025-10-30 21:07:24,977 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:07:24,997 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:07:24,997 [INFO] Scheduler started
+2025-10-30 21:07:25,017 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:07:54,406 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 21:07:54,408 [INFO] Scheduler has been shut down
+2025-10-30 21:07:54,980 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:08:24 +07)" (scheduled at 2025-10-30 21:07:54.977881+07:00)
+2025-10-30 21:07:55,010 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:07:55,011 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:08:24 +07)" executed successfully
+2025-10-30 21:07:55,335 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:07:55,341 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:07:55,342 [INFO] Scheduler started
+2025-10-30 21:07:55,365 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:08:13,548 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 21:08:13,549 [INFO] Scheduler has been shut down
+2025-10-30 21:08:14,894 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:08:14,914 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:08:14,914 [INFO] Scheduler started
+2025-10-30 21:08:14,948 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:08:33,038 [INFO] E:\1_Projects\Python_NET\quanly\api_views.py changed, reloading.
+2025-10-30 21:08:33,040 [INFO] Scheduler has been shut down
+2025-10-30 21:08:34,526 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:08:34,535 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:08:34,535 [INFO] Scheduler started
+2025-10-30 21:08:34,562 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:09:04,538 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:09:34 +07)" (scheduled at 2025-10-30 21:09:04.525987+07:00)
+2025-10-30 21:09:04,539 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:09:34 +07)" (scheduled at 2025-10-30 21:09:04.525987+07:00)
+2025-10-30 21:09:04,572 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:09:04,574 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:09:34 +07)" executed successfully
+2025-10-30 21:09:04,657 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:09:04,658 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:09:34 +07)" executed successfully
+2025-10-30 21:09:10,627 [INFO] E:\1_Projects\Python_NET\quanly\serializers.py changed, reloading.
+2025-10-30 21:09:10,630 [INFO] Scheduler has been shut down
+2025-10-30 21:09:11,688 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:09:11,697 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:09:11,697 [INFO] Scheduler started
+2025-10-30 21:09:11,732 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:09:28,655 [INFO] E:\1_Projects\Python_NET\quanly\serializers.py changed, reloading.
+2025-10-30 21:09:28,658 [INFO] Scheduler has been shut down
+2025-10-30 21:09:29,504 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:09:29,513 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:09:29,513 [INFO] Scheduler started
+2025-10-30 21:09:29,536 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:09:59,509 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:10:29 +07)" (scheduled at 2025-10-30 21:09:59.504741+07:00)
+2025-10-30 21:09:59,511 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:10:29 +07)" (scheduled at 2025-10-30 21:09:59.504741+07:00)
+2025-10-30 21:09:59,533 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:09:59,535 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:10:29 +07)" executed successfully
+2025-10-30 21:09:59,609 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:09:59,612 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:10:29 +07)" executed successfully
+2025-10-30 21:10:03,253 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:10:03,274 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:10:03,275 [INFO] Scheduler started
+2025-10-30 21:10:03,883 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:10:03,904 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:10:03,904 [INFO] Scheduler started
+2025-10-30 21:10:03,935 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:10:04,058 [INFO] Scheduler has been shut down
+2025-10-30 21:10:18,022 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:10:18,028 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:10:18,028 [INFO] Scheduler started
+2025-10-30 21:10:18,631 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:10:18,637 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:10:18,637 [INFO] Scheduler started
+2025-10-30 21:10:18,671 [INFO] Watching for file changes with StatReloader
+2025-10-30 21:10:23,855 [WARNING] Not Found: /
+2025-10-30 21:10:23,922 [WARNING] Not Found: /favicon.ico
+2025-10-30 21:10:48,650 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:10:48 +07)" (scheduled at 2025-10-30 21:10:48.631089+07:00)
+2025-10-30 21:10:48,743 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:10:48,746 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:18 +07)" executed successfully
+2025-10-30 21:10:48,830 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:10:48,832 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:18 +07)" executed successfully
+2025-10-30 21:11:18,634 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:48 +07)" (scheduled at 2025-10-30 21:11:18.631089+07:00)
+2025-10-30 21:11:18,634 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:48 +07)" (scheduled at 2025-10-30 21:11:18.631089+07:00)
+2025-10-30 21:11:18,670 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:11:18,672 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:48 +07)" executed successfully
+2025-10-30 21:11:18,705 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:11:18,708 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:11:48 +07)" executed successfully
+2025-10-30 21:11:48,642 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:12:18 +07)" (scheduled at 2025-10-30 21:11:48.631089+07:00)
+2025-10-30 21:11:48,642 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:12:18 +07)" (scheduled at 2025-10-30 21:11:48.631089+07:00)
+2025-10-30 21:11:48,690 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:11:48,692 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:12:18 +07)" executed successfully
+2025-10-30 21:11:48,730 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:11:48,732 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:12:18 +07)" executed successfully
+2025-10-30 21:12:09,987 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:12:09,993 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:12:09,993 [INFO] Scheduler started
+2025-10-30 21:12:10,011 [INFO] Scheduler has been shut down
+2025-10-30 21:12:32,329 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:12:32,337 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:12:32,337 [INFO] Scheduler started
+2025-10-30 21:12:32,450 [INFO] Running worker for channels ['default']
+2025-10-30 21:13:02,334 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" (scheduled at 2025-10-30 21:13:02.329893+07:00)
+2025-10-30 21:13:02,334 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" (scheduled at 2025-10-30 21:13:02.329893+07:00)
+2025-10-30 21:13:02,335 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" (scheduled at 2025-10-30 21:13:02.329893+07:00)
+2025-10-30 21:13:02,361 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:13:02,408 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:02,410 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" executed successfully
+2025-10-30 21:13:02,454 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:02,456 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" executed successfully
+2025-10-30 21:13:02,514 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:02,517 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:13:32 +07)" executed successfully
+2025-10-30 21:13:32,339 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" (scheduled at 2025-10-30 21:13:32.329893+07:00)
+2025-10-30 21:13:32,340 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" (scheduled at 2025-10-30 21:13:32.329893+07:00)
+2025-10-30 21:13:32,340 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" (scheduled at 2025-10-30 21:13:32.329893+07:00)
+2025-10-30 21:13:32,397 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:32,399 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" executed successfully
+2025-10-30 21:13:32,437 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:32,439 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" executed successfully
+2025-10-30 21:13:32,478 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:13:32,479 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:02 +07)" executed successfully
+2025-10-30 21:14:02,335 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:32 +07)" (scheduled at 2025-10-30 21:14:02.329893+07:00)
+2025-10-30 21:14:02,384 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:02,386 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:32 +07)" executed successfully
+2025-10-30 21:14:02,429 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:02,431 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:32 +07)" executed successfully
+2025-10-30 21:14:02,471 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:02,473 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:14:32 +07)" executed successfully
+2025-10-30 21:14:32,333 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:02 +07)" (scheduled at 2025-10-30 21:14:32.329893+07:00)
+2025-10-30 21:14:32,333 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:02 +07)" (scheduled at 2025-10-30 21:14:32.329893+07:00)
+2025-10-30 21:14:32,404 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:32,406 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:02 +07)" executed successfully
+2025-10-30 21:14:32,462 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:32,464 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:02 +07)" executed successfully
+2025-10-30 21:14:32,534 [ERROR] [ERROR] Lỗi khi xử lý phiên #15: 'KhachHang' object has no attribute 'ten_khach'
+2025-10-30 21:14:32,538 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:02 +07)" executed successfully
+2025-10-30 21:14:52,765 [WARNING] Bad Request: /api/phien/15/ket-thuc/
+2025-10-30 21:15:02,338 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" (scheduled at 2025-10-30 21:15:02.329893+07:00)
+2025-10-30 21:15:02,338 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" (scheduled at 2025-10-30 21:15:02.329893+07:00)
+2025-10-30 21:15:02,338 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" (scheduled at 2025-10-30 21:15:02.329893+07:00)
+2025-10-30 21:15:02,356 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" executed successfully
+2025-10-30 21:15:02,357 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:15:02,358 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" executed successfully
+2025-10-30 21:15:02,368 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:15:32 +07)" executed successfully
+2025-10-30 21:15:32,331 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:02 +07)" (scheduled at 2025-10-30 21:15:32.329893+07:00)
+2025-10-30 21:15:32,335 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:02 +07)" (scheduled at 2025-10-30 21:15:32.329893+07:00)
+2025-10-30 21:15:32,354 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:02 +07)" executed successfully
+2025-10-30 21:15:32,359 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:02 +07)" executed successfully
+2025-10-30 21:15:32,375 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:02 +07)" executed successfully
+2025-10-30 21:16:02,335 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:32 +07)" (scheduled at 2025-10-30 21:16:02.329893+07:00)
+2025-10-30 21:16:02,340 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:32 +07)" executed successfully
+2025-10-30 21:16:02,341 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:32 +07)" executed successfully
+2025-10-30 21:16:02,342 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:16:32 +07)" executed successfully
+2025-10-30 21:16:02,359 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:16:02,361 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:16:32,342 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:02 +07)" (scheduled at 2025-10-30 21:16:32.329893+07:00)
+2025-10-30 21:16:32,342 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:02 +07)" (scheduled at 2025-10-30 21:16:32.329893+07:00)
+2025-10-30 21:16:32,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:02 +07)" executed successfully
+2025-10-30 21:16:32,348 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:02 +07)" executed successfully
+2025-10-30 21:16:32,348 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:02 +07)" executed successfully
+2025-10-30 21:16:32,362 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:16:32,362 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:17:02,334 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:32 +07)" (scheduled at 2025-10-30 21:17:02.329893+07:00)
+2025-10-30 21:17:02,337 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:32 +07)" executed successfully
+2025-10-30 21:17:02,337 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:32 +07)" executed successfully
+2025-10-30 21:17:02,338 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:17:32 +07)" executed successfully
+2025-10-30 21:17:02,356 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:17:02,356 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:17:32,339 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" (scheduled at 2025-10-30 21:17:32.329893+07:00)
+2025-10-30 21:17:32,339 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" (scheduled at 2025-10-30 21:17:32.329893+07:00)
+2025-10-30 21:17:32,343 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" (scheduled at 2025-10-30 21:17:32.329893+07:00)
+2025-10-30 21:17:32,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" executed successfully
+2025-10-30 21:17:32,349 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" executed successfully
+2025-10-30 21:17:32,349 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:02 +07)" executed successfully
+2025-10-30 21:17:32,360 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:18:02,342 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:32 +07)" (scheduled at 2025-10-30 21:18:02.329893+07:00)
+2025-10-30 21:18:02,342 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:32 +07)" (scheduled at 2025-10-30 21:18:02.329893+07:00)
+2025-10-30 21:18:02,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:32 +07)" executed successfully
+2025-10-30 21:18:02,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:32 +07)" executed successfully
+2025-10-30 21:18:02,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:18:32 +07)" executed successfully
+2025-10-30 21:18:02,362 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:18:02,362 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:18:32,333 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" (scheduled at 2025-10-30 21:18:32.329893+07:00)
+2025-10-30 21:18:32,333 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" (scheduled at 2025-10-30 21:18:32.329893+07:00)
+2025-10-30 21:18:32,334 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" (scheduled at 2025-10-30 21:18:32.329893+07:00)
+2025-10-30 21:18:32,337 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" executed successfully
+2025-10-30 21:18:32,338 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" executed successfully
+2025-10-30 21:18:32,340 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:02 +07)" executed successfully
+2025-10-30 21:18:32,352 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:19:02,345 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" (scheduled at 2025-10-30 21:19:02.329893+07:00)
+2025-10-30 21:19:02,346 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" (scheduled at 2025-10-30 21:19:02.329893+07:00)
+2025-10-30 21:19:02,346 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" (scheduled at 2025-10-30 21:19:02.329893+07:00)
+2025-10-30 21:19:02,352 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" executed successfully
+2025-10-30 21:19:02,352 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" executed successfully
+2025-10-30 21:19:02,352 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:19:32 +07)" executed successfully
+2025-10-30 21:19:32,343 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" (scheduled at 2025-10-30 21:19:32.329893+07:00)
+2025-10-30 21:19:32,344 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" (scheduled at 2025-10-30 21:19:32.329893+07:00)
+2025-10-30 21:19:32,344 [INFO] Running job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" (scheduled at 2025-10-30 21:19:32.329893+07:00)
+2025-10-30 21:19:32,346 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" executed successfully
+2025-10-30 21:19:32,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" executed successfully
+2025-10-30 21:19:32,347 [INFO] Job "auto_shutdown_prepaid_sessions (trigger: interval[0:00:30], next run at: 2025-10-30 21:20:02 +07)" executed successfully
+2025-10-30 21:19:32,351 [WARNING] Job 'auto_shutdown_sessions' no longer exists! Skipping logging of job execution...
+2025-10-30 21:19:40,513 [INFO] E:\1_Projects\Python_NET\quanly\tasks.py changed, reloading.
+2025-10-30 21:19:40,516 [INFO] Scheduler has been shut down
+2025-10-30 21:19:41,621 [INFO] Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-10-30 21:19:41,629 [INFO] Added job "auto_shutdown_prepaid_sessions" to job store "default"
+2025-10-30 21:19:41,629 [INFO] Scheduler started
+2025-10-30 21:19:41,651 [INFO] Watching for file changes with StatReloader

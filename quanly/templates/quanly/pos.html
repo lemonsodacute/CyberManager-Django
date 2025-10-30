@@ -53,7 +53,10 @@
                         <hr>
                         <h6>Chi phí tạm tính</h6>
                         <p class="mb-1"><strong>Tiền giờ:</strong> <span id="machine-view-tien-gio">0 VNĐ</span></p>
-                        <p><strong>Tiền dịch vụ:</strong> <span id="machine-view-tien-dv">0 VNĐ</span></p>
+                        <p class="mb-1"><strong>Tiền dịch vụ:</strong> <span id="machine-view-tien-dv">0 VNĐ</span></p>
+                        <!-- <<< THÊM HIỂN THỊ TIỀN GIẢM GIÁ >>> -->
+                        <p class="mb-1 text-success"><strong>Giảm giá dịch vụ:</strong> <span id="machine-view-tien-giam-gia" class="float-end">- 0 VNĐ</span></p>
+                        <!-- <<< KẾT THÚC THÊM HIỂN THỊ TIỀN GIẢM GIÁ >>> -->
                         <h5 class="text-danger">Tổng cộng: <span id="machine-view-tong-cong" class="fw-bold">0 VNĐ</span></h5>
                     </div>
                     <hr>
@@ -65,10 +68,13 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-    // --- GLOBAL FUNCTIONS ---
-    function openOrderWindowForSession(sessionId, machineName) {
-        const url = `/pos/order/?phien_id=${sessionId}&may_ten=${encodeURIComponent(machineName)}`;
+    // --- GLOBAL FUNCTIONS (ĐÃ SỬA) ---
+    function openOrderWindowForSession(sessionId, machineName, hinhThuc) { // <<< THÊM hinhThuc
+        // <<< SỬA: THÊM hinh_thuc VÀO URL >>>
+        const url = `/pos/order/?phien_id=${sessionId}&may_ten=${encodeURIComponent(machineName)}&hinh_thuc=${hinhThuc}`;
         window.open(url, 'OrderWindow', 'width=1200,height=800,scrollbars=yes,resizable=yes');
     }
 
@@ -82,7 +88,8 @@
         const taskPanelPlaceholder = document.getElementById('task-panel-placeholder');
         const taskPanelMachineView = document.getElementById('task-panel-machine-view');
         const filterButtons = document.getElementById('filter-buttons');
-        const API_BASE_URL = '/pos/api';
+        const API_BASE_URL = '/api';
+
 
         const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
         const openForMemberModal = new bootstrap.Modal(document.getElementById('openForMemberModal'));
@@ -164,8 +171,7 @@
                 `;
             } else if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
                 const phien = may.phien_dang_chay;
-                const response = await fetch(`${API_BASE_URL}/phien/${phien.id}/`);
-                const phienData = response.ok ? await response.json() : null;
+                const phienData = await apiRequest(`/phien/${phien.id}/`); // Lấy chi tiết phiên với thông tin giảm giá
                 
                 infoPhienContainer.style.display = 'block';
                 document.getElementById('machine-view-khach-hang').textContent = phien.khach_hang ? phien.khach_hang.username : 'Khách vãng lai';
@@ -174,10 +180,12 @@
                 const startTime = new Date(phien.thoi_gian_bat_dau);
                 const durationSec = Math.floor((new Date() - startTime) / 1000);
                 const tienGio = (durationSec / 3600) * parseFloat(may.loai_may.don_gia_gio);
-                const tienDV = phienData ? phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0) : 0;
+                const tienDV = phienData ? parseFloat(phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0)) : 0; // tong_tien đã có giảm giá
+                const tienGiamGiaPhien = phienData ? parseFloat(phienData.tong_tien_giam_gia_phien) : 0; // Lấy tổng giảm giá từ phiên
                 
                 document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
                 document.getElementById('machine-view-tien-dv').textContent = formatCurrency(tienDV);
+                document.getElementById('machine-view-tien-giam-gia').textContent = `- ${formatCurrency(tienGiamGiaPhien)}`; // HIỂN THỊ TIỀN GIẢM GIÁ
                 document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
 
                 let depositButtonHtml = `<button class="btn btn-info text-white" disabled><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
@@ -185,10 +193,12 @@
                     depositButtonHtml = `<button class="btn btn-info text-white" data-action="nap-tien" data-customer-id="${phien.khach_hang.tai_khoan_id}" data-customer-name="${phien.khach_hang.username}"><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
                 }
 
+                // <<< SỬA NÚT ORDER MÓN ĐỂ TRUYỀN HÌNH THỨC PHIÊN >>>
                 actionContainer.innerHTML = `
-                    <button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button>
+                    <button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}', '${phien.hinh_thuc}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button>
                     ${depositButtonHtml}
                     <button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-receipt-cutoff me-2"></i> Tính Tiền & Đóng Máy</button>`;
+                // <<< KẾT THÚC SỬA NÚT ORDER MÓN >>>
             } else {
                 infoPhienContainer.style.display = 'none';
                 actionContainer.innerHTML = `<div class="alert alert-danger">Lỗi: Dữ liệu không nhất quán.</div>`;
@@ -225,8 +235,9 @@
                         const phien = may.phien_dang_chay;
                         if(new Date(phien.thoi_gian_bat_dau).getTime() === startTime.getTime()) {
                             const tienGio = (seconds / 3600) * parseFloat(may.loai_may.don_gia_gio);
+                            
                             const tienDvText = document.getElementById('machine-view-tien-dv').textContent;
-                            const tienDV = parseFloat(tienDvText.replace(/[^\d]/g, '')) || 0;
+                            const tienDV = parseFloat(tienDvText.replace(/[^\d,\.-]/g, '')) || 0;
                             
                             document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
                             document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
@@ -287,7 +298,7 @@
                 if (!confirm(`Tính tiền và đóng máy ${may.ten_may}?`)) return;
                 try {
                     const result = await apiRequest(`/phien/${phienId}/ket-thuc/`, { method: 'POST' });
-                    alert(`${result.success}\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}`);
+                    alert(`Đã kết thúc phiên thành công!\nTổng hóa đơn: ${formatCurrency(result.hoa_don.tong_tien)}\nGiảm giá: ${formatCurrency(result.hoa_don.tien_giam_gia)}`);
                     selectedMayId = null;
                     showTaskPanel(null);
                     location.reload();
@@ -354,4 +365,33 @@
         initialize();
     });
 </script>
+<!-- ✅ Modal Nạp Tiền -->
+<div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="depositModalLabel"><i class="bi bi-cash-stack me-2"></i> Nạp Tiền Cho Khách Hàng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="depositForm">
+        <div class="modal-body">
+          <input type="hidden" id="deposit-modal-customer-id">
+          <p>Khách hàng: <strong id="deposit-modal-customer-name" class="text-primary"></strong></p>
+          <div class="mb-3">
+            <label for="deposit-modal-amount" class="form-label">Số tiền nạp</label>
+            <div class="input-group">
+              <input type="number" id="deposit-modal-amount" class="form-control" min="1000" step="1000" required>
+              <span class="input-group-text">VNĐ</span>
+            </div>
+          </div>
+          <div id="deposit-modal-error" class="alert alert-danger d-none"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-info text-white w-100"><i class="bi bi-check-circle me-1"></i> Xác Nhận Nạp</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

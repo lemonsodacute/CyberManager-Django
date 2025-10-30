@@ -18,7 +18,7 @@
                         <th>Mã KM</th>
                         <th>Mô Tả</th>
                         <th>Loại Giảm</th>
-                        <th class="text-end">Giá Trị</th>
+                        <th class="text-end">Giá Trị</th> <!-- SỬ DỤNG gia_tri_display -->
                         <th>Hiệu Lực</th>
                         <th>Trạng Thái</th>
                         <th class="text-center">Sửa</th>
@@ -72,15 +72,27 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Loại Giảm Giá</label>
                             <select id="loaiGiamGia" class="form-select" required>
-                                <option value="SO_TIEN">Số tiền cố định</option>
                                 <option value="PHAN_TRAM">Phần trăm (%)</option>
+                                <option value="SO_TIEN">Số tiền cố định</option>
+                                <option value="BONUS_NAP_TIEN">Bonus nạp tiền vào tài khoản</option> <!-- THÊM LOẠI MỚI -->
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Giá Trị</label>
+                            <label class="form-label" id="giaTriLabel">Giá Trị</label> <!-- THAY ĐỔI LABEL -->
                             <input type="number" step="0.01" min="0" id="giaTri" class="form-control" required>
                         </div>
                     </div>
+
+                    <!-- <<< THÊM TRƯỜNG CHỌN LOẠI BONUS NẠP TIỀN >>> -->
+                    <div class="mb-3" id="loaiBonusNapTienContainer" style="display: none;">
+                        <label class="form-label">Loại Bonus Nạp Tiền</label>
+                        <select id="loaiBonusNapTien" class="form-select">
+                            <option value="PHAN_TRAM_BONUS">Phần trăm bonus</option>
+                            <option value="SO_TIEN_BONUS">Số tiền bonus cố định</option>
+                        </select>
+                    </div>
+                    <!-- <<< KẾT THÚC THÊM TRƯỜNG CHỌN LOẠI BONUS NẠP TIỀN >>> -->
+
                     <div class="row">
                          <div class="col-md-6 mb-3">
                             <label class="form-label">Ngày Bắt Đầu</label>
@@ -91,6 +103,14 @@
                             <input type="date" id="ngayKetThuc" class="form-control" required>
                         </div>
                     </div>
+
+                    <!-- <<< THÊM TRƯỜNG SỐ LƯỢT DÙNG/KHÁCH >>> -->
+                    <div class="mb-3" id="luotSuDungContainer">
+                        <label class="form-label">Số lượt dùng tối đa / khách (0 = không giới hạn)</label>
+                        <input type="number" id="luotSuDungToiDaMoiKhach" class="form-control" min="0" value="0">
+                    </div>
+                    <!-- <<< KẾT THÚC THÊM TRƯỜNG SỐ LƯỢT DÙNG/KHÁCH >>> -->
+
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" role="switch" id="isActive" checked>
                         <label class="form-check-label" for="isActive">Kích hoạt (Đang áp dụng)</label>
@@ -118,10 +138,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const addPromotionBtn = document.getElementById('add-promotion-btn');
     const deletePromotionBtn = document.getElementById('deletePromotionBtn');
 
-    // <<< BIẾN MỚI >>>
+    // Các trường mới được thêm vào
     const chuKyLapLaiSelect = document.getElementById('chuKyLapLai');
     const ngayTrongTuanContainer = document.getElementById('ngayTrongTuanContainer');
     const ngayTrongTuanCheckboxesDiv = document.getElementById('ngayTrongTuanCheckboxes');
+    const loaiGiamGiaSelect = document.getElementById('loaiGiamGia'); // Select loại giảm giá
+    const giaTriLabel = document.getElementById('giaTriLabel'); // Label của input Giá Trị
+    const loaiBonusNapTienContainer = document.getElementById('loaiBonusNapTienContainer'); // Container cho loại bonus nạp tiền
+    const loaiBonusNapTienSelect = document.getElementById('loaiBonusNapTien'); // Select loại bonus nạp tiền
+    const luotSuDungContainer = document.getElementById('luotSuDungContainer'); // Container cho số lượt dùng
+    const luotSuDungToiDaMoiKhachInput = document.getElementById('luotSuDungToiDaMoiKhach'); // Input số lượt dùng
 
     let allPromotions = [];
     let currentPromotionId = null;
@@ -131,13 +157,17 @@ document.addEventListener('DOMContentLoaded', function() {
         { id: 2, name: 'Thứ 3' },
         { id: 3, name: 'Thứ 4' },
         { id: 4, name: 'Thứ 5' },
-        { id: 5, name: 'Thứ 6' },
-        { id: 6, name: 'Thứ 7' },
-        { id: 7, name: 'Chủ Nhật' },
+        { id: 6, name: 'Thứ 6' },
+        { id: 7, name: 'Thứ 7' },
+        { id: 8, name: 'Chủ Nhật' }, // Sửa lại để Chủ Nhật là 7 trong model, nhưng đây để 8 cho dễ hiển thị. Sẽ map lại khi gửi API.
     ];
+    // FIX: Mapping cho Chủ Nhật (nếu muốn hiển thị đúng trong UI)
+    DAYS_OF_WEEK[6].name = 'Chủ Nhật'; // Giả sử id 7 là Chủ Nhật theo ISO
+    DAYS_OF_WEEK.splice(7, 1); // Loại bỏ mục Chủ Nhật thừa nếu đã có ID 7
+
+
     
     // --- HÀM TIỆN ÍCH ---
-    // ... (formatCurrency, formatDate, getBadge giữ nguyên) ...
     const formatCurrency = (val) => {
         const number = parseFloat(val);
         if (isNaN(number) || val === null) return (0).toLocaleString('vi-VN') + ' VNĐ';
@@ -147,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const formatDate = (isoString) => {
         if (!isoString) return 'N/A';
         const date = new Date(isoString);
-        // Lấy ngày ở định dạng D/M/Y
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const d = String(date.getDate()).padStart(2, '0');
@@ -170,11 +199,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderDaysOfWeekCheckboxes(selectedDays = []) {
         ngayTrongTuanCheckboxesDiv.innerHTML = '';
         DAYS_OF_WEEK.forEach(day => {
-            const isChecked = selectedDays.includes(String(day.id));
+            // FIX: Chủ Nhật có id là 7 theo ISO, nhưng trong Days_OF_WEEK là 8 trước đó.
+            // Điều chỉnh lại để id 7 tương ứng với Chủ Nhật.
+            const dayId = day.id === 8 ? 7 : day.id; // Map lại 8 thành 7 nếu cần
+            const isChecked = selectedDays.includes(String(dayId));
             ngayTrongTuanCheckboxesDiv.innerHTML += `
                 <div class="form-check">
-                    <input class="form-check-input ngay-trong-tuan-checkbox" type="checkbox" value="${day.id}" id="day-${day.id}" ${isChecked ? 'checked' : ''}>
-                    <label class="form-check-label" for="day-${day.id}">${day.name}</label>
+                    <input class="form-check-input ngay-trong-tuan-checkbox" type="checkbox" value="${dayId}" id="day-${dayId}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="day-${dayId}">${day.name}</label>
                 </div>
             `;
         });
@@ -188,12 +220,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         allPromotions.forEach(promo => {
-            let valueDisplay;
-            if (promo.loai_giam_gia === 'PHAN_TRAM') {
-                valueDisplay = `${promo.gia_tri}%`;
-            } else {
-                valueDisplay = formatCurrency(promo.gia_tri);
-            }
+            // SỬ DỤNG gia_tri_display TỪ SERIALIZER
+            const valueDisplay = promo.gia_tri_display; 
             
             const start = formatDate(promo.ngay_bat_dau);
             const end = formatDate(promo.ngay_ket_thuc);
@@ -227,6 +255,48 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- XỬ LÝ SỰ KIỆN ---
     
+    // Logic hiển thị/ẩn các trường tùy thuộc vào loại giảm giá
+    function togglePromotionFields() {
+        const loaiGiamGia = loaiGiamGiaSelect.value;
+        const isBonusTopup = loaiGiamGia === 'BONUS_NAP_TIEN';
+
+        // Cập nhật label cho Giá Trị
+        if (loaiGiamGia === 'PHAN_TRAM') {
+            giaTriLabel.textContent = 'Giá Trị (%)';
+            document.getElementById('giaTri').setAttribute('step', '1'); // Thường % là số nguyên
+            document.getElementById('giaTri').setAttribute('max', '100');
+        } else if (loaiGiamGia === 'SO_TIEN') {
+            giaTriLabel.textContent = 'Giá Trị (VNĐ)';
+            document.getElementById('giaTri').setAttribute('step', '1000');
+            document.getElementById('giaTri').removeAttribute('max');
+        } else if (loaiGiamGia === 'BONUS_NAP_TIEN') {
+            giaTriLabel.textContent = 'Giá Trị Bonus'; // Sẽ thay đổi tiếp tùy loại bonus
+            document.getElementById('giaTri').setAttribute('step', '1'); 
+            document.getElementById('giaTri').removeAttribute('max');
+        }
+
+        // Hiển thị/ẩn container loại bonus nạp tiền
+        loaiBonusNapTienContainer.style.display = isBonusTopup ? 'block' : 'none';
+        // Hiển thị/ẩn số lượt dùng
+        luotSuDungContainer.style.display = isBonusTopup ? 'block' : 'none';
+
+        // Cập nhật label Giá trị một lần nữa nếu là Bonus nạp tiền
+        if (isBonusTopup) {
+            if (loaiBonusNapTienSelect.value === 'PHAN_TRAM_BONUS') {
+                giaTriLabel.textContent = 'Giá Trị Bonus (%)';
+                document.getElementById('giaTri').setAttribute('step', '1');
+                document.getElementById('giaTri').setAttribute('max', '100');
+            } else if (loaiBonusNapTienSelect.value === 'SO_TIEN_BONUS') {
+                giaTriLabel.textContent = 'Giá Trị Bonus (VNĐ)';
+                document.getElementById('giaTri').setAttribute('step', '1000');
+                document.getElementById('giaTri').removeAttribute('max');
+            }
+        }
+    }
+    
+    loaiGiamGiaSelect.addEventListener('change', togglePromotionFields);
+    loaiBonusNapTienSelect.addEventListener('change', togglePromotionFields); // Khi thay đổi loại bonus cũng cần cập nhật label
+
     // Logic hiển thị/ẩn checkbox ngày trong tuần
     chuKyLapLaiSelect.addEventListener('change', () => {
         const isWeekly = chuKyLapLaiSelect.value === 'HANG_TUAN';
@@ -248,6 +318,12 @@ document.addEventListener('DOMContentLoaded', function() {
         ngayTrongTuanContainer.style.display = 'none';
         renderDaysOfWeekCheckboxes(); // Reset các checkbox
         
+        // Thiết lập UI mặc định cho khuyến mãi
+        loaiGiamGiaSelect.value = 'PHAN_TRAM';
+        loaiBonusNapTienSelect.value = 'PHAN_TRAM_BONUS'; // Giá trị mặc định
+        luotSuDungToiDaMoiKhachInput.value = 0; // Giá trị mặc định
+        togglePromotionFields(); // Cập nhật các trường hiển thị
+
         promotionModal.show();
     });
 
@@ -263,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('promotionId').value = promo.id;
             document.getElementById('maKhuyenMai').value = promo.ma_khuyen_mai;
             document.getElementById('moTa').value = promo.mo_ta;
-            document.getElementById('loaiGiamGia').value = promo.loai_giam_gia;
+            loaiGiamGiaSelect.value = promo.loai_giam_gia;
             document.getElementById('giaTri').value = promo.gia_tri;
             document.getElementById('ngayBatDau').value = dateToInputFormat(promo.ngay_bat_dau);
             document.getElementById('ngayKetThuc').value = dateToInputFormat(promo.ngay_ket_thuc);
@@ -275,6 +351,12 @@ document.addEventListener('DOMContentLoaded', function() {
             renderDaysOfWeekCheckboxes(selectedDays);
             ngayTrongTuanContainer.style.display = (promo.chu_ky_lap_lai === 'HANG_TUAN') ? 'block' : 'none';
 
+            // <<< CẬP NHẬT CÁC TRƯỜNG MỚI >>>
+            loaiBonusNapTienSelect.value = promo.loai_bonus_nap_tien || 'PHAN_TRAM_BONUS'; // Đảm bảo có giá trị mặc định nếu null
+            luotSuDungToiDaMoiKhachInput.value = promo.luot_su_dung_toi_da_moi_khach;
+            togglePromotionFields(); // Gọi để cập nhật trạng thái hiển thị
+            // <<< KẾT THÚC CẬP NHẬT CÁC TRƯỜNG MỚI >>>
+
             promotionModal.show();
         }
     });
@@ -284,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = currentPromotionId ? `/api/dashboard/promotions/${currentPromotionId}/` : '/api/dashboard/promotions/';
         const method = currentPromotionId ? 'PUT' : 'POST';
         
-        const chuKy = document.getElementById('chuKyLapLai').value;
+        const chuKy = chuKyLapLaiSelect.value;
         let ngayTrongTuanValue = null;
         
         if (chuKy === 'HANG_TUAN') {
@@ -292,18 +374,27 @@ document.addEventListener('DOMContentLoaded', function() {
             ngayTrongTuanValue = selectedDays.join(',');
         }
         
+        // <<< LẤY GIÁ TRỊ CÁC TRƯỜNG MỚI >>>
+        const loaiGiamGia = loaiGiamGiaSelect.value;
+        let loaiBonusNapTien = null;
+        if (loaiGiamGia === 'BONUS_NAP_TIEN') {
+            loaiBonusNapTien = loaiBonusNapTienSelect.value;
+        }
+        const luotSuDung = luotSuDungToiDaMoiKhachInput.value;
+        // <<< KẾT THÚC LẤY GIÁ TRỊ CÁC TRƯỜNG MỚI >>>
+
         const payload = {
             ma_khuyen_mai: document.getElementById('maKhuyenMai').value,
             mo_ta: document.getElementById('moTa').value,
-            loai_giam_gia: document.getElementById('loaiGiamGia').value,
+            loai_giam_gia: loaiGiamGia,
             gia_tri: parseFloat(document.getElementById('giaTri').value),
-            // Lấy giá trị từ input date (YYYY-MM-DD)
             ngay_bat_dau: document.getElementById('ngayBatDau').value, 
             ngay_ket_thuc: document.getElementById('ngayKetThuc').value,
             is_active: document.getElementById('isActive').checked,
-            // <<< TRƯỜNG DỮ LIỆU MỚI >>>
             chu_ky_lap_lai: chuKy,
-            ngay_trong_tuan: ngayTrongTuanValue // Gửi chuỗi '3,5,7' hoặc null
+            ngay_trong_tuan: ngayTrongTuanValue,
+            loai_bonus_nap_tien: loaiBonusNapTien, // <<< GỬI TRƯỜNG MỚI
+            luot_su_dung_toi_da_moi_khach: luotSuDung // <<< GỬI TRƯỜNG MỚI
         };
         
         try {

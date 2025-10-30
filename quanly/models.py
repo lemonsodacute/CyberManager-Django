@@ -1,5 +1,6 @@
 # quanly/models.py
 
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -79,14 +80,19 @@ class DinhLuong(models.Model):
 class KhuyenMai(models.Model):
     ma_khuyen_mai = models.CharField(max_length=50, unique=True)
     mo_ta = models.TextField()
-    LOAI_GIAM_GIA_CHOICES = [('PHAN_TRAM', 'Phần trăm'), ('SO_TIEN', 'Số tiền cố định')]
+    
+    LOAI_GIAM_GIA_CHOICES = [
+        ('PHAN_TRAM', 'Phần trăm'), 
+        ('SO_TIEN', 'Số tiền cố định'),
+        ('BONUS_NAP_TIEN', 'Bonus nạp tiền vào tài khoản')
+    ]
     loai_giam_gia = models.CharField(max_length=20, choices=LOAI_GIAM_GIA_CHOICES)
-    gia_tri = models.FloatField()
+    gia_tri = models.FloatField() # Giá trị này sẽ là % bonus hoặc số tiền bonus
     ngay_bat_dau = models.DateTimeField()
     ngay_ket_thuc = models.DateTimeField()
     is_active = models.BooleanField(default=True)
-    def __str__(self): return self.ma_khuyen_mai
-# Chu kỳ lặp lại
+    
+    # Chu kỳ lặp lại
     LOAI_CHU_KY_CHOICES = [
         ('MOT_LAN', 'Áp dụng một lần (theo ngày bắt đầu/kết thúc)'),
         ('HANG_NGAY', 'Lặp lại Hằng ngày'),
@@ -100,14 +106,50 @@ class KhuyenMai(models.Model):
         verbose_name="Chu kỳ lặp lại"
     )
     
-    # Áp dụng cho các ngày trong tuần (Thứ 2 = 1, Chủ nhật = 7). Lưu dưới dạng chuỗi '3,5,7' (Thứ 3, Thứ 5, CN)
     ngay_trong_tuan = models.CharField(
         max_length=15, 
         blank=True, 
         null=True, 
         verbose_name="Các ngày trong tuần"
     )
+    
+    luot_su_dung_toi_da_moi_khach = models.PositiveIntegerField(
+        default=0, 
+        help_text="Số lần tối đa mỗi khách hàng có thể sử dụng khuyến mãi này (0 = không giới hạn).",
+        verbose_name="Số lượt dùng/khách"
+    )
 
+    # <<< THÊM TRƯỜNG MỚI ĐỂ PHÂN BIỆT LOẠI BONUS KHI NẠP TIỀN >>>
+    LOAI_BONUS_NAP_TIEN_CHOICES = [
+        ('PHAN_TRAM_BONUS', 'Phần trăm bonus'),
+        ('SO_TIEN_BONUS', 'Số tiền bonus cố định'),
+    ]
+    loai_bonus_nap_tien = models.CharField(
+        max_length=20,
+        choices=LOAI_BONUS_NAP_TIEN_CHOICES,
+        null=True, # Cho phép null nếu không phải loại BONUS_NAP_TIEN
+        blank=True,
+        verbose_name="Loại bonus nạp tiền"
+    )
+    # <<< KẾT THÚC THÊM TRƯỜNG MỚI >>>
+
+    def __str__(self): return self.ma_khuyen_mai
+
+
+# <<< THÊM MODEL ĐỂ THEO DÕI LƯỢT SỬ DỤNG KHUYẾN MÃI CHO TỪNG KHÁCH HÀNG >>>
+class KhuyenMaiSuDung(models.Model):
+    khuyen_mai = models.ForeignKey(KhuyenMai, on_delete=models.CASCADE, related_name='luot_su_dung')
+    khach_hang = models.ForeignKey(KhachHang, on_delete=models.CASCADE, related_name='khuyen_mai_da_dung')
+    thoi_gian_su_dung = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('khuyen_mai', 'khach_hang') # Đảm bảo mỗi khách chỉ dùng 1 lần/mã nếu luot_su_dung_toi_da_moi_khach = 1
+        verbose_name = "Lịch sử sử dụng khuyến mãi"
+        verbose_name_plural = "Lịch sử sử dụng khuyến mãi"
+
+    def __str__(self):
+        return f"{self.khach_hang.username} dùng {self.khuyen_mai.ma_khuyen_mai} lúc {self.thoi_gian_su_dung.strftime('%H:%M %d/%m')}"
+# <<< KẾT THÚC THÊM MODEL MỚI >>>
 # -----------------------------------------------------------------------------
 # KHU VỰC 3: CA LÀM VIỆC
 # -----------------------------------------------------------------------------
@@ -165,7 +207,12 @@ class PhienSuDung(models.Model):
     thoi_gian_bat_dau = models.DateTimeField(default=timezone.now)
     thoi_gian_ket_thuc = models.DateTimeField(null=True, blank=True)
     trang_thai = models.CharField(max_length=20, choices=TrangThai.choices, default=TrangThai.DANG_DIEN_RA)
+    thoi_gian_kiem_tra_lan_cuoi = models.DateTimeField(
+        default=timezone.now, 
+        verbose_name="Thời gian kiểm tra số dư lần cuối"
+    )
     def __str__(self): return f"Phiên {self.may.ten_may} lúc {timezone.localtime(self.thoi_gian_bat_dau).strftime('%H:%M')}"
+    
 
 class DonHangDichVu(models.Model):
     class LoaiDonHang(models.TextChoices):
@@ -177,7 +224,48 @@ class DonHangDichVu(models.Model):
     loai_don_hang = models.CharField(max_length=10, choices=LoaiDonHang.choices, default=LoaiDonHang.GHI_NO)
     da_thanh_toan = models.BooleanField(default=False)
     tong_tien = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    # <<< THÊM 2 TRƯỜNG MỚI NÀY >>>
+    khuyen_mai = models.ForeignKey('KhuyenMai', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Mã khuyến mãi áp dụng")
+    tien_giam_gia = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Số tiền giảm giá")
+    # <<< KẾT THÚC THÊM TRƯỜNG MỚI >>>
+
+      # <<< THÊM PHƯƠNG THỨC TÍNH TỔNG TIỀN TỰ ĐỘNG >>>
+    def tinh_tong_tien(self):
+        # Tính tổng tiền từ chi tiết đơn hàng
+        total = sum([ct.thanh_tien for ct in self.chi_tiet.all()])
+        
+        # Áp dụng khuyến mãi (nếu có)
+        if self.khuyen_mai and self.tien_giam_gia:
+             total -= self.tien_giam_gia
+             
+        self.tong_tien = max(Decimal('0.00'), total)
+        self.save(update_fields=['tong_tien'])
+        return self.tong_tien
+
+    def save(self, *args, **kwargs):
+        # Tự động gọi tính tổng tiền trước khi lưu (chỉ khi tạo mới hoặc tổng tiền thay đổi)
+        # Để tránh vòng lặp vô hạn, ta nên gọi nó sau khi các chi tiết đã được tạo.
+        # Tuy nhiên, để đơn giản theo đề xuất, ta gọi nó ở đây (cần phải cẩn thận trong API tạo)
+        super().save(*args, **kwargs)
+        # Ta sẽ chỉ gọi hàm này thủ công trong API để tránh lỗi vòng lặp nếu ChiTietDonHang được tạo sau.
+        # KHÔNG nên ghi đè save() nếu ChiTietDonHang được tạo sau.
+        pass 
+    # <<< KẾT THÚC THÊM PHƯƠNG THỨC >>>
+      # <<< THÊM HÀM NÀY ĐỂ TÍNH TỔNG TIỀN ĐƠN HÀNG DỊCH VỤ >>>
+    def calculate_total(self):
+        """Tính tổng tiền dịch vụ (đã bao gồm giảm giá)."""
+        total_service_items = sum([ct.thanh_tien for ct in self.chi_tiet.all()])
+        
+        # Áp dụng giảm giá (nếu có)
+        final_total = total_service_items - self.tien_giam_gia
+        self.tong_tien = max(Decimal('0.00'), final_total)
+        self.save(update_fields=['tong_tien'])
+        return self.tong_tien
+    # <<< KẾT THÚC THÊM HÀM NÀY >>>
+
     def __str__(self): return f"Order #{self.id}"
+    
 
 class ChiTietDonHang(models.Model):
     don_hang = models.ForeignKey(DonHangDichVu, on_delete=models.CASCADE, related_name='chi_tiet')
@@ -266,7 +354,13 @@ class LichSuThayDoiKho(models.Model):
     # Thêm null=True, blank=True để cho phép trường này có thể trống
     ca_lam_viec = models.ForeignKey(CaLamViec, on_delete=models.SET_NULL, related_name='cac_thay_doi_kho', null=True, blank=True)
     
-    nhan_vien = models.ForeignKey(NhanVien, on_delete=models.PROTECT)
+   # <<< SỬA TRƯỜNG NÀY ĐỂ CHO PHÉP NULL >>>
+    nhan_vien = models.ForeignKey(
+        NhanVien, 
+        on_delete=models.PROTECT, 
+        null=True,     # <<< THÊM DÒNG NÀY
+        blank=True     # <<< THÊM DÒNG NÀY
+    )
     nguyen_lieu = models.ForeignKey(NguyenLieu, on_delete=models.PROTECT)
     so_luong_thay_doi = models.FloatField(help_text="Số dương cho Nhập kho, số âm cho Hủy hàng.")
     loai_thay_doi = models.CharField(max_length=20, choices=LoaiThayDoi.choices)
@@ -324,3 +418,5 @@ class ThongBao(models.Model):
 
     def __str__(self):
         return f"[{self.get_loai_canh_bao_display()}] {self.tieu_de}"
+    
+    

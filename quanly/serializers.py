@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.db.models import Sum
@@ -11,7 +12,8 @@ from .models import (
     CaLamViec, LoaiCa, GiaoDichTaiChinh, HoaDon,
     MenuItem, DonHangDichVu, ChiTietDonHang,
     NguyenLieu, PhieuKiemKe, ChiTietKiemKe,
-    LichSuThayDoiKho,  KhuyenMai, ThongBao
+    LichSuThayDoiKho,  KhuyenMai, ThongBao,
+    KhuyenMaiSuDung
 )
 
 # -----------------------------------------------------------------------------
@@ -97,9 +99,11 @@ class MaySerializer(serializers.ModelSerializer):
         fields = ['id', 'ten_may', 'trang_thai', 'loai_may', 'phien_dang_chay']
         
     def get_phien_dang_chay(self, obj):
+            # Kiểm tra xem có thuộc tính đã được Prefetch hay không
         if hasattr(obj, 'phien_dang_chay_prefetched') and obj.phien_dang_chay_prefetched:
+            # Đảm bảo lấy phần tử đầu tiên an toàn
             return PhienDangChaySerializer(obj.phien_dang_chay_prefetched[0]).data
-        return None
+        return None # Trả về None nếu không có phiên
 
 # -----------------------------------------------------------------------------
 # SERIALIZERS CHO API MENU & ORDER
@@ -117,12 +121,38 @@ class ChiTietDonHangSerializer(serializers.ModelSerializer):
         model = ChiTietDonHang
         fields = ['mon', 'so_luong', 'thanh_tien']
 
+# quanly/serializers.py (Trong DonHangDichVuSerializer)
 class DonHangDichVuSerializer(serializers.ModelSerializer):
     chi_tiet = ChiTietDonHangSerializer(many=True, read_only=True)
+    
+    # THÊM TRƯỜNG TEN_MAY
+    ten_may = serializers.CharField(source='phien_su_dung.may.ten_may', read_only=True, allow_null=True)
+    
+    ma_khuyen_mai_ap_dung = serializers.CharField(source='khuyen_mai.ma_khuyen_mai', read_only=True, allow_null=True)
+
     class Meta:
         model = DonHangDichVu
-        fields = ['id', 'loai_don_hang', 'da_thanh_toan', 'tong_tien', 'chi_tiet']
+        # THÊM 'ten_may' VÀO FIELDS
+        fields = ['id', 'loai_don_hang', 'da_thanh_toan', 'tong_tien', 'chi_tiet', 'tien_giam_gia', 'ma_khuyen_mai_ap_dung', 'ten_may']
+        
+class ChiTietPhienSerializer(serializers.ModelSerializer):
+    """Serializer đầy đủ thông tin cho một phiên khi click vào xem chi tiết."""
+    cac_don_hang = DonHangDichVuSerializer(many=True, read_only=True)
+    loai_may = LoaiMaySerializer(source='may.loai_may', read_only=True)
+    ten_may = serializers.CharField(source='may.ten_may', read_only=True)
+    khach_hang = KhachHangSerializer(read_only=True)
+    
+    # <<< THÊM TRƯỜNG MỚI ĐỂ HIỂN THỊ TỔNG TIỀN GIẢM GIÁ TRONG PHIÊN >>>
+    tong_tien_giam_gia_phien = serializers.SerializerMethodField()
+    # <<< KẾT THÚC THÊM TRƯỜNG MỚI >>>
+    
+    class Meta:
+        model = PhienSuDung
+        fields = ['id', 'ten_may', 'loai_may', 'khach_hang', 'thoi_gian_bat_dau', 'hinh_thuc', 'cac_don_hang', 'tong_tien_giam_gia_phien'] # <<< THÊM tong_tien_giam_gia_phien
 
+    def get_tong_tien_giam_gia_phien(self, obj):
+        # Tính tổng tiền giảm giá từ tất cả các đơn hàng chưa thanh toán trong phiên
+        return obj.cac_don_hang.filter(da_thanh_toan=False).aggregate(total_discount=Sum('tien_giam_gia'))['total_discount'] or Decimal('0.00')
 class ChiTietPhienSerializer(serializers.ModelSerializer):
     """Serializer đầy đủ thông tin cho một phiên khi click vào xem chi tiết."""
     cac_don_hang = DonHangDichVuSerializer(many=True, read_only=True)
@@ -174,13 +204,11 @@ class CaLamViecSerializer(serializers.ModelSerializer):
 
     def get_tong_thu_hien_tai(self, obj):
         if obj.trang_thai == 'DA_KET_THUC':
-            return obj.tong_doanh_thu_he_thong
-
-        giao_dich_thu_tien = GiaoDichTaiChinh.objects.filter(
+            return obj.tong_doanh_thu_he_thong # SỬ DỤNG TÊN TRƯỜNG MODEL CHÍNH XÁC
+        total = GiaoDichTaiChinh.objects.filter(
             ca_lam_viec=obj,
             loai_giao_dich__in=['THANH_TOAN_HOA_DON', 'THANH_TOAN_ORDER_LE', 'NAP_TIEN']
-        )
-        total = giao_dich_thu_tien.aggregate(total=Sum('so_tien'))['total']
+        ).aggregate(total=Sum('so_tien'))['total']
         return total or 0
 
 class ChiTietCaLamViecSerializer(serializers.ModelSerializer):
@@ -311,31 +339,42 @@ class CustomerDetailSerializer(serializers.ModelSerializer):
         return obj.top_mon_an if hasattr(obj, 'top_mon_an') else []
     
     
+
 class KhuyenMaiSerializer(serializers.ModelSerializer):
     """Serializer cho việc quản lý Khuyến mãi."""
     
-    # Custom field để hiển thị loại giảm giá một cách thân thiện
     loai_giam_gia_display = serializers.CharField(source='get_loai_giam_gia_display', read_only=True)
-    
-    class Meta:
-        model = KhuyenMai
-        fields = [
-            'id', 'ma_khuyen_mai', 'mo_ta', 'loai_giam_gia', 'loai_giam_gia_display', 
-            'gia_tri', 'ngay_bat_dau', 'ngay_ket_thuc', 'is_active'
-        ]
-        read_only_fields = ['loai_giam_gia_display']
     chu_ky_lap_lai_display = serializers.CharField(source='get_chu_ky_lap_lai_display', read_only=True)
     
+    # <<< TRƯỜNG MỚI ĐỂ HIỂN THỊ ĐƠN VỊ GIÁ TRỊ TƯƠNG ỨNG >>>
+    gia_tri_display = serializers.SerializerMethodField()
+    # <<< KẾT THÚC TRƯỜNG MỚI >>>
+
     class Meta:
         model = KhuyenMai
         fields = [
             'id', 'ma_khuyen_mai', 'mo_ta', 'loai_giam_gia', 'loai_giam_gia_display', 
             'gia_tri', 'ngay_bat_dau', 'ngay_ket_thuc', 'is_active',
-            # <<< CÁC TRƯỜNG MỚI >>>
-            'chu_ky_lap_lai', 'chu_ky_lap_lai_display', 'ngay_trong_tuan' 
+            'chu_ky_lap_lai', 'chu_ky_lap_lai_display', 'ngay_trong_tuan',
+            'luot_su_dung_toi_da_moi_khach', # <<< THÊM TRƯỜNG NÀY
+            'loai_bonus_nap_tien', # <<< THÊM TRƯỜNG NÀY
+            'gia_tri_display' # <<< THÊM TRƯỜNG NÀY
         ]
-        read_only_fields = ['loai_giam_gia_display', 'chu_ky_lap_lai_display']
+        read_only_fields = ['loai_giam_gia_display', 'chu_ky_lap_lai_display', 'gia_tri_display']
 
+    # <<< HÀM MỚI ĐỂ ĐỊNH DẠNG HIỂN THỊ GIA_TRI >>>
+    def get_gia_tri_display(self, obj):
+        if obj.loai_giam_gia == KhuyenMai.LOAI_GIAM_GIA_CHOICES[0][0]: # PHAN_TRAM
+            return f"{obj.gia_tri}%"
+        elif obj.loai_giam_gia == KhuyenMai.LOAI_GIAM_GIA_CHOICES[1][0]: # SO_TIEN
+            return f"{obj.gia_tri:,.0f} VNĐ"
+        elif obj.loai_giam_gia == KhuyenMai.LOAI_GIAM_GIA_CHOICES[2][0]: # BONUS_NAP_TIEN
+            if obj.loai_bonus_nap_tien == KhuyenMai.LOAI_BONUS_NAP_TIEN_CHOICES[0][0]: # PHAN_TRAM_BONUS
+                return f"{obj.gia_tri}%"
+            elif obj.loai_bonus_nap_tien == KhuyenMai.LOAI_BONUS_NAP_TIEN_CHOICES[1][0]: # SO_TIEN_BONUS
+                return f"{obj.gia_tri:,.0f} VNĐ"
+        return str(obj.gia_tri)
+    # <<< KẾT THÚC HÀM MỚI >>>
 # -----------------------------------------------------------------------------
 # SERIALIZERS MỚI CHO HỆ THỐNG THÔNG BÁO (DASHBOARD)
 # -----------------------------------------------------------------------------
