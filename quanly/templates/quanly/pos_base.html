@@ -1,4 +1,3 @@
-<!-- quanly/templates/quanly/pos_base.html (FINAL FIX) -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="vi">
@@ -9,181 +8,795 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    :root { --sidebar-width: 260px; }
+    :root { 
+      --sidebar-width: 280px;
+      
+      /* Bảng màu hiện đại - Neutral + Accent */
+      --color-bg-primary: #f8f9fa;
+      --color-bg-secondary: #ffffff;
+      --color-sidebar: #1e293b;
+      --color-sidebar-hover: #334155;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #64748b;
+      --color-text-light: #94a3b8;
+      --color-border: #e2e8f0;
+      --color-accent: #3b82f6;
+      --color-accent-hover: #2563eb;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
     
-    /* <<< PHẦN SỬA ĐỔI CHO ẢNH NỀN (Body) >>> */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body { 
-        background-color: #f0f2f5; 
-        
-        /* Đặt ảnh nền */
+        background-color: var(--color-bg-primary);
         background-image: url("{% static 'images/GAMING.jpg' %}");
         background-size: cover;
         background-attachment: fixed;
         background-position: center;
-        
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--color-text-primary);
     } 
-    /* <<< PHẦN FIX MÀU TEXT MỚI >>> */
-    /* Ép tất cả các tiêu đề và đoạn văn cơ bản có màu sáng */
-    h3, h4, p, label, .form-label, .text-muted {
+
+    /* Typography cho nền tối */
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
         color: white !important;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* Thêm viền đen nhẹ để dễ đọc hơn */
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
-      /* Đảm bảo các thẻ bài (Cards) giữ nguyên màu đen/xám */
-    .card h3, .card h4, .card p, .card h5 {
-        color: inherit !important; /* Trả lại màu mặc định của Bootstrap */
+
+    p, label, .form-label {
+        color: white !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .text-muted {
+        color: #e2e8f0 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Card text giữ màu tối */
+    .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
+    .card p, .card label, .card .form-label {
+        color: var(--color-text-primary) !important;
         text-shadow: none !important;
     }
     
-  /* FIX đặc biệt cho các thẻ trong Card */
     .card .text-muted {
-        color: #6c757d !important; /* Màu xám mặc định của Bootstrap */
+        color: var(--color-text-secondary) !important;
+        text-shadow: none !important;
     }
-    /* <<< KẾT THÚC PHẦN FIX MÀU TEXT MỚI >>> */
 
-    /* 2. Đảm bảo nội dung chính có nền trắng/màu mờ (Giữ nguyên) */
-    .top-bar, .main-content .card {
-         background-color: rgba(255, 255, 255, 0.9); /* Cho nền trong suốt hơn */
+    /* Modal & Offcanvas text */
+    .modal h1, .modal h2, .modal h3, .modal h4, .modal h5, .modal h6,
+    .modal p, .modal label, .modal .form-label,
+    .offcanvas h1, .offcanvas h2, .offcanvas h3, .offcanvas h4, .offcanvas h5, .offcanvas h6,
+    .offcanvas p, .offcanvas label, .offcanvas .form-label {
+        color: var(--color-text-primary) !important;
+        text-shadow: none !important;
     }
-    /* Lớp phủ để làm nền tối/mờ không ảnh hưởng đến nội dung chính */
-    .content-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
+
+    .modal .text-muted,
+    .offcanvas .text-muted {
+        color: var(--color-text-secondary) !important;
+        text-shadow: none !important;
+    }
+
+    /* Sidebar - Clean & Professional */
+    .sidebar { 
+      width: var(--sidebar-width); 
+      background: var(--color-sidebar);
+      color: white; 
+      height: 100vh; 
+      position: fixed; 
+      top: 0; 
+      left: 0;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-header a {
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+
+    .sidebar-header a:hover {
+      opacity: 0.9;
+    }
+
+    .sidebar .nav {
+      padding: 1rem 0.75rem;
+    }
+
+    .sidebar .nav-link { 
+      color: var(--color-text-light); 
+      border-radius: 0.5rem; 
+      margin: 0.25rem 0; 
+      padding: 0.875rem 1rem;
+      font-weight: 500;
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: relative;
+    }
+
+    .sidebar .nav-link:hover { 
+      color: white; 
+      background: var(--color-sidebar-hover);
+      transform: translateX(2px);
+    }
+
+    .sidebar .nav-link.active { 
+      color: white; 
+      background: var(--color-accent);
+      font-weight: 600;
+    }
+
+    .sidebar .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: white;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .sidebar .nav-link .bi { 
+      font-size: 1.125rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar hr {
+      border-color: rgba(255, 255, 255, 0.1);
+      margin: 1rem 0.75rem;
+    }
+
+    /* Dropdown user */
+    .sidebar .dropdown {
+      padding: 0 0.75rem 1.25rem;
+    }
+
+    .sidebar .dropdown-toggle {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar .dropdown-toggle:hover {
+      background: var(--color-sidebar-hover);
+    }
+
+    .sidebar .dropdown-toggle::after {
+      margin-left: auto;
+    }
+
+    .dropdown-menu {
+      border: none;
+      border-radius: 0.5rem;
+      box-shadow: var(--shadow-xl);
+      padding: 0.5rem;
+    }
+
+    .dropdown-menu-dark {
+      background: #334155;
+    }
+
+    .dropdown-item {
+      border-radius: 0.375rem;
+      padding: 0.625rem 1rem;
+      font-size: 0.9375rem;
+      transition: all 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-divider {
+      border-color: rgba(255, 255, 255, 0.1);
+      margin: 0.5rem 0;
+    }
+
+    /* Main Content */
+    .main-content { 
+      margin-left: var(--sidebar-width); 
+      width: calc(100% - var(--sidebar-width));
+      min-height: 100vh;
+    }
+
+    /* Top Bar - Clean & Functional */
+    .top-bar { 
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 1.5rem; 
+      border-bottom: 1px solid var(--color-border);
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      min-height: 70px;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    #ca-lam-viec-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.9375rem;
+    }
+
+    #ca-lam-viec-info strong {
+      color: var(--color-text-secondary);
+      font-weight: 600;
+    }
+
+    #ca-lam-viec-info .text-primary {
+      color: var(--color-accent) !important;
+      font-weight: 700;
+    }
+
+    #ca-lam-viec-info .text-danger {
+      color: var(--color-danger) !important;
+      font-weight: 700;
+    }
+
+    .top-bar-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* Content Wrapper */
+    .content-wrapper { 
+      padding: 1.5rem;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Buttons - Clean & Modern */
+    .btn {
+      font-weight: 600;
+      border-radius: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border: none;
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--color-accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--color-accent-hover);
+    }
+
+    .btn-success {
+      background: var(--color-success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: var(--color-danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-warning {
+      background: var(--color-warning);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #d97706;
+    }
+
+    .btn-secondary {
+      background: #64748b;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    /* Badge */
+    .badge {
+      font-weight: 700;
+      padding: 0.375rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+    }
+
+    .badge.bg-danger {
+      background: var(--color-danger) !important;
+    }
+
+    .badge.bg-success {
+      background: var(--color-success) !important;
+    }
+
+    /* Cards - Clean & Elevated */
+    .card {
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow-sm);
+      background: var(--color-bg-secondary);
+      transition: all 0.2s ease;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+
+    .card-header {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--color-border);
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card.border-warning {
+      border-color: #fbbf24 !important;
+      background: #fffbeb;
+    }
+
+    .card.border-warning:hover {
+      border-color: var(--color-warning) !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
+
+    /* Forms - Modern & Clean */
+    .form-control, .form-select {
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      padding: 0.625rem 0.875rem;
+      font-size: 0.9375rem;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      outline: none;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--color-text-primary) !important;
+      margin-bottom: 0.5rem;
+      font-size: 0.9375rem;
+    }
+
+    .input-group-text {
+      background: #f8fafc;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      font-weight: 600;
+      font-size: 0.9375rem;
+    }
+
+    /* Modal - Clean & Professional */
+    .modal-content {
+      border: none;
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow-xl);
+      background: white;
+    }
+
+    .modal-header {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--color-border);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .modal-title {
+      font-weight: 700;
+      color: var(--color-text-primary);
+      font-size: 1.25rem;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .modal-footer {
+      background: #f8fafc;
+      border-top: 1px solid var(--color-border);
+      padding: 1rem 1.5rem;
+    }
+
+    /* Offcanvas - Modern Sidebar */
+    .offcanvas {
+      background: white;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .offcanvas-header {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--color-border);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .offcanvas-title {
+      color: var(--color-text-primary);
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .offcanvas-body {
+      padding: 1.5rem;
+    }
+
+    /* Alerts - Clean Notifications */
+    .alert {
+      border: 1px solid;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .alert-warning {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+
+    .alert-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #7f1d1d;
+    }
+
+    .alert-info {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1e3a8a;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #14532d;
+    }
+
+    /* List Group - Clean Lists */
+    .list-group-item {
+      border: 1px solid var(--color-border);
+      background: white;
+      transition: all 0.2s;
+      padding: 0.875rem 1.125rem;
+    }
+
+    .list-group-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    /* Spinner */
+    .spinner-border {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-width: 2px;
+    }
+
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+      border-width: 2px;
+    }
+
+    /* Text Colors */
+    .text-primary {
+      color: var(--color-accent) !important;
+    }
+
+    .text-success {
+      color: var(--color-success) !important;
+    }
+
+    .text-danger {
+      color: var(--color-danger) !important;
+    }
+
+    .text-warning {
+      color: var(--color-warning) !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      :root {
+        --sidebar-width: 260px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
         width: 100%;
-        height: 100%;
-        z-index: -1; /* Đảm bảo nó nằm dưới nội dung */
-    }
-    /* <<< KẾT THÚC PHẦN SỬA ĐỔI CHO ẢNH NỀN >>> */
+      }
 
-    .sidebar { width: var(--sidebar-width); background-color: #2c3e50; color: white; flex-shrink: 0; height: 100vh; position: fixed; top: 0; left: 0; }
-    .sidebar .nav-link { color: #bdc3c7; border-radius: .3rem; margin: 0.2rem 0; transition: all 0.2s; padding: 0.75rem 1rem; }
-    .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: #34495e; }
-    .sidebar .nav-link .bi { margin-right: 10px; }
-    .main-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
-    .top-bar { background-color: white; padding: 0.75rem 1.5rem; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-    .content-wrapper { padding: 1.5rem; }
-</style>
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        min-height: auto;
+      }
+
+      .top-bar-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      #ca-lam-viec-info {
+        font-size: 0.875rem;
+      }
+    }
+
+    /* Utilities */
+    .shadow-sm { box-shadow: var(--shadow-sm); }
+    .shadow-md { box-shadow: var(--shadow-md); }
+    .shadow-lg { box-shadow: var(--shadow-lg); }
+    .shadow-xl { box-shadow: var(--shadow-xl); }
+
+    .rounded-lg { border-radius: 0.75rem; }
+    .rounded-xl { border-radius: 1rem; }
+
+    /* Smooth Scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Focus Visible */
+    *:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    /* Selection */
+    ::selection {
+      background: var(--color-accent);
+      color: white;
+    }
+  </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     
-    <!-- FORM LOGOUT ẨN (FIX LỖI METHOD NOT ALLOWED) -->
     <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
         {% csrf_token %}
     </form>
 
-    <div class="sidebar d-flex flex-column p-3">
-        <a href="{% url 'pos-view' %}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
-            <i class="bi bi-display fs-4 me-2"></i>
-            <span class="fs-4 fw-bold">Quản Net Pro</span>
-        </a>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'pos-view' %}">
+                <i class="bi bi-display"></i>
+                <span>Quản Net Pro</span>
+            </a>
+        </div>
         <hr>
-        <ul class="nav nav-pills flex-column mb-auto">
+        <ul class="nav nav-pills flex-column">
             <li class="nav-item">
                 <a href="{% url 'pos-view' %}" class="nav-link {% if request.resolver_match.url_name == 'pos-view' %}active{% endif %}">
-                    <i class="bi bi-grid-1x2-fill"></i> Tổng Quan Máy
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Tổng Quan Máy</span>
                 </a>
             </li>
             <li>
                 <a href="{% url 'retail-order-view' %}" class="nav-link {% if request.resolver_match.url_name == 'retail-order-view' %}active{% endif %}">
-                    <i class="bi bi-cart-plus-fill"></i> POS Bán Lẻ
+                    <i class="bi bi-cart-plus-fill"></i>
+                    <span>POS Bán Lẻ</span>
                 </a>
             </li>
-         <li>
-        <a href="{% url 'customer-management-view' %}" class="nav-link {% if request.resolver_match.url_name == 'customer-management-view' %}active{% endif %}">
-            <i class="bi bi-cash-stack"></i> Nạp Tiền Khách Hàng
-        </a>
-    </li>
-             <li>
-        <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">
-            <i class="bi bi-box-seam-fill"></i> Quản Lý Kho
-        </a>
-    </li>
-             <li>
-        <a href="{% url 'reports-view' %}" class="nav-link {% if request.resolver_match.url_name == 'reports-view' %}active{% endif %}">
-            <i class="bi bi-clock-history"></i> Báo Cáo / Lịch Sử Ca
-        </a>
-    </li>
+            <li>
+                <a href="{% url 'customer-management-view' %}" class="nav-link {% if request.resolver_match.url_name == 'customer-management-view' %}active{% endif %}">
+                    <i class="bi bi-cash-stack"></i>
+                    <span>Nạp Tiền Khách Hàng</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">
+                    <i class="bi bi-box-seam-fill"></i>
+                    <span>Quản Lý Kho</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'reports-view' %}" class="nav-link {% if request.resolver_match.url_name == 'reports-view' %}active{% endif %}">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Báo Cáo / Lịch Sử Ca</span>
+                </a>
+            </li>
         </ul>
         <hr>
         <div class="dropdown">
-             <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle fs-4 me-2"></i>
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle fs-4"></i>
                 <strong>{% if user.is_authenticated %}{{ user.username }}{% else %}Guest{% endif %}</strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                <!-- Thêm nút Dashboard cho Admin/Staff (Điều kiện có thể được thêm vào đây) -->
                 {% if user.is_staff %}
                     <li><a class="dropdown-item" href="{% url 'dashboard_home' %}">Về Dashboard</a></li>
                     <li><a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a></li>
                     <li><hr class="dropdown-divider"></li>
                 {% endif %}
-                <!-- NÚT ĐĂNG XUẤT THỰC TẾ (Sử dụng onclick để kích hoạt form POST) -->
                 <li><a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit();">Đăng xuất</a></li>
             </ul>
         </div>
     </div>
 
     <main class="main-content">
-    <div class="top-bar" id="top-bar-sticky">
-        <div id="ca-lam-viec-info" class="fw-bold">
-            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-            <span class="ms-2">Đang tải thông tin ca...</span>
+        <div class="top-bar">
+            <div id="ca-lam-viec-info">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2">Đang tải thông tin ca...</span>
+            </div>
+            <div class="top-bar-actions">
+                <button class="btn btn-warning" type="button" data-bs-toggle="offcanvas" data-bs-target="#debtOffcanvas" aria-controls="debtOffcanvas" id="debt-count-btn">
+                    <i class="bi bi-wallet-fill"></i>
+                    <span>Nợ Dịch Vụ</span>
+                    <span class="badge bg-danger rounded-pill" id="debt-count">0</span>
+                </button>
+                <button class="btn btn-danger d-none" id="ket-thuc-ca-btn">
+                    <i class="bi bi-door-closed-fill"></i>
+                    <span>Kết Thúc Ca</span>
+                </button>
+            </div>
         </div>
-        <div>
-             <!-- NÚT NỢ DỊCH VỤ -->
-            <button class="btn btn-warning me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#debtOffcanvas" aria-controls="debtOffcanvas" id="debt-count-btn">
-                <i class="bi bi-wallet-fill me-1"></i> Nợ Dịch Vụ 
-                <span class="badge bg-danger rounded-pill" id="debt-count">0</span>
-            </button>
-             <!-- KẾT THÚC NÚT -->
-
-            <button class="btn btn-danger d-none" id="ket-thuc-ca-btn"><i class="bi bi-door-closed-fill me-2"></i>Kết Thúc Ca</button>
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
         </div>
-    </div>
-    <div class="content-wrapper">
-        {% block content %}{% endblock %}
-    </div>
-</main>
+    </main>
 
-
-    <!-- Modal Bắt đầu Ca (Đã có sẵn) -->
     <div class="modal fade" id="startShiftModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="startShiftForm">
-                    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-right me-2"></i> Bắt Đầu Ca Làm Việc Mới</h5></div>
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Bắt Đầu Ca Làm Việc Mới
+                        </h5>
+                    </div>
                     <div class="modal-body">
-                        <p>Vui lòng chọn ca và nhập số tiền mặt ban đầu để bắt đầu.</p>
+                        <p class="text-muted mb-4">Vui lòng chọn ca và nhập số tiền mặt ban đầu để bắt đầu.</p>
                         <div class="mb-3">
                             <label for="loai_ca_id" class="form-label">Chọn ca của bạn</label>
-                            <select class="form-select" id="loai_ca_id" required><option value="">Đang tải...</option></select>
+                            <select class="form-select" id="loai_ca_id" required>
+                                <option value="">Đang tải...</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="tien_mat_ban_dau" class="form-label">Tiền mặt ban đầu</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="tien_mat_ban_dau" value="0" min="0" required><span class="input-group-text">VNĐ</span>
+                                <input type="number" class="form-control" id="tien_mat_ban_dau" value="0" min="0" required>
+                                <span class="input-group-text">VNĐ</span>
                             </div>
                         </div>
                         <div id="start-shift-error" class="alert alert-danger d-none"></div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button></div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
     
-    <!-- Modal Nạp Tiền (PHẢI ĐƯỢC INCLUDE Ở ĐÂU ĐÓ) -->
-    <!-- Modal Mở Máy Cho Thành Viên (Giữ nguyên) -->
     <div class="modal fade" id="openForMemberModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Mở Máy Cho Thành Viên</h5></div>
+                <div class="modal-header">
+                    <h5 class="modal-title">Mở Máy Cho Thành Viên</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
                     <input type="hidden" id="open-member-machine-id">
-                    <p>Tìm và chọn khách hàng để mở máy <strong id="open-member-machine-name" class="text-primary"></strong>.</p>
+                    <p class="text-muted mb-3">Tìm và chọn khách hàng để mở máy <strong id="open-member-machine-name" class="text-primary"></strong>.</p>
                     <input type="text" id="member-search-input" class="form-control" placeholder="Nhập tên đăng nhập để tìm...">
-                    <div id="member-search-results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                    <div id="member-search-results" class="list-group mt-3" style="max-height: 250px; overflow-y: auto;"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -192,52 +805,113 @@
         </div>
     </div>
     
-    <!-- <<< OFFCANVAS NỢ DỊCH VỤ >>> -->
-     <div class="offcanvas offcanvas-end" tabindex="-1" id="debtOffcanvas" style="width: 450px;">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="debtOffcanvas" style="width: 480px;">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title fw-bold">Danh Sách Nợ Dịch Vụ</h5>
+            <h5 class="offcanvas-title">
+                <i class="bi bi-wallet2 me-2"></i>
+                Danh Sách Nợ Dịch Vụ
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body" id="debt-list-container">
-            <!-- ĐÃ THÊM HEADER TỔNG CỘNG -->
-            <div class="d-flex justify-content-between mb-3 p-2 bg-light rounded shadow-sm">
-                <span class="fs-5 fw-bold">TỔNG TIỀN NỢ:</span>
-                <span class="fs-5 fw-bold text-danger" id="total-debt-amount">0 VNĐ</span>
+            <div class="card border-0 bg-light mb-4">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-secondary">TỔNG TIỀN NỢ:</span>
+                    <span class="fs-4 fw-bold text-danger" id="total-debt-amount">0 VNĐ</span>
+                </div>
             </div>
             <div id="debt-orders-list">
-                <div class="text-center p-5"><div class="spinner-border"></div></div>
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="text-muted mt-2">Đang tải...</p>
+                </div>
             </div>
         </div>
     </div>
+     <!-- <<< MODAL KẾT THÚC CA MỚI (Thêm vào đây) >>> -->
+    <div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="endShiftForm">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="endShiftModalLabel"><i class="bi bi-door-open-fill me-2"></i> Chốt Ca & Kết Thúc</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Ca: <span id="end-shift-name" class="text-primary"></span></h6>
+                        <hr>
+                        <div class="cost-section">
+                            <div class="cost-row">
+                                <span class="info-label">Tiền mặt ban đầu (Hệ thống):</span>
+                                <span id="end-shift-cash-start" class="info-value">0 đ</span>
+                            </div>
+                            <div class="cost-row">
+                                <span class="info-label">Tổng Doanh Thu (Hệ thống):</span>
+                                <span id="end-shift-revenue" class="info-value">0 đ</span>
+                            </div>
+                            <div class="cost-row">
+                                <span class="info-label">Tổng tiền mặt cần có (Lý thuyết):</span>
+                                <span id="end-shift-theoretical-total" class="info-value">0 đ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end-shift-actual-cash" class="form-label">Số tiền mặt thực tế đếm được</label>
+                            <div class="input-group">
+                                <input type="number" id="end-shift-actual-cash" class="form-control" min="0" step="1000" required>
+                                <span class="input-group-text">VNĐ</span>
+                            </div>
+                        </div>
+                        <div id="end-shift-error" class="alert alert-danger d-none mt-2"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger w-100"><i class="bi bi-power me-2"></i> CHỐT CA & ĐĂNG XUẤT</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- <<< KẾT THÚC MODAL KẾT THÚC CA MỚI >>> -->
  
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- KHAI BÁO BIẾN CHUNG ---
         const caLamViecInfo = document.getElementById('ca-lam-viec-info');
         const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
         const startShiftModalEl = document.getElementById('startShiftModal');
-        // KHỞI TẠO MODAL VỚI KIỂM TRA AN TOÀN ĐỂ TRÁNH LỖI UNDEFINED
         const startShiftModal = startShiftModalEl ? new bootstrap.Modal(startShiftModalEl) : null;
         const startShiftForm = document.getElementById('startShiftForm');
         const API_BASE_URL = '/pos/api';
         
-        // SELECTOR NỢ DỊCH VỤ
         const debtCountBadge = document.getElementById('debt-count');
         const debtListContainer = document.getElementById('debt-list-container');
         const debtCountBtn = document.getElementById('debt-count-btn'); 
         const totalDebtAmountEl = document.getElementById('total-debt-amount');
-
-        // --- CÁC HÀM TIỆN ÍCH CHUNG ---
-        function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
-        const csrftoken = getCookie('csrftoken');
-        const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace(' VNĐ', ' VNĐ'); // Đảm bảo định dạng tiền tệ
         
-        // CÁC HÀM API CHUNG
+
+        function getCookie(name) { 
+            let cV = null; 
+            if (document.cookie && document.cookie !== '') { 
+                const c = document.cookie.split(';'); 
+                for (let i = 0; i < c.length; i++) { 
+                    const cK = c[i].trim(); 
+                    if (cK.substring(0, name.length + 1) === (name + '=')) { 
+                        cV = decodeURIComponent(cK.substring(name.length + 1)); 
+                        break; 
+                    } 
+                } 
+            } 
+            return cV; 
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+        const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace(' VNĐ', ' VNĐ');
+        
         const fetchData = async (relativeUrl) => {
             const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return await response.json();
         };
+        
         const postData = async (relativeUrl, data) => {
             return apiClient(`${API_BASE_URL}${relativeUrl}`, {
                 method: 'POST',
@@ -245,9 +919,7 @@
             });
         };
 
-        // --- LOGIC XỬ LÝ CA LÀM VIỆC ---
         async function loadDebtList(renderToContainer = true) {
-            // Chỉ hiển thị spinner khi offcanvas đang mở
             if (!document.getElementById('debtOffcanvas').classList.contains('show') && renderToContainer) {
                 try {
                     const debtOrders = await fetchData('/order/debt-list/');
@@ -259,7 +931,7 @@
             }
             
             if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
-                 document.getElementById('debt-orders-list').innerHTML = '<div class="text-center p-5"><div class="spinner-border"></div></div>';
+                 document.getElementById('debt-orders-list').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Đang tải...</p></div>';
             }
 
             try {
@@ -270,14 +942,14 @@
                 let listHtml = '';
                 
                 if (debtOrders.length === 0) {
-                    listHtml = '<div class="alert alert-info">Không có Order nào đang nợ.</div>';
+                    listHtml = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Không có Order nào đang nợ.</div>';
                     totalDebtAmountEl.textContent = formatCurrency(0);
                     
                 } else {
                     debtOrders.forEach(order => {
                         let detailsHtml = '';
                         order.chi_tiet.forEach(detail => {
-                            detailsHtml += `<li>${detail.mon.ten_mon} x ${detail.so_luong}</li>`;
+                            detailsHtml += `<li class="mb-1"><i class="bi bi-dot text-primary"></i>${detail.mon.ten_mon} <span class="badge bg-secondary">x${detail.so_luong}</span></li>`;
                         });
                         
                         const machineInfo = order.ten_may ? ` - Máy ${order.ten_may}` : '';
@@ -289,20 +961,29 @@
                         totalDebt += orderDebt;
 
                         listHtml += `
-                            <div class="card mb-3 shadow-sm border-warning">
+                            <div class="card mb-3 border-warning">
                                 <div class="card-body">
-                                    <h5 class="card-title mb-1">Order #${order.id}${machineInfo} (${order.loai_don_hang === 'BAN_LE' ? 'Bán Lẻ' : 'Ghi Nợ'})</h5>
-                                    <p class="card-text mb-1 small">
-                                        Hình thức: <span class="fw-bold">${hinhThucDisplay}</span>
-                                        | Mã KM: <span class="fw-bold">${order.ma_khuyen_mai_ap_dung || 'Không'}</span>
-                                    </p>
-                                    <p class="card-text fs-5 fw-bold text-danger">
-                                        Tổng nợ: ${formatCurrency(orderDebt)}
-                                    </p>
-                                    <h6 class="mt-2 small">Chi tiết:</h6>
-                                    <ul class="list-unstyled small ps-3">${detailsHtml}</ul>
-                                    <button class="btn btn-sm btn-success w-100 pay-debt-btn" data-id="${order.id}">
-                                        <i class="bi bi-check-circle-fill me-1"></i> Xác Nhận Đã Thu Tiền
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0 fw-bold">Order #${order.id}${machineInfo}</h6>
+                                        <span class="badge ${order.loai_don_hang === 'BAN_LE' ? 'bg-info' : 'bg-warning'}">${order.loai_don_hang === 'BAN_LE' ? 'Bán Lẻ' : 'Ghi Nợ'}</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">
+                                            <i class="bi bi-person me-1"></i>${hinhThucDisplay}
+                                            <span class="mx-2">|</span>
+                                            <i class="bi bi-tag me-1"></i>${order.ma_khuyen_mai_ap_dung || 'Không KM'}
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <span class="fs-5 fw-bold text-danger">${formatCurrency(orderDebt)}</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted fw-semibold">Chi tiết món:</small>
+                                        <ul class="list-unstyled ps-2 mt-1 small">${detailsHtml}</ul>
+                                    </div>
+                                    <button class="btn btn-success w-100 pay-debt-btn" data-id="${order.id}">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>Xác Nhận Đã Thu Tiền</span>
                                     </button>
                                 </div>
                             </div>
@@ -317,7 +998,7 @@
 
             } catch (error) {
                 if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
-                    document.getElementById('debt-orders-list').innerHTML = `<div class="alert alert-danger">Lỗi tải danh sách nợ: ${error.message}</div>`;
+                    document.getElementById('debt-orders-list').innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Lỗi tải danh sách nợ: ${error.message}</div>`;
                 }
                 debtCountBadge.textContent = '0';
                 totalDebtAmountEl.textContent = formatCurrency(0);
@@ -336,7 +1017,7 @@
                 if (startShiftModal) startShiftModal.show();
             } catch (error) {
                 const errorDiv = document.getElementById('start-shift-error');
-                errorDiv.textContent = 'Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
+                errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
                 errorDiv.classList.remove('d-none');
             }
         }
@@ -349,23 +1030,37 @@
                 const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
                 
                 caLamViecInfo.innerHTML = `
-                    <i class="bi bi-clock-fill text-success"></i> 
-                    <strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span> | 
-                    <strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan} | 
-                    <strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')} |
-                    <strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-fill text-success"></i>
+                        <span><strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-person-fill"></i>
+                        <span><strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-calendar-check"></i>
+                        <span><strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-cash-coin"></i>
+                        <span><strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span></span>
+                    </div>
                 `;
                 ketThucCaBtn.classList.remove('d-none');
                 debtCountBtn.disabled = false;
                 
-                loadDebtList(false); // Cập nhật badge Nợ
+                loadDebtList(false);
                 
             } catch (error) {
                 caLamViecInfo.innerHTML = `
-                    <div class="alert alert-warning py-1 px-3 mb-0 d-flex align-items-center">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>Chưa bắt đầu ca làm việc!</strong>
-                        <button class="btn btn-primary btn-sm ms-3" id="manual-start-shift-btn">Bắt Đầu Ca</button>
+                    <div class="alert alert-warning py-2 px-3 mb-0 d-flex align-items-center gap-3">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <span class="fw-semibold">Chưa bắt đầu ca làm việc!</span>
+                        <button class="btn btn-primary btn-sm ms-auto" id="manual-start-shift-btn">
+                            <i class="bi bi-play-fill"></i>
+                            <span>Bắt Đầu Ca</span>
+                        </button>
                     </div>
                 `;
                 ketThucCaBtn.classList.add('d-none');
@@ -382,25 +1077,54 @@
             const orderCard = document.querySelector(`.pay-debt-btn[data-id="${orderId}"]`).closest('.card');
             const totalText = orderCard.querySelector('.fs-5').textContent;
 
-            if (!confirm(`Xác nhận đã thu tiền Order #${orderId} (${totalText})? Hành động này không thể hoàn tác.`)) return;
+            if (!confirm(`Xác nhận đã thu tiền Order #${orderId} (${totalText})?\n\nHành động này không thể hoàn tác.`)) return;
 
             const btn = orderCard.querySelector('.pay-debt-btn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span><span class="ms-2">Đang xử lý...</span>';
             
             try {
                 const result = await postData(`/order/${orderId}/pay-debt/`, {});
                 alert(result.success);
-                await loadDebtList(true); // Tải lại danh sách và render
-                updateCaInfo(); // Cập nhật tổng thu trên top bar
+                await loadDebtList(true);
+                updateCaInfo();
             } catch(error) {
                 alert(`Lỗi khi xác nhận thanh toán: ${error.message}`);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Xác Nhận Đã Thu Tiền';
+                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Xác Nhận Đã Thu Tiền</span>';
             }
         }
+        // --- XỬ LÝ START SHIFT MODAL ---
+const startShiftFormEl = document.getElementById('startShiftForm');
+if (startShiftFormEl) {
+    startShiftFormEl.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorDiv = document.getElementById('start-shift-error');
+        errorDiv.classList.add('d-none');
+        const data = {
+            loai_ca_id: document.getElementById('loai_ca_id').value,
+            tien_mat_ban_dau: document.getElementById('tien_mat_ban_dau').value
+        };
         
-        // SỰ KIỆN CHO OFFCANVAS
+        if (!data.loai_ca_id) {
+            errorDiv.textContent = 'Vui lòng chọn một ca làm việc.';
+            errorDiv.classList.remove('d-none');
+            return;
+        }
+
+        try {
+            // Gọi API /ca/bat-dau/ (API này nằm trong quanly/api_urls.py)
+            const result = await postData('/ca/bat-dau/', data); 
+            alert(`Đã bắt đầu ${result.loai_ca.ten_ca} thành công!`);
+            location.reload();
+        } catch (error) {
+            errorDiv.textContent = `Lỗi: ${error.message}`;
+            errorDiv.classList.remove('d-none');
+        }
+    });
+}
+// --- KẾT THÚC XỬ LÝ START SHIFT MODAL ---
+        
         document.getElementById('debtOffcanvas').addEventListener('shown.bs.offcanvas', () => loadDebtList(true)); 
         
         debtListContainer.addEventListener('click', (e) => {
@@ -408,20 +1132,59 @@
             if (btn) payDebt(btn.dataset.id);
         });
         
-        // Tải danh sách nợ dịch vụ mỗi 60s để cập nhật badge
         setInterval(() => loadDebtList(false), 60000);
 
-        // --- KHỞI CHẠY CHUNG ---
         updateCaInfo();
         setInterval(updateCaInfo, 30000);
     });
 </script>
-<!-- ✅ Chỉ giữ MỘT bản api_client.js -->
-<script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
 
-<!-- ✅ Bootstrap Bundle (có cả Popper + Modal) -->
+<script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {% block extra_js %}{% endblock %}
+    <!-- THÊM MODAL NÀY VÀO CUỐI POS_BASE.HTML, TRƯỚC ENDBODY/ENDHTML -->
+<div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="endShiftForm">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="endShiftModalLabel"><i class="bi bi-door-open-fill me-2"></i> Kết Thúc Ca Làm Việc</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Tóm tắt ca làm việc: <span id="end-shift-name" class="text-primary"></span></h6>
+                    <hr>
+                    <div class="cost-section">
+                        <div class="cost-row">
+                            <span class="info-label">Tiền mặt ban đầu (Hệ thống):</span>
+                            <span id="end-shift-cash-start" class="info-value">0 đ</span>
+                        </div>
+                        <div class="cost-row">
+                            <span class="info-label">Tổng Doanh Thu (Hệ thống):</span>
+                            <span id="end-shift-revenue" class="info-value">0 đ</span>
+                        </div>
+                        <div class="cost-row">
+                            <span class="info-label">Tổng tiền mặt cần có (Lý thuyết):</span>
+                            <span id="end-shift-theoretical-total" class="info-value">0 đ</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="end-shift-actual-cash" class="form-label">Số tiền mặt thực tế đếm được</label>
+                        <div class="input-group">
+                            <input type="number" id="end-shift-actual-cash" class="form-control" min="0" step="1000" required>
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+                    <div id="end-shift-error" class="alert alert-danger d-none mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger w-100"><i class="bi bi-power me-2"></i> CHỐT CA & ĐĂNG XUẤT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 </body>
 </html>

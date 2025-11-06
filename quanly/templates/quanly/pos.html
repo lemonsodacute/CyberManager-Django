@@ -3,23 +3,470 @@
 {% block title %}Tổng Quan - Quản Net Pro{% endblock %}
 
 {% block extra_css %}
+{% load static %}  
 <style>
-    .may-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.25rem; }
-    .may-card { cursor: pointer; transition: all 0.2s ease-in-out; border-radius: 0.5rem; border: 1px solid #dee2e6; }
-    .may-card:hover { transform: translateY(-5px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .may-card.selected { border: 2px solid #0d6efd; box-shadow: 0 4px 15px rgba(13,110,253,0.4); }
-    .may-card .card-header { font-weight: bold; }
-    .task-panel { position: sticky; top: 1.5rem; }
-    .badge { font-size: 0.8rem; }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+  body {
+    background: url("{% static 'images/GAMING.jpg' %}") center/cover fixed no-repeat;
+    color: #e4e4e7;
+   
+}
+
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h3 {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-outline-secondary,
+    .btn-outline-success,
+    .btn-outline-primary,
+    .btn-outline-danger {
+        padding: 0.6rem 1.2rem;
+        background: #1a1f3a;
+        border: 1.5px solid #2a2f4a;
+        color: #a1a1aa;
+        border-radius: 0.6rem;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-outline-secondary:hover,
+    .btn-outline-success:hover,
+    .btn-outline-primary:hover,
+    .btn-outline-danger:hover {
+        background: #252a45;
+        border-color: #3a3f5a;
+        color: #e4e4e7;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-outline-secondary.active {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-color: #6366f1;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-outline-success.active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-outline-primary.active {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border-color: #2563eb;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-outline-danger.active {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-color: #ef4444;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .may-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.2rem;
+    }
+
+    .may-card { 
+        background: linear-gradient(135deg, #f8f9fa 0%, #f0f1f3 100%);
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        padding: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .may-card:hover { 
+        transform: translateY(-4px);
+        border-color: #d1d5db;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .may-card.selected { 
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15), 0 8px 20px rgba(37, 99, 235, 0.2);
+        background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+    }
+
+    .may-card.status-used {
+        border-left: 4px solid #10b981;
+    }
+
+    .may-card.status-empty {
+        border-left: 4px solid #6366f1;
+    }
+
+    .may-card.status-broken {
+        border-left: 4px solid #ef4444;
+    }
+
+    .may-card .card-header { 
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 1rem;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 110, 0.1));
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .may-card .card-body {
+        padding: 0.8rem 0.5rem 0.5rem;
+    }
+
+    .card-text {
+        font-size: 0.8rem;
+        color: #6b7280 !important;
+        margin-bottom: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.5rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .text-bg-success { background: rgba(16, 185, 129, 0.2) !important; color: #059669 !important; }
+    .text-bg-primary { background: rgba(99, 102, 241, 0.2) !important; color: #4f46e5 !important; }
+    .text-bg-danger { background: rgba(239, 68, 68, 0.2) !important; color: #dc2626 !important; }
+
+    .time-used {
+        font-family: 'Courier New', monospace;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+        display: block;
+        margin-top: 0.875rem;
+        padding-top: 0.875rem;
+        border-top: 2px solid #e5e7eb;
+    }
+
+    .task-panel { 
+        position: sticky; 
+        top: 1.5rem;
+    }
+
+    .task-panel .card {
+        background: #ffffff;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.875rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .task-panel .card-header {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        padding: 1.2rem;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.15rem;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .task-panel .card-body {
+        padding: 1.5rem;
+        color: #1f2937;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.875rem 0;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+        font-weight: 600;
+        min-width: 120px;
+    }
+
+    .info-value {
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-align: right;
+        flex: 1;
+    }
+
+    .cost-section {
+        margin: 1.5rem 0;
+        padding: 1.2rem;
+        background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+        border-radius: 0.6rem;
+        border: 1.5px solid #bfdbfe;
+    }
+
+    .cost-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+        font-size: 0.875rem;
+        color: #1f2937;
+    }
+
+    .total-cost {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #059669;
+        margin-top: 0.875rem;
+        padding-top: 0.875rem;
+        border-top: 1.5px solid #bfdbfe;
+    }
+
+    .btn {
+        padding: 0.8rem 1rem;
+        border: none;
+        border-radius: 0.6rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+    .btn-info:hover {
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .d-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.875rem;
+    }
+
+    .spinner-border {
+        border-color: rgba(37, 99, 235, 0.2);
+        border-right-color: #2563eb;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .text-muted {
+        color: #9ca3af !important;
+    }
+
+    .text-success {
+        color: #10b981 !important;
+    }
+
+    .text-danger {
+        color: #ef4444 !important;
+    }
+
+    .fw-bold {
+        font-weight: 700 !important;
+    }
+
+    .fs-1 {
+        font-size: 3rem;
+    }
+
+    .mt-2 {
+        margin-top: 0.5rem;
+    }
+
+    .mt-3 {
+        margin-top: 1rem;
+    }
+
+    .mb-0 {
+        margin-bottom: 0;
+    }
+
+    .mb-1 {
+        margin-bottom: 0.25rem;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .py-5 {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+
+    .small {
+        font-size: 0.875rem;
+    }
+
+    hr {
+        border-color: #e5e7eb;
+        opacity: 0.5;
+        margin: 1rem 0;
+    }
+
+    h5, h6 {
+        color: #1f2937;
+        font-weight: 700;
+        margin-bottom: 0.875rem;
+    }
+
+    .modal-content {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border: 2px solid #e5e7eb;
+        color: #1f2937;
+        border-radius: 0.875rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+        border-bottom: 2px solid #e5e7eb;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        padding: 1.2rem;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modal-footer {
+        border-top: 2px solid #e5e7eb;
+    }
+
+    .form-control,
+    .input-group-text {
+        background: #f8f9fa;
+        border: 1.5px solid #e5e7eb;
+        color: #1f2937;
+        border-radius: 0.5rem;
+    }
+
+    .form-control:focus {
+        background: #fff;
+        border-color: #2563eb;
+        color: #1f2937;
+        box-shadow: 0 0 0 0.3rem rgba(37, 99, 235, 0.25);
+    }
+
+    .form-label {
+        color: #374151;
+        font-weight: 600;
+    }
+
+    .list-group-item {
+        background: #f8f9fa;
+        border: 1px solid #e5e7eb;
+        color: #1f2937;
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item:hover {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        transform: translateX(4px);
+    }
+
+    .alert-danger {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1.5px solid rgba(239, 68, 68, 0.4);
+        color: #991b1b;
+        border-radius: 0.6rem;
+    }
+
+    @media (max-width: 1024px) {
+        .task-panel {
+            position: relative;
+            top: 0;
+            margin-top: 2rem;
+        }
+
+        .may-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-lg-8">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Sơ Đồ Máy</h3>
-            <div class="btn-group" role="group" id="filter-buttons">
+        <div class="page-header">
+            <h3><i class="bi bi-grid-3x3-gap-fill me-2"></i>Sơ Đồ Máy</h3>
+            <div class="filter-tabs" id="filter-buttons">
                 <button type="button" class="btn btn-outline-secondary active" data-filter="all">Tất Cả</button>
                 <button type="button" class="btn btn-outline-success" data-filter="DANG_SU_DUNG">Đang sử dụng</button>
                 <button type="button" class="btn btn-outline-primary" data-filter="TRONG">Trống</button>
@@ -37,27 +484,25 @@
         <div class="task-panel" id="task-panel">
             <div class="card shadow-sm" id="task-panel-placeholder">
                 <div class="card-body text-center py-5">
-                    <i class="bi bi-mouse2 fs-1 text-muted"></i>
-                    <h5 class="mt-2">Chọn một máy để bắt đầu</h5>
-                    <p class="text-muted small">Hoặc chọn chức năng "POS Bán Lẻ" từ menu bên trái.</p>
+                    <i class="bi bi-pc-display fs-1" style="color: #3f3f46;"></i>
+                    <h5 class="mt-2">Chọn máy để xem chi tiết</h5>
+                    <p class="text-muted small">Click vào một máy bất kỳ để bắt đầu</p>
                 </div>
             </div>
             <div class="card shadow-sm d-none" id="task-panel-machine-view">
-                <div class="card-header bg-primary text-white"><h5 class="mb-0" id="machine-view-ten-may"></h5></div>
+                <div class="card-header"><h5 class="mb-0" id="machine-view-ten-may"></h5></div>
                 <div class="card-body">
                     <p><strong>Trạng thái:</strong> <span id="machine-view-trang-thai"></span></p>
                     <div id="machine-view-info-phien">
                         <p><strong>Khách hàng:</strong> <span id="machine-view-khach-hang"></span></p>
                         <p><strong>Bắt đầu:</strong> <span id="machine-view-bat-dau"></span></p>
-                        <p><strong>Thời gian:</strong> <span id="machine-view-thoi-gian" class="fw-bold text-danger"></span></p>
+                        <p><strong>Thời gian:</strong> <span id="machine-view-thoi-gian" class="fw-bold time-used"></span></p>
                         <hr>
                         <h6>Chi phí tạm tính</h6>
                         <p class="mb-1"><strong>Tiền giờ:</strong> <span id="machine-view-tien-gio">0 VNĐ</span></p>
                         <p class="mb-1"><strong>Tiền dịch vụ:</strong> <span id="machine-view-tien-dv">0 VNĐ</span></p>
-                        <!-- <<< THÊM HIỂN THỊ TIỀN GIẢM GIÁ >>> -->
                         <p class="mb-1 text-success"><strong>Giảm giá dịch vụ:</strong> <span id="machine-view-tien-giam-gia" class="float-end">- 0 VNĐ</span></p>
-                        <!-- <<< KẾT THÚC THÊM HIỂN THỊ TIỀN GIẢM GIÁ >>> -->
-                        <h5 class="text-danger">Tổng cộng: <span id="machine-view-tong-cong" class="fw-bold">0 VNĐ</span></h5>
+                        <h5 class="text-danger mt-3">Tổng cộng: <span id="machine-view-tong-cong" class="fw-bold">0 VNĐ</span></h5>
                     </div>
                     <hr>
                     <div class="d-grid gap-2" id="machine-view-actions"></div>
@@ -71,9 +516,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // --- GLOBAL FUNCTIONS (ĐÃ SỬA) ---
-    function openOrderWindowForSession(sessionId, machineName, hinhThuc) { // <<< THÊM hinhThuc
-        // <<< SỬA: THÊM hinh_thuc VÀO URL >>>
+    function openOrderWindowForSession(sessionId, machineName, hinhThuc) {
         const url = `/pos/order/?phien_id=${sessionId}&may_ten=${encodeURIComponent(machineName)}&hinh_thuc=${hinhThuc}`;
         window.open(url, 'OrderWindow', 'width=1200,height=800,scrollbars=yes,resizable=yes');
     }
@@ -90,13 +533,21 @@
         const filterButtons = document.getElementById('filter-buttons');
         const API_BASE_URL = '/api';
 
-
+        // Modals & Forms
         const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
         const openForMemberModal = new bootstrap.Modal(document.getElementById('openForMemberModal'));
         const depositForm = document.getElementById('depositForm');
+        
+        // --- END SHIFT MODAL ELEMENTS ---
+        const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
+        const endShiftModalEl = document.getElementById('endShiftModal');
+        const endShiftModal = endShiftModalEl ? new bootstrap.Modal(endShiftModalEl) : null;
+        const endShiftForm = document.getElementById('endShiftForm');
+        // ---
 
         // --- HELPER & API FUNCTIONS ---
         function getCookie(name) { let cV = null; if (document.cookie && document.cookie !== '') { const c = document.cookie.split(';'); for (let i = 0; i < c.length; i++) { const cK = c[i].trim(); if (cK.substring(0, name.length + 1) === (name + '=')) { cV = decodeURIComponent(cK.substring(name.length + 1)); break; } } } return cV; }
+        const csrftoken = getCookie('csrftoken');
         const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN') + ' VNĐ';
         const formatDateTime = (iso) => iso ? new Date(iso).toLocaleString('vi-VN') : 'N/A';
         const formatDuration = (sec) => {
@@ -109,7 +560,7 @@
 
         const apiRequest = async (url, options = {}) => {
             try {
-                options.headers = { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken'), ...options.headers };
+                options.headers = { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken, ...options.headers };
                 const response = await fetch(`${API_BASE_URL}${url}`, options);
                 if (response.status === 204) return null;
                 const result = await response.json();
@@ -118,7 +569,7 @@
             } catch (e) { throw e; }
         };
 
-        // --- RENDER FUNCTIONS ---
+        // --- RENDER FUNCTIONS (Giữ nguyên) ---
         function renderMayGrid(data, filter = 'all') {
             const filteredData = filter === 'all' ? data : data.filter(may => may.trang_thai === filter);
             mayContainer.innerHTML = '';
@@ -127,21 +578,45 @@
                  return;
             }
             filteredData.forEach(may => {
-                let statusClass, statusText, icon, headerClass;
+                let statusClass, statusText, statusType;
                 switch (may.trang_thai) {
-                    case 'DANG_SU_DUNG': statusClass = 'text-bg-success'; statusText = 'Đang dùng'; icon = 'bi-person-check-fill'; headerClass = 'bg-success-subtle'; break;
-                    case 'TRONG': statusClass = 'text-bg-primary'; statusText = 'Trống'; icon = 'bi-pc-display'; headerClass = 'bg-primary-subtle'; break;
-                    case 'HONG': statusClass = 'text-bg-danger'; statusText = 'Hỏng'; icon = 'bi-x-circle-fill'; headerClass = 'bg-danger-subtle'; break;
+                    case 'DANG_SU_DUNG': 
+                        statusClass = 'text-bg-success'; 
+                        statusText = 'Đang dùng'; 
+                        statusType = 'status-used';
+                        break;
+                    case 'TRONG': 
+                        statusClass = 'text-bg-primary'; 
+                        statusText = 'Trống'; 
+                        statusType = 'status-empty';
+                        break;
+                    case 'HONG': 
+                        statusClass = 'text-bg-danger'; 
+                        statusText = 'Hỏng'; 
+                        statusType = 'status-broken';
+                        break;
                 }
                 const isSelected = may.id === selectedMayId ? 'selected' : '';
                 const card = document.createElement('div');
-                card.className = `card may-card ${isSelected}`;
+                card.className = `card may-card ${statusType} ${isSelected}`;
                 card.dataset.mayId = may.id;
                 let phienHtml = '';
                 if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
-                    phienHtml = `<div class="mt-2"><strong class="text-danger fs-5 time-used" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}">00:00:00</strong><p class="mb-0 small text-muted">${formatCurrency(may.loai_may.don_gia_gio)}/giờ</p></div>`;
+                    phienHtml = `<div class="mt-2"><span class="time-used" data-start-time="${may.phien_dang_chay.thoi_gian_bat_dau}">00:00:00</span><p class="mb-0 small text-muted">${formatCurrency(may.loai_may.don_gia_gio)}/giờ</p></div>`;
                 }
-                card.innerHTML = `<div class="card-header ${headerClass}"><i class="bi ${icon} me-1"></i> ${may.ten_may}</div><div class="card-body"><p class="card-text text-muted small">${may.loai_may.ten_loai}</p><span class="badge ${statusClass}">${statusText}</span>${phienHtml}</div>`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span><i class="bi bi-pc-display me-1"></i> ${may.ten_may}</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text text-muted small">${may.loai_may.ten_loai}</p>
+                        <span class="badge ${statusClass}">
+                            <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                            ${statusText}
+                        </span>
+                        ${phienHtml}
+                    </div>
+                `;
                 mayContainer.appendChild(card);
             });
         }
@@ -158,20 +633,29 @@
             const actionContainer = document.getElementById('machine-view-actions');
             const infoPhienContainer = document.getElementById('machine-view-info-phien');
 
-            document.getElementById('machine-view-ten-may').textContent = may.ten_may;
-            document.getElementById('machine-view-trang-thai').innerHTML = `<span class="badge text-bg-${may.trang_thai === 'DANG_SU_DUNG' ? 'success' : may.trang_thai === 'TRONG' ? 'primary' : 'danger'}">${may.trang_thai.replace('_', ' ')}</span>`;
+            document.getElementById('machine-view-ten-may').innerHTML = `<i class="bi bi-pc-display me-2"></i>${may.ten_may}`;
+            
+            let statusBadge;
+            if (may.trang_thai === 'DANG_SU_DUNG') {
+                statusBadge = '<span class="badge text-bg-success"><i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Đang dùng</span>';
+            } else if (may.trang_thai === 'TRONG') {
+                statusBadge = '<span class="badge text-bg-primary"><i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Trống</span>';
+            } else {
+                statusBadge = '<span class="badge text-bg-danger"><i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Hỏng</span>';
+            }
+            document.getElementById('machine-view-trang-thai').innerHTML = statusBadge;
             
             actionContainer.innerHTML = '';
 
             if (may.trang_thai === 'TRONG') {
                 infoPhienContainer.style.display = 'none';
                 actionContainer.innerHTML = `
-                    <button class="btn btn-primary btn-lg" data-action="mo-may-vang-lai"><i class="bi bi-play-circle-fill me-2"></i> Mở Máy (Vãng lai)</button>
-                    <button class="btn btn-info text-white btn-lg" data-action="mo-may-thanh-vien"><i class="bi bi-person-plus-fill me-2"></i> Mở Máy (Thành viên)</button>
+                    <button class="btn btn-primary btn-lg" data-action="mo-may-vang-lai"><i class="bi bi-play-fill me-2"></i>Mở Máy (Vãng lai)</button>
+                    <button class="btn btn-info text-white btn-lg" data-action="mo-may-thanh-vien"><i class="bi bi-person-plus-fill me-2"></i>Mở Máy (Thành viên)</button>
                 `;
             } else if (may.trang_thai === 'DANG_SU_DUNG' && may.phien_dang_chay) {
                 const phien = may.phien_dang_chay;
-                const phienData = await apiRequest(`/phien/${phien.id}/`); // Lấy chi tiết phiên với thông tin giảm giá
+                const phienData = await apiRequest(`/phien/${phien.id}/`);
                 
                 infoPhienContainer.style.display = 'block';
                 document.getElementById('machine-view-khach-hang').textContent = phien.khach_hang ? phien.khach_hang.username : 'Khách vãng lai';
@@ -180,33 +664,30 @@
                 const startTime = new Date(phien.thoi_gian_bat_dau);
                 const durationSec = Math.floor((new Date() - startTime) / 1000);
                 const tienGio = (durationSec / 3600) * parseFloat(may.loai_may.don_gia_gio);
-                const tienDV = phienData ? parseFloat(phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0)) : 0; // tong_tien đã có giảm giá
-                const tienGiamGiaPhien = phienData ? parseFloat(phienData.tong_tien_giam_gia_phien) : 0; // Lấy tổng giảm giá từ phiên
+                const tienDV = phienData ? parseFloat(phienData.cac_don_hang.reduce((sum, order) => sum + parseFloat(order.tong_tien), 0)) : 0;
+                const tienGiamGiaPhien = phienData ? parseFloat(phienData.tong_tien_giam_gia_phien) : 0;
                 
                 document.getElementById('machine-view-tien-gio').textContent = formatCurrency(tienGio);
                 document.getElementById('machine-view-tien-dv').textContent = formatCurrency(tienDV);
-                document.getElementById('machine-view-tien-giam-gia').textContent = `- ${formatCurrency(tienGiamGiaPhien)}`; // HIỂN THỊ TIỀN GIẢM GIÁ
+                document.getElementById('machine-view-tien-giam-gia').textContent = `- ${formatCurrency(tienGiamGiaPhien)}`;
                 document.getElementById('machine-view-tong-cong').textContent = formatCurrency(tienGio + tienDV);
 
-                let depositButtonHtml = `<button class="btn btn-info text-white" disabled><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
+                let depositButtonHtml = `<button class="btn btn-info text-white" disabled><i class="bi bi-cash-stack me-2"></i>Nạp Tiền</button>`;
                 if (phien.khach_hang) {
-                    depositButtonHtml = `<button class="btn btn-info text-white" data-action="nap-tien" data-customer-id="${phien.khach_hang.tai_khoan_id}" data-customer-name="${phien.khach_hang.username}"><i class="bi bi-currency-dollar me-2"></i> Nạp Tiền</button>`;
+                    depositButtonHtml = `<button class="btn btn-info text-white" data-action="nap-tien" data-customer-id="${phien.khach_hang.tai_khoan_id}" data-customer-name="${phien.khach_hang.username}"><i class="bi bi-cash-stack me-2"></i>Nạp Tiền</button>`;
                 }
 
-                // <<< SỬA NÚT ORDER MÓN ĐỂ TRUYỀN HÌNH THỨC PHIÊN >>>
                 actionContainer.innerHTML = `
-                    <button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}', '${phien.hinh_thuc}')"><i class="bi bi-cup-straw me-2"></i> Order Món</button>
+                    <button class="btn btn-success" onclick="openOrderWindowForSession(${phien.id}, '${may.ten_may}', '${phien.hinh_thuc}')"><i class="bi bi-cup-straw me-2"></i>Order Món</button>
                     ${depositButtonHtml}
-                    <button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-receipt-cutoff me-2"></i> Tính Tiền & Đóng Máy</button>`;
-                // <<< KẾT THÚC SỬA NÚT ORDER MÓN >>>
+                    <button class="btn btn-danger" data-action="tinh-tien"><i class="bi bi-x-circle me-2"></i>Tính Tiền & Đóng Máy</button>`;
             } else {
                 infoPhienContainer.style.display = 'none';
-                actionContainer.innerHTML = `<div class="alert alert-danger">Lỗi: Dữ liệu không nhất quán.</div>`;
+                actionContainer.innerHTML = `<div class="alert alert-danger">Máy đang hỏng</div>`;
             }
             showTaskPanel('task-panel-machine-view');
         }
 
-        // --- DATA LOADING ---
         async function loadInitialData() {
             try {
                 const [mayData, customerData] = await Promise.all([
@@ -356,13 +837,43 @@
             }
         });
 
-        // --- INITIALIZATION ---
         function initialize() {
             loadInitialData();
             setInterval(loadInitialData, 30000);
             setInterval(updateTimers, 1000);
         }
         initialize();
+        
+        // *** THÊM XỬ LÝ NÚT KẾT THÚC CA NGAY TẠI ĐÂY ***
+        const endShiftBtn = document.getElementById('ket-thuc-ca-btn');
+        async function endShift() {
+            if (!endShiftBtn) return;
+            if (!confirm('Bạn có chắc chắn muốn kết thúc ca làm việc hiện tại không?')) return;
+
+            endShiftBtn.disabled = true;
+            endShiftBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang kết thúc...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/ca/ket-thuc/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrftoken},
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || JSON.stringify(data));
+                
+                alert(data.success || "Đã kết thúc ca làm việc thành công!");
+                location.reload();
+            } catch (err) {
+                alert("Lỗi kết thúc ca: " + err.message);
+                endShiftBtn.disabled = false;
+                endShiftBtn.innerHTML = '<i class="bi bi-door-closed-fill me-2"></i>Kết Thúc Ca';
+            }
+        }
+
+        if(endShiftBtn) {
+            endShiftBtn.addEventListener('click', endShift);
+        }
+        // ************************************************
     });
 </script>
 <!-- ✅ Modal Nạp Tiền -->
@@ -393,5 +904,47 @@
     </div>
   </div>
 </div>
+<!-- ✅ MODAL KẾT THÚC CA MỚI (Thêm vào đây) -->
+<div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="endShiftForm">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="endShiftModalLabel"><i class="bi bi-door-open-fill me-2"></i> Chốt Ca & Kết Thúc</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Ca: <span id="end-shift-name" class="text-primary"></span></h6>
+                    <hr>
+                    <div class="cost-section">
+                        <div class="cost-row">
+                            <span class="info-label">Tiền mặt ban đầu (Hệ thống):</span>
+                            <span id="end-shift-cash-start" class="info-value">0 đ</span>
+                        </div>
+                        <div class="cost-row">
+                            <span class="info-label">Tổng Doanh Thu (Hệ thống):</span>
+                            <span id="end-shift-revenue" class="info-value">0 đ</span>
+                        </div>
+                        <div class="cost-row">
+                            <span class="info-label">Tổng tiền mặt cần có (Lý thuyết):</span>
+                            <span id="end-shift-theoretical-total" class="info-value">0 đ</span>
+                        </div>
+                    </div>
 
+                    <div class="mb-3">
+                        <label for="end-shift-actual-cash" class="form-label">Số tiền mặt thực tế đếm được</label>
+                        <div class="input-group">
+                            <input type="number" id="end-shift-actual-cash" class="form-control" min="0" step="1000" required>
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                    </div>
+                    <div id="end-shift-error" class="alert alert-danger d-none mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger w-100"><i class="bi bi-power me-2"></i> CHỐT CA & ĐĂNG XUẤT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
