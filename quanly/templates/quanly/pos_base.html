@@ -2,833 +2,308 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Quản Net Pro{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Quản Net Pro{% endblock %}</title>
+
+  <!-- Bootstrap + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- ===== NEON THEME (frontend only; không đổi backend) ===== -->
   <style>
-    :root { 
-      --sidebar-width: 280px;
-      
-      /* Bảng màu hiện đại - Neutral + Accent */
-      --color-bg-primary: #f8f9fa;
-      --color-bg-secondary: #ffffff;
-      --color-sidebar: #1e293b;
-      --color-sidebar-hover: #334155;
-      --color-text-primary: #0f172a;
-      --color-text-secondary: #64748b;
-      --color-text-light: #94a3b8;
-      --color-border: #e2e8f0;
-      --color-accent: #3b82f6;
-      --color-accent-hover: #2563eb;
-      --color-success: #10b981;
-      --color-warning: #f59e0b;
-      --color-danger: #ef4444;
-      
-      /* Shadows */
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body { 
-        background-color: var(--color-bg-primary);
-        background-image: url("{% static 'images/GAMING.jpg' %}");
-        background-size: cover;
-        background-attachment: fixed;
-        background-position: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-        line-height: 1.6;
-        color: var(--color-text-primary);
-    } 
-
-    /* Typography cho nền tối */
-    h1, h2, h3, h4, h5, h6 {
-        font-weight: 600;
-        color: white !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    p, label, .form-label {
-        color: white !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    .text-muted {
-        color: #e2e8f0 !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Card text giữ màu tối */
-    .card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
-    .card p, .card label, .card .form-label {
-        color: var(--color-text-primary) !important;
-        text-shadow: none !important;
-    }
-    
-    .card .text-muted {
-        color: var(--color-text-secondary) !important;
-        text-shadow: none !important;
-    }
-
-    /* Modal & Offcanvas text */
-    .modal h1, .modal h2, .modal h3, .modal h4, .modal h5, .modal h6,
-    .modal p, .modal label, .modal .form-label,
-    .offcanvas h1, .offcanvas h2, .offcanvas h3, .offcanvas h4, .offcanvas h5, .offcanvas h6,
-    .offcanvas p, .offcanvas label, .offcanvas .form-label {
-        color: var(--color-text-primary) !important;
-        text-shadow: none !important;
-    }
-
-    .modal .text-muted,
-    .offcanvas .text-muted {
-        color: var(--color-text-secondary) !important;
-        text-shadow: none !important;
-    }
-
-    /* Sidebar - Clean & Professional */
-    .sidebar { 
-      width: var(--sidebar-width); 
-      background: var(--color-sidebar);
-      color: white; 
-      height: 100vh; 
-      position: fixed; 
-      top: 0; 
-      left: 0;
-      overflow-y: auto;
-      box-shadow: var(--shadow-lg);
-      z-index: 1000;
-    }
-
-    .sidebar::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .sidebar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .sidebar::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-    }
-
-    .sidebar-header {
-      padding: 1.5rem 1.25rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .sidebar-header a {
-      text-decoration: none;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 1.25rem;
-      font-weight: 700;
-      transition: opacity 0.2s;
-    }
-
-    .sidebar-header a:hover {
-      opacity: 0.9;
-    }
-
-    .sidebar .nav {
-      padding: 1rem 0.75rem;
-    }
-
-    .sidebar .nav-link { 
-      color: var(--color-text-light); 
-      border-radius: 0.5rem; 
-      margin: 0.25rem 0; 
-      padding: 0.875rem 1rem;
-      font-weight: 500;
-      font-size: 0.9375rem;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      position: relative;
-    }
-
-    .sidebar .nav-link:hover { 
-      color: white; 
-      background: var(--color-sidebar-hover);
-      transform: translateX(2px);
-    }
-
-    .sidebar .nav-link.active { 
-      color: white; 
-      background: var(--color-accent);
-      font-weight: 600;
-    }
-
-    .sidebar .nav-link.active::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 60%;
-      background: white;
-      border-radius: 0 2px 2px 0;
-    }
-
-    .sidebar .nav-link .bi { 
-      font-size: 1.125rem;
-      width: 20px;
-      text-align: center;
-    }
-
-    .sidebar hr {
-      border-color: rgba(255, 255, 255, 0.1);
-      margin: 1rem 0.75rem;
-    }
-
-    /* Dropdown user */
-    .sidebar .dropdown {
-      padding: 0 0.75rem 1.25rem;
-    }
-
-    .sidebar .dropdown-toggle {
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .sidebar .dropdown-toggle:hover {
-      background: var(--color-sidebar-hover);
-    }
-
-    .sidebar .dropdown-toggle::after {
-      margin-left: auto;
-    }
-
-    .dropdown-menu {
-      border: none;
-      border-radius: 0.5rem;
-      box-shadow: var(--shadow-xl);
-      padding: 0.5rem;
-    }
-
-    .dropdown-menu-dark {
-      background: #334155;
-    }
-
-    .dropdown-item {
-      border-radius: 0.375rem;
-      padding: 0.625rem 1rem;
-      font-size: 0.9375rem;
-      transition: all 0.2s;
-    }
-
-    .dropdown-item:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .dropdown-divider {
-      border-color: rgba(255, 255, 255, 0.1);
-      margin: 0.5rem 0;
-    }
-
-    /* Main Content */
-    .main-content { 
-      margin-left: var(--sidebar-width); 
-      width: calc(100% - var(--sidebar-width));
-      min-height: 100vh;
-    }
-
-    /* Top Bar - Clean & Functional */
-    .top-bar { 
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 1rem 1.5rem; 
-      border-bottom: 1px solid var(--color-border);
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      min-height: 70px;
-      box-shadow: var(--shadow-sm);
-      position: sticky;
-      top: 0;
-      z-index: 999;
-    }
-
-    #ca-lam-viec-info {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      font-size: 0.9375rem;
-    }
-
-    #ca-lam-viec-info strong {
-      color: var(--color-text-secondary);
-      font-weight: 600;
-    }
-
-    #ca-lam-viec-info .text-primary {
-      color: var(--color-accent) !important;
-      font-weight: 700;
-    }
-
-    #ca-lam-viec-info .text-danger {
-      color: var(--color-danger) !important;
-      font-weight: 700;
-    }
-
-    .top-bar-actions {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    /* Content Wrapper */
-    .content-wrapper { 
-      padding: 1.5rem;
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    /* Buttons - Clean & Modern */
-    .btn {
-      font-weight: 600;
-      border-radius: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border: none;
-      font-size: 0.9375rem;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary {
-      background: var(--color-accent);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--color-accent-hover);
-    }
-
-    .btn-success {
-      background: var(--color-success);
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: #059669;
-    }
-
-    .btn-danger {
-      background: var(--color-danger);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #dc2626;
-    }
-
-    .btn-warning {
-      background: var(--color-warning);
-      color: white;
-    }
-
-    .btn-warning:hover {
-      background: #d97706;
-    }
-
-    .btn-secondary {
-      background: #64748b;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background: #475569;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-    }
-
-    /* Badge */
-    .badge {
-      font-weight: 700;
-      padding: 0.375rem 0.625rem;
-      border-radius: 0.375rem;
-      font-size: 0.75rem;
-    }
-
-    .badge.bg-danger {
-      background: var(--color-danger) !important;
-    }
-
-    .badge.bg-success {
-      background: var(--color-success) !important;
-    }
-
-    /* Cards - Clean & Elevated */
-    .card {
-      border: 1px solid var(--color-border);
-      border-radius: 0.75rem;
-      box-shadow: var(--shadow-sm);
-      background: var(--color-bg-secondary);
-      transition: all 0.2s ease;
-      overflow: hidden;
-    }
-
-    .card:hover {
-      box-shadow: var(--shadow-md);
-      border-color: #cbd5e1;
-    }
-
-    .card-header {
-      background: #f8fafc;
-      border-bottom: 1px solid var(--color-border);
-      padding: 1rem 1.25rem;
-      font-weight: 600;
-      color: var(--color-text-primary);
-    }
-
-    .card-body {
-      padding: 1.25rem;
-    }
-
-    .card-title {
-      font-size: 1.125rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .card.border-warning {
-      border-color: #fbbf24 !important;
-      background: #fffbeb;
-    }
-
-    .card.border-warning:hover {
-      border-color: var(--color-warning) !important;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-    }
-
-    /* Forms - Modern & Clean */
-    .form-control, .form-select {
-      border: 1px solid var(--color-border);
-      border-radius: 0.5rem;
-      padding: 0.625rem 0.875rem;
-      font-size: 0.9375rem;
-      transition: all 0.2s;
-      background: white;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: var(--color-accent);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      outline: none;
-    }
-
-    .form-label {
-      font-weight: 600;
-      color: var(--color-text-primary) !important;
-      margin-bottom: 0.5rem;
-      font-size: 0.9375rem;
-    }
-
-    .input-group-text {
-      background: #f8fafc;
-      border: 1px solid var(--color-border);
-      color: var(--color-text-secondary);
-      font-weight: 600;
-      font-size: 0.9375rem;
-    }
-
-    /* Modal - Clean & Professional */
-    .modal-content {
-      border: none;
-      border-radius: 0.75rem;
-      box-shadow: var(--shadow-xl);
-      background: white;
-    }
-
-    .modal-header {
-      background: #f8fafc;
-      border-bottom: 1px solid var(--color-border);
-      padding: 1.25rem 1.5rem;
-    }
-
-    .modal-title {
-      font-weight: 700;
-      color: var(--color-text-primary);
-      font-size: 1.25rem;
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .modal-footer {
-      background: #f8fafc;
-      border-top: 1px solid var(--color-border);
-      padding: 1rem 1.5rem;
-    }
-
-    /* Offcanvas - Modern Sidebar */
-    .offcanvas {
-      background: white;
-      box-shadow: var(--shadow-xl);
-    }
-
-    .offcanvas-header {
-      background: #f8fafc;
-      border-bottom: 1px solid var(--color-border);
-      padding: 1.25rem 1.5rem;
-    }
-
-    .offcanvas-title {
-      color: var(--color-text-primary);
-      font-weight: 700;
-      font-size: 1.25rem;
-    }
-
-    .offcanvas-body {
-      padding: 1.5rem;
-    }
-
-    /* Alerts - Clean Notifications */
-    .alert {
-      border: 1px solid;
-      border-radius: 0.5rem;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1rem;
-    }
-
-    .alert-warning {
-      background: #fffbeb;
-      border-color: #fde68a;
-      color: #92400e;
-    }
-
-    .alert-danger {
-      background: #fef2f2;
-      border-color: #fecaca;
-      color: #7f1d1d;
-    }
-
-    .alert-info {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-      color: #1e3a8a;
-    }
-
-    .alert-success {
-      background: #f0fdf4;
-      border-color: #bbf7d0;
-      color: #14532d;
-    }
-
-    /* List Group - Clean Lists */
-    .list-group-item {
-      border: 1px solid var(--color-border);
-      background: white;
-      transition: all 0.2s;
-      padding: 0.875rem 1.125rem;
-    }
-
-    .list-group-item:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-    }
-
-    /* Spinner */
-    .spinner-border {
-      width: 1.25rem;
-      height: 1.25rem;
-      border-width: 2px;
-    }
-
-    .spinner-border-sm {
-      width: 1rem;
-      height: 1rem;
-      border-width: 2px;
-    }
-
-    /* Text Colors */
-    .text-primary {
-      color: var(--color-accent) !important;
-    }
-
-    .text-success {
-      color: var(--color-success) !important;
-    }
-
-    .text-danger {
-      color: var(--color-danger) !important;
-    }
-
-    .text-warning {
-      color: var(--color-warning) !important;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 992px) {
-      :root {
-        --sidebar-width: 260px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-      }
-
-      .sidebar.show {
-        transform: translateX(0);
-      }
-
-      .main-content {
-        margin-left: 0;
-        width: 100%;
-      }
-
-      .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-        min-height: auto;
-      }
-
-      .top-bar-actions {
-        width: 100%;
-        justify-content: flex-end;
-      }
-
-      #ca-lam-viec-info {
-        font-size: 0.875rem;
-      }
-    }
-
-    /* Utilities */
-    .shadow-sm { box-shadow: var(--shadow-sm); }
-    .shadow-md { box-shadow: var(--shadow-md); }
-    .shadow-lg { box-shadow: var(--shadow-lg); }
-    .shadow-xl { box-shadow: var(--shadow-xl); }
-
-    .rounded-lg { border-radius: 0.75rem; }
-    .rounded-xl { border-radius: 1rem; }
-
-    /* Smooth Scrolling */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    /* Focus Visible */
-    *:focus-visible {
-      outline: 2px solid var(--color-accent);
-      outline-offset: 2px;
-    }
-
-    /* Selection */
-    ::selection {
-      background: var(--color-accent);
-      color: white;
-    }
-  </style>
-    {% block extra_css %}{% endblock %}
+    :root{
+      --bg:#050813;--nav:#060b18;--panel:#0e1326;--panel-2:#0b1022;
+      --muted:#1a1f3b;--text:#e5e7eb;--muted-text:#9ca3af;
+      --violet:#a855f7;--violet-2:#d946ef;--cyan:#22d3ee;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text)}
+    ::selection{background:var(--violet-2);color:#fff}
+
+    /* Ẩn sidebar gốc nhưng KHÔNG xóa – để backend khác còn dùng */
+    .sidebar{display:none}
+    .main-content{margin-left:0;width:100%;min-height:100vh}
+
+    /* ===== Header giống ảnh ===== */
+    .top-bar{
+      background:var(--nav)!important;
+      border-bottom:1px solid rgba(162,69,255,.25);
+      padding:18px 22px!important;
+      position:sticky;top:0;z-index:999;
+    }
+    /* stack hai nút theo chiều dọc */
+.top-bar-actions{
+  display:flex;
+  flex-direction: column;   /* <— CHÍNH: xếp dọc */
+  gap: .5rem;
+  align-items: stretch;     /* cho nút đều nhau, full theo container */
+}
+.top-bar-actions .btn{ width: 220px; } /* tuỳ chỉnh: ngang bằng đẹp mắt */
+
+    .brand-row{display:flex;align-items:center;justify-content:space-between}
+    .brand-left{display:flex;align-items:center;gap:14px}
+    .brand-badge{font-size:36px;line-height:1;filter:drop-shadow(0 0 8px rgba(217,70,239,.55))}
+    .brand-title{
+      margin:0;font-weight:800;letter-spacing:.5px;color:#f0e1ff;font-size:28px;
+      text-shadow:0 0 6px rgba(217,70,239,.7),0 0 14px rgba(168,85,247,.55)
+    }
+    .brand-sub{margin:2px 0 0;color:#7de9ff;font-size:14px;text-shadow:0 0 8px rgba(34,211,238,.55)}
+
+    /* Nút kết thúc ca – GIỮ id để JS hoạt động */
+    #ket-thuc-ca-btn{
+      display:inline-flex !important;background:linear-gradient(90deg,#c026d3,#a855f7);
+      border:none;color:#fff;font-weight:700;padding:.55rem 1.05rem;border-radius:.9rem;
+      box-shadow:0 0 16px rgba(168,85,247,.6)
+    }
+    #ket-thuc-ca-btn:hover{filter:brightness(1.05);box-shadow:0 0 26px rgba(168,85,247,.85);transform:translateY(-1px)}
+
+    /* Thanh nav ngang giống ảnh */
+    .neon-nav{background:var(--nav);border-bottom:1px solid rgba(162,69,255,.25);padding:0 22px}
+    .neon-nav .nav{gap:28px;overflow-x:auto;white-space:nowrap}
+    .neon-nav .nav-link{color:#cfd8ff;opacity:.85;border:none;border-bottom:2px solid transparent;padding:14px 0;font-weight:700;display:flex;align-items:center;gap:10px}
+    .neon-nav .nav-link:hover{opacity:1;color:#f0e1ff}
+    .neon-nav .nav-link.active{color:#f0e1ff;opacity:1;border-color:#7b2cbf;text-shadow:0 0 8px rgba(168,85,247,.7)}
+
+    /* Nội dung */
+    .content-wrapper{padding:1.5rem;max-width:1600px;margin:0 auto}
+    .card{background:var(--panel);border:1px solid var(--muted);color:var(--text);border-radius:.75rem}
+    .card-header{background:var(--panel-2);border-color:var(--muted)}
+    .list-group-item{background:var(--panel-2);border-color:var(--muted);color:#cbd5e1}
+    .modal-content,.offcanvas{background:var(--panel-2);color:var(--text)}
+    .input-group-text{background:#0b1220;color:var(--muted-text);border-color:var(--muted)}
+    .form-control,.form-select{background:#0b1220;color:var(--text);border-color:var(--muted)}
+    .form-control:focus,.form-select:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(168,85,247,.25)}
+    .btn-warning{background:#f59e0b;border:none}
+    .badge.bg-danger{background:#ef4444!important}
+    .spinner-border{width:1.1rem;height:1.1rem;border-width:2px}
+  /* === Action buttons: xếp dọc, NGẮN lại, căn giữa === */
+:root{
+  --action-btn-w: 210px;   /* ← chỉnh tại đây nếu muốn ngắn/dài hơn */
+}
+
+.top-bar-actions{
+  display: flex;
+  flex-direction: column;   /* xếp dọc */
+  gap: .6rem;
+  align-items: center;      /* căn giữa theo cột */
+}
+
+/* áp dụng cùng kích thước cho 2 nút */
+.top-bar-actions .btn{
+  width: var(--action-btn-w);
+  max-width: 100%;
+  justify-content: center;  /* căn giữa icon + text trong nút */
+  padding: .55rem .9rem;    /* gọn nút hơn */
+  border-radius: .8rem;
+}
+
+/* nút Kết Thúc Ca – vẫn giữ gradient nếu bạn đã có */
+#ket-thuc-ca-btn{
+  display: inline-flex !important;
+  justify-content: center;   /* căn giữa nội dung nút */
+  text-align: center;
+}
+
+/* (tùy chọn) icon cách chữ 1 chút cho cân */
+.top-bar-actions .btn .bi{ margin-right: .45rem; }
+/* đo chiều cao bằng biến (JS sẽ cập nhật) */
+:root { --topbar-h: 86px; --nav-h: 54px; }
+
+/* HEADER cố định */
+.top-bar{
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 1100;
+}
+
+/* NAV “Tổng Quan Máy · POS Bán Lẻ …” cố định */
+nav.neon-nav{
+  position: fixed !important;
+  top: var(--topbar-h);
+  left: 0; right: 0;
+  z-index: 1099;
+  width: 100%;
+}
+
+/* Đẩy phần nội dung xuống, tránh bị che */
+.main-content{
+  margin-top: calc(var(--topbar-h) + var(--nav-h)) !important;
+}
+
+/* Tắt hiệu ứng “nhích” khi hover để nhìn như đứng yên tuyệt đối */
+.neon-nav .nav-link{ transform:none !important; }
+.neon-nav .nav-link:hover{ transform:none !important; }
+
+/* ==== FIX: Offcanvas (Nợ Dịch Vụ) không bị che ==== */
+.offcanvas {
+  z-index: 2000 !important;         /* đảm bảo cao hơn topbar (1100) và nav (1099) */
+  margin-top: calc(var(--topbar-h) + var(--nav-h));  /* đẩy xuống dưới header và nav */
+  height: calc(100vh - (var(--topbar-h) + var(--nav-h)));  /* vừa khít phần còn lại */
+  border-top-left-radius: 1rem;
+  border-bottom-left-radius: 1rem;
+  overflow-y: auto;                 /* cuộn nếu nội dung dài */
+  background: var(--panel-2);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+}
+.offcanvas-header {
+  position: sticky;
+  top: 0;
+  z-index: 2001;
+  background: var(--panel);
+  border-bottom: 1px solid var(--muted);
+}
+
+</style>
+
+<style>
+  @import url('/static/css/offcanvas_fix.css');
+</style>
+
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
-    
-    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
-        {% csrf_token %}
-    </form>
 
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <a href="{% url 'pos-view' %}">
-                <i class="bi bi-display"></i>
-                <span>Quản Net Pro</span>
-            </a>
-        </div>
-        <hr>
-        <ul class="nav nav-pills flex-column">
-            <li class="nav-item">
-                <a href="{% url 'pos-view' %}" class="nav-link {% if request.resolver_match.url_name == 'pos-view' %}active{% endif %}">
-                    <i class="bi bi-grid-1x2-fill"></i>
-                    <span>Tổng Quan Máy</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'retail-order-view' %}" class="nav-link {% if request.resolver_match.url_name == 'retail-order-view' %}active{% endif %}">
-                    <i class="bi bi-cart-plus-fill"></i>
-                    <span>POS Bán Lẻ</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'customer-management-view' %}" class="nav-link {% if request.resolver_match.url_name == 'customer-management-view' %}active{% endif %}">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>Nạp Tiền Khách Hàng</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">
-                    <i class="bi bi-box-seam-fill"></i>
-                    <span>Quản Lý Kho</span>
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'reports-view' %}" class="nav-link {% if request.resolver_match.url_name == 'reports-view' %}active{% endif %}">
-                    <i class="bi bi-clock-history"></i>
-                    <span>Báo Cáo / Lịch Sử Ca</span>
-                </a>
-            </li>
-        </ul>
-        <hr>
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-circle fs-4"></i>
-                <strong>{% if user.is_authenticated %}{{ user.username }}{% else %}Guest{% endif %}</strong>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                {% if user.is_staff %}
-                    <li><a class="dropdown-item" href="{% url 'dashboard_home' %}">Về Dashboard</a></li>
-                    <li><a class="dropdown-item" href="{% url 'admin:index' %}">Django Admin</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                {% endif %}
-                <li><a class="dropdown-item" href="#" onclick="document.getElementById('logout-form').submit();">Đăng xuất</a></li>
-            </ul>
-        </div>
-    </div>
+  <!-- giữ nguyên để logout -->
+  <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
 
-    <main class="main-content">
-        <div class="top-bar">
-            <div id="ca-lam-viec-info">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                <span class="ms-2">Đang tải thông tin ca...</span>
-            </div>
-            <div class="top-bar-actions">
-                <button class="btn btn-warning" type="button" data-bs-toggle="offcanvas" data-bs-target="#debtOffcanvas" aria-controls="debtOffcanvas" id="debt-count-btn">
-                    <i class="bi bi-wallet-fill"></i>
-                    <span>Nợ Dịch Vụ</span>
-                    <span class="badge bg-danger rounded-pill" id="debt-count">0</span>
-                </button>
-                <button class="btn btn-danger d-none" id="ket-thuc-ca-btn">
-                    <i class="bi bi-door-closed-fill"></i>
-                    <span>Kết Thúc Ca</span>
-                </button>
-            </div>
+  <!-- ===== HEADER ===== -->
+  <div class="top-bar">
+    <div class="brand-row">
+      <div class="brand-left">
+        <div class="brand-badge">⚔️</div>
+        <div>
+          <h1 class="brand-title">QUÁN NET PRO</h1>
+          <div class="brand-sub">Gaming Arena Management System</div>
         </div>
-        <div class="content-wrapper">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
+      </div>
 
-    <div class="modal fade" id="startShiftModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <form id="startShiftForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                            Bắt Đầu Ca Làm Việc Mới
-                        </h5>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-muted mb-4">Vui lòng chọn ca và nhập số tiền mặt ban đầu để bắt đầu.</p>
-                        <div class="mb-3">
-                            <label for="loai_ca_id" class="form-label">Chọn ca của bạn</label>
-                            <select class="form-select" id="loai_ca_id" required>
-                                <option value="">Đang tải...</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="tien_mat_ban_dau" class="form-label">Tiền mặt ban đầu</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="tien_mat_ban_dau" value="0" min="0" required>
-                                <span class="input-group-text">VNĐ</span>
-                            </div>
-                        </div>
-                        <div id="start-shift-error" class="alert alert-danger d-none"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+      <!-- vị trí backend sẽ thay nội dung -->
+      <div id="ca-lam-viec-info" class="mx-3">
+        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        <span class="ms-2">Đang tải thông tin ca...</span>
+      </div>
+
+      <div class="top-bar-actions d-flex align-items-center">
+        <button class="btn btn-warning me-2" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#debtOffcanvas" aria-controls="debtOffcanvas" id="debt-count-btn">
+          <i class="bi bi-wallet-fill"></i>
+          <span>Nợ Dịch Vụ</span>
+          <span class="badge bg-danger rounded-pill" id="debt-count">0</span>
+        </button>
+        <button class="btn d-none" id="ket-thuc-ca-btn">
+          <i class="bi bi-door-closed-fill me-1"></i>Kết Thúc Ca
+        </button>
+      </div>
     </div>
-    
-    <div class="modal fade" id="openForMemberModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Mở Máy Cho Thành Viên</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="open-member-machine-id">
-                    <p class="text-muted mb-3">Tìm và chọn khách hàng để mở máy <strong id="open-member-machine-name" class="text-primary"></strong>.</p>
-                    <input type="text" id="member-search-input" class="form-control" placeholder="Nhập tên đăng nhập để tìm...">
-                    <div id="member-search-results" class="list-group mt-3" style="max-height: 250px; overflow-y: auto;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                </div>
-            </div>
-        </div>
+  </div>
+
+  <!-- ===== NAV ===== -->
+  <nav class="neon-nav">
+    <ul class="nav py-0 my-0">
+      <li class="nav-item">
+        <a href="{% url 'pos-view' %}" class="nav-link {% if request.resolver_match.url_name == 'pos-view' %}active{% endif %}">🏠 Tổng Quan Máy</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'retail-order-view' %}" class="nav-link {% if request.resolver_match.url_name == 'retail-order-view' %}active{% endif %}">🛒 POS Bán Lẻ</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'customer-management-view' %}" class="nav-link {% if request.resolver_match.url_name == 'customer-management-view' %}active{% endif %}">👥 Khách Hàng</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'reports-view' %}" class="nav-link {% if request.resolver_match.url_name == 'reports-view' %}active{% endif %}">🗓️ Ca Làm Việc</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'inventory-view' %}" class="nav-link {% if request.resolver_match.url_name == 'inventory-view' %}active{% endif %}">📦 Kiểm Kê</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'machine-map-view' %}" class="nav-link {% if request.resolver_match.url_name == 'machine-map-view' %}active{% endif %}">💻 Sơ Đồ Máy</a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      {% block content %}{% endblock %}
     </div>
-    
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="debtOffcanvas" style="width: 480px;">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title">
-                <i class="bi bi-wallet2 me-2"></i>
-                Danh Sách Nợ Dịch Vụ
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body" id="debt-list-container">
-            <div class="card border-0 bg-light mb-4">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-secondary">TỔNG TIỀN NỢ:</span>
-                    <span class="fs-4 fw-bold text-danger" id="total-debt-amount">0 VNĐ</span>
-                </div>
+  </main>
+
+  <!-- ===== MODALS/OFFCANVAS – GIỮ backend ===== -->
+  <div class="modal fade" id="startShiftModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="startShiftForm">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-box-arrow-in-right me-2"></i>Bắt Đầu Ca Làm Việc Mới</h5>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted mb-4">Vui lòng chọn ca và nhập số tiền mặt ban đầu để bắt đầu.</p>
+            <div class="mb-3">
+              <label for="loai_ca_id" class="form-label">Chọn ca của bạn</label>
+              <select class="form-select" id="loai_ca_id" required>
+                <option value="">Đang tải...</option>
+              </select>
             </div>
-            <div id="debt-orders-list">
-                <div class="text-center p-5">
-                    <div class="spinner-border text-primary"></div>
-                    <p class="text-muted mt-2">Đang tải...</p>
-                </div>
+            <div class="mb-3">
+              <label for="tien_mat_ban_dau" class="form-label">Tiền mặt ban đầu</label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="tien_mat_ban_dau" value="0" min="0" required>
+                <span class="input-group-text">VNĐ</span>
+              </div>
             </div>
-        </div>
+            <div id="start-shift-error" class="alert alert-danger d-none"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary w-100">Bắt Đầu Ca</button>
+          </div>
+        </form>
+      </div>
     </div>
-     <!-- <<< MODAL KẾT THÚC CA MỚI (Thêm vào đây) >>> -->
+  </div>
+
+  <div class="modal fade" id="openForMemberModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Mở Máy Cho Thành Viên</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="open-member-machine-id">
+          <p class="text-muted mb-3">Tìm và chọn khách hàng để mở máy <strong id="open-member-machine-name" class="text-primary"></strong>.</p>
+          <input type="text" id="member-search-input" class="form-control" placeholder="Nhập tên đăng nhập để tìm...">
+          <div id="member-search-results" class="list-group mt-3" style="max-height:250px;overflow-y:auto;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="debtOffcanvas" style="width:480px;">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title"><i class="bi bi-wallet2 me-2"></i>Danh Sách Nợ Dịch Vụ</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" id="debt-list-container">
+      <div class="card border-0 mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <span class="fw-bold text-secondary">TỔNG TIỀN NỢ:</span>
+          <span class="fs-4 fw-bold text-danger" id="total-debt-amount">0 VNĐ</span>
+        </div>
+      </div>
+      <div id="debt-orders-list">
+        <div class="text-center p-5">
+          <div class="spinner-border text-primary"></div>
+          <p class="text-muted mt-2">Đang tải...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal kết thúc ca -->
     <div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -871,280 +346,377 @@
             </div>
         </div>
     </div>
-    <!-- <<< KẾT THÚC MODAL KẾT THÚC CA MỚI >>> -->
- 
-<script>
+
+  <!-- ===== BACKEND JS giữ nguyên logic ===== -->
+  <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const caLamViecInfo = document.getElementById('ca-lam-viec-info');
-        const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
-        const startShiftModalEl = document.getElementById('startShiftModal');
-        const startShiftModal = startShiftModalEl ? new bootstrap.Modal(startShiftModalEl) : null;
-        const startShiftForm = document.getElementById('startShiftForm');
-        const API_BASE_URL = '/pos/api';
-        
-        const debtCountBadge = document.getElementById('debt-count');
-        const debtListContainer = document.getElementById('debt-list-container');
-        const debtCountBtn = document.getElementById('debt-count-btn'); 
-        const totalDebtAmountEl = document.getElementById('total-debt-amount');
-        
+      const caLamViecInfo = document.getElementById('ca-lam-viec-info');
+      const ketThucCaBtn = document.getElementById('ket-thuc-ca-btn');
+      const startShiftModalEl = document.getElementById('startShiftModal');
+      const startShiftModal = startShiftModalEl ? new bootstrap.Modal(startShiftModalEl) : null;
+      const startShiftForm = document.getElementById('startShiftForm');
+      const API_BASE_URL = '/pos/api';
 
-        function getCookie(name) { 
-            let cV = null; 
-            if (document.cookie && document.cookie !== '') { 
-                const c = document.cookie.split(';'); 
-                for (let i = 0; i < c.length; i++) { 
-                    const cK = c[i].trim(); 
-                    if (cK.substring(0, name.length + 1) === (name + '=')) { 
-                        cV = decodeURIComponent(cK.substring(name.length + 1)); 
-                        break; 
-                    } 
-                } 
-            } 
-            return cV; 
+        const topBar = document.querySelector('.top-bar');
+  const neonNav = document.querySelector('nav.neon-nav');
+  const main = document.querySelector('.main-content');
+
+      const debtCountBadge = document.getElementById('debt-count');
+      const debtListContainer = document.getElementById('debt-list-container');
+      const debtCountBtn = document.getElementById('debt-count-btn');
+      const totalDebtAmountEl = document.getElementById('total-debt-amount');
+
+        function applyOffsets(){
+    const th = topBar ? topBar.offsetHeight : 0;
+    const nh = neonNav ? neonNav.offsetHeight : 0;
+    document.documentElement.style.setProperty('--topbar-h', th + 'px');
+    document.documentElement.style.setProperty('--nav-h', nh + 'px');
+    if (main) main.style.marginTop = `calc(${th}px + ${nh}px)`;
+  }
+  applyOffsets();
+  window.addEventListener('resize', applyOffsets);
+
+      function getCookie(name) {
+        let cV = null;
+        if (document.cookie && document.cookie !== '') {
+          const c = document.cookie.split(';');
+          for (let i = 0; i < c.length; i++) {
+            const cK = c[i].trim();
+            if (cK.substring(0, name.length + 1) === (name + '=')) {
+              cV = decodeURIComponent(cK.substring(name.length + 1));
+              break;
+            }
+          }
         }
-        
-        const csrftoken = getCookie('csrftoken');
-        const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace(' VNĐ', ' VNĐ');
-        
-        const fetchData = async (relativeUrl) => {
-            const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            return await response.json();
-        };
-        
-        const postData = async (relativeUrl, data) => {
-            return apiClient(`${API_BASE_URL}${relativeUrl}`, {
-                method: 'POST',
-                body: JSON.stringify(data)
-            });
-        };
+        return cV;
+      }
+      const csrftoken = getCookie('csrftoken');
+      const formatCurrency = (v) => Math.ceil(v || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }).replace(' VNĐ', ' VNĐ');
 
-        async function loadDebtList(renderToContainer = true) {
-            if (!document.getElementById('debtOffcanvas').classList.contains('show') && renderToContainer) {
-                try {
-                    const debtOrders = await fetchData('/order/debt-list/');
-                    debtCountBadge.textContent = debtOrders.length;
-                } catch (error) {
-                    debtCountBadge.textContent = '0';
-                }
-                return;
-            }
-            
-            if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
-                 document.getElementById('debt-orders-list').innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Đang tải...</p></div>';
-            }
+      const fetchData = async (relativeUrl) => {
+        const response = await fetch(`${API_BASE_URL}${relativeUrl}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return await response.json();
+      };
 
-            try {
-                const debtOrders = await fetchData('/order/debt-list/');
-                debtCountBadge.textContent = debtOrders.length;
-                
-                let totalDebt = 0;
-                let listHtml = '';
-                
-                if (debtOrders.length === 0) {
-                    listHtml = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Không có Order nào đang nợ.</div>';
-                    totalDebtAmountEl.textContent = formatCurrency(0);
-                    
-                } else {
-                    debtOrders.forEach(order => {
-                        let detailsHtml = '';
-                        order.chi_tiet.forEach(detail => {
-                            detailsHtml += `<li class="mb-1"><i class="bi bi-dot text-primary"></i>${detail.mon.ten_mon} <span class="badge bg-secondary">x${detail.so_luong}</span></li>`;
-                        });
-                        
-                        const machineInfo = order.ten_may ? ` - Máy ${order.ten_may}` : '';
-                        const hinhThucDisplay = order.phien_su_dung 
-                                                ? (order.phien_su_dung.hinh_thuc === 'TRA_TRUOC' ? 'Thành Viên' : 'Vãng Lai') 
-                                                : 'Bán Lẻ';
-                        
-                        const orderDebt = parseFloat(order.tong_tien) || 0;
-                        totalDebt += orderDebt;
+      const postData = async (relativeUrl, data) => {
+        return apiClient(`${API_BASE_URL}${relativeUrl}`, {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+      };
 
-                        listHtml += `
-                            <div class="card mb-3 border-warning">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h6 class="card-title mb-0 fw-bold">Order #${order.id}${machineInfo}</h6>
-                                        <span class="badge ${order.loai_don_hang === 'BAN_LE' ? 'bg-info' : 'bg-warning'}">${order.loai_don_hang === 'BAN_LE' ? 'Bán Lẻ' : 'Ghi Nợ'}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <small class="text-muted">
-                                            <i class="bi bi-person me-1"></i>${hinhThucDisplay}
-                                            <span class="mx-2">|</span>
-                                            <i class="bi bi-tag me-1"></i>${order.ma_khuyen_mai_ap_dung || 'Không KM'}
-                                        </small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <span class="fs-5 fw-bold text-danger">${formatCurrency(orderDebt)}</span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <small class="text-muted fw-semibold">Chi tiết món:</small>
-                                        <ul class="list-unstyled ps-2 mt-1 small">${detailsHtml}</ul>
-                                    </div>
-                                    <button class="btn btn-success w-100 pay-debt-btn" data-id="${order.id}">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        <span>Xác Nhận Đã Thu Tiền</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
-                    document.getElementById('debt-orders-list').innerHTML = listHtml;
-                }
-                totalDebtAmountEl.textContent = formatCurrency(totalDebt);
-
-            } catch (error) {
-                if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
-                    document.getElementById('debt-orders-list').innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Lỗi tải danh sách nợ: ${error.message}</div>`;
-                }
-                debtCountBadge.textContent = '0';
-                totalDebtAmountEl.textContent = formatCurrency(0);
-            }
-        }
-        
-        async function openStartShiftModal() {
-            const selectEl = document.getElementById('loai_ca_id');
-            selectEl.innerHTML = '<option value="">Đang tải...</option>';
-            try {
-                const shiftTypes = await fetchData('/loai-ca/');
-                selectEl.innerHTML = '<option value="" disabled selected>-- Chọn ca làm việc --</option>';
-                shiftTypes.forEach(type => {
-                    selectEl.innerHTML += `<option value="${type.id}">${type.ten_ca} (${type.gio_bat_dau} - ${type.gio_ket_thuc})</option>`;
-                });
-                if (startShiftModal) startShiftModal.show();
-            } catch (error) {
-                const errorDiv = document.getElementById('start-shift-error');
-                errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
-                errorDiv.classList.remove('d-none');
-            }
-        }
-        
-        async function updateCaInfo() {
-            try {
-                const currentShift = await fetchData('/ca/hien-tai/');
-                if (startShiftModal && startShiftModalEl.classList.contains('show')) startShiftModal.hide();
-                
-                const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
-                
-                caLamViecInfo.innerHTML = `
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-clock-fill text-success"></i>
-                        <span><strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span></span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-person-fill"></i>
-                        <span><strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-calendar-check"></i>
-                        <span><strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-cash-coin"></i>
-                        <span><strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span></span>
-                    </div>
-                `;
-                ketThucCaBtn.classList.remove('d-none');
-                debtCountBtn.disabled = false;
-                
-                loadDebtList(false);
-                
-            } catch (error) {
-                caLamViecInfo.innerHTML = `
-                    <div class="alert alert-warning py-2 px-3 mb-0 d-flex align-items-center gap-3">
-                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                        <span class="fw-semibold">Chưa bắt đầu ca làm việc!</span>
-                        <button class="btn btn-primary btn-sm ms-auto" id="manual-start-shift-btn">
-                            <i class="bi bi-play-fill"></i>
-                            <span>Bắt Đầu Ca</span>
-                        </button>
-                    </div>
-                `;
-                ketThucCaBtn.classList.add('d-none');
-                debtCountBtn.disabled = true;
-                document.getElementById('manual-start-shift-btn')?.addEventListener('click', openStartShiftModal);
-                
-                if (!startShiftModalEl.classList.contains('show')) {
-                    openStartShiftModal();
-                }
-            }
+      async function loadDebtList(renderToContainer = true) {
+        if (!document.getElementById('debtOffcanvas').classList.contains('show') && renderToContainer) {
+          try {
+            const debtOrders = await fetchData('/order/debt-list/');
+            debtCountBadge.textContent = debtOrders.length;
+          } catch (error) {
+            debtCountBadge.textContent = '0';
+          }
+          return;
         }
 
-        async function payDebt(orderId) {
-            const orderCard = document.querySelector(`.pay-debt-btn[data-id="${orderId}"]`).closest('.card');
-            const totalText = orderCard.querySelector('.fs-5').textContent;
-
-            if (!confirm(`Xác nhận đã thu tiền Order #${orderId} (${totalText})?\n\nHành động này không thể hoàn tác.`)) return;
-
-            const btn = orderCard.querySelector('.pay-debt-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span><span class="ms-2">Đang xử lý...</span>';
-            
-            try {
-                const result = await postData(`/order/${orderId}/pay-debt/`, {});
-                alert(result.success);
-                await loadDebtList(true);
-                updateCaInfo();
-            } catch(error) {
-                alert(`Lỗi khi xác nhận thanh toán: ${error.message}`);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Xác Nhận Đã Thu Tiền</span>';
-            }
-        }
-        // --- XỬ LÝ START SHIFT MODAL ---
-const startShiftFormEl = document.getElementById('startShiftForm');
-if (startShiftFormEl) {
-    startShiftFormEl.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const errorDiv = document.getElementById('start-shift-error');
-        errorDiv.classList.add('d-none');
-        const data = {
-            loai_ca_id: document.getElementById('loai_ca_id').value,
-            tien_mat_ban_dau: document.getElementById('tien_mat_ban_dau').value
-        };
-        
-        if (!data.loai_ca_id) {
-            errorDiv.textContent = 'Vui lòng chọn một ca làm việc.';
-            errorDiv.classList.remove('d-none');
-            return;
+        if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+          document.getElementById('debt-orders-list').innerHTML =
+            '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Đang tải...</p></div>';
         }
 
         try {
-            // Gọi API /ca/bat-dau/ (API này nằm trong quanly/api_urls.py)
-            const result = await postData('/ca/bat-dau/', data); 
+          const debtOrders = await fetchData('/order/debt-list/');
+          debtCountBadge.textContent = debtOrders.length;
+
+          let totalDebt = 0;
+          let listHtml = '';
+
+          if (debtOrders.length === 0) {
+            listHtml = '<div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Không có Order nào đang nợ.</div>';
+            totalDebtAmountEl.textContent = formatCurrency(0);
+
+          } else {
+            debtOrders.forEach(order => {
+              let detailsHtml = '';
+              order.chi_tiet.forEach(detail => {
+                detailsHtml += `<li class="mb-1"><i class="bi bi-dot text-primary"></i>${detail.mon.ten_mon} <span class="badge bg-secondary">x${detail.so_luong}</span></li>`;
+              });
+
+              const machineInfo = order.ten_may ? ` - Máy ${order.ten_may}` : '';
+              const hinhThucDisplay = order.phien_su_dung
+                                      ? (order.phien_su_dung.hinh_thuc === 'TRA_TRUOC' ? 'Thành Viên' : 'Vãng Lai')
+                                      : 'Bán Lẻ';
+
+              const orderDebt = parseFloat(order.tong_tien) || 0;
+              totalDebt += orderDebt;
+
+              listHtml += `
+                <div class="card mb-3 border-warning">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="card-title mb-0 fw-bold">Order #${order.id}${machineInfo}</h6>
+                      <span class="badge ${order.loai_don_hang === 'BAN_LE' ? 'bg-info' : 'bg-warning'}">${order.loai_don_hang === 'BAN_LE' ? 'Bán Lẻ' : 'Ghi Nợ'}</span>
+                    </div>
+                    <div class="mb-2">
+                      <small class="text-muted">
+                        <i class="bi bi-person me-1"></i>${hinhThucDisplay}
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-tag me-1"></i>${order.ma_khuyen_mai_ap_dung || 'Không KM'}
+                      </small>
+                    </div>
+                    <div class="mb-3">
+                      <span class="fs-5 fw-bold text-danger">${formatCurrency(orderDebt)}</span>
+                    </div>
+                    <div class="mb-3">
+                      <small class="text-muted fw-semibold">Chi tiết món:</small>
+                      <ul class="list-unstyled ps-2 mt-1 small">${detailsHtml}</ul>
+                    </div>
+                    <button class="btn btn-success w-100 pay-debt-btn" data-id="${order.id}">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Xác Nhận Đã Thu Tiền</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            });
+          }
+
+          if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+            document.getElementById('debt-orders-list').innerHTML = listHtml;
+          }
+          totalDebtAmountEl.textContent = formatCurrency(totalDebt);
+
+        } catch (error) {
+          if (renderToContainer || document.getElementById('debtOffcanvas').classList.contains('show')) {
+            document.getElementById('debt-orders-list').innerHTML =
+              `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Lỗi tải danh sách nợ: ${error.message}</div>`;
+          }
+          debtCountBadge.textContent = '0';
+          totalDebtAmountEl.textContent = formatCurrency(0);
+        }
+      }
+
+      async function openStartShiftModal() {
+        const selectEl = document.getElementById('loai_ca_id');
+        selectEl.innerHTML = '<option value="">Đang tải...</option>';
+        try {
+          const shiftTypes = await fetchData('/loai-ca/');
+          selectEl.innerHTML = '<option value="" disabled selected>-- Chọn ca làm việc --</option>';
+          shiftTypes.forEach(type => {
+            selectEl.innerHTML += `<option value="${type.id}">${type.ten_ca} (${type.gio_bat_dau} - ${type.gio_ket_thuc})</option>`;
+          });
+          if (startShiftModal) startShiftModal.show();
+        } catch (error) {
+          const errorDiv = document.getElementById('start-shift-error');
+          errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>Không thể tải danh sách ca. Vui lòng kiểm tra kết nối.';
+          errorDiv.classList.remove('d-none');
+        }
+      }
+
+      async function updateCaInfo() {
+        try {
+          const currentShift = await fetchData('/ca/hien-tai/');
+          if (startShiftModal && startShiftModalEl.classList.contains('show')) startShiftModal.hide();
+
+          const startTime = new Date(currentShift.thoi_gian_bat_dau_thuc_te);
+
+caLamViecInfo.innerHTML = `
+  <div class="d-flex flex-wrap align-items-center gap-4">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-clock-fill text-success"></i>
+      <span><strong>Ca:</strong> <span class="text-primary">${currentShift.loai_ca.ten_ca}</span></span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-person-fill"></i>
+      <span><strong>NV:</strong> ${currentShift.nhan_vien.tai_khoan}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-calendar-check"></i>
+      <span><strong>Bắt đầu:</strong> ${startTime.toLocaleTimeString('vi-VN')}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-cash-coin"></i>
+      <span><strong>Tổng thu:</strong> <span class="text-danger fw-bold">${formatCurrency(currentShift.tong_thu_hien_tai)}</span></span>
+    </div>
+  </div>
+`;
+
+          ketThucCaBtn.classList.remove('d-none');
+          debtCountBtn.disabled = false;
+
+          // Gắn sự kiện click để mở modal chốt ca
+if (ketThucCaBtn && !ketThucCaBtn.dataset.bound) {
+  ketThucCaBtn.addEventListener('click', async () => {
+    try {
+      const currentShift = await fetchData('/ca/hien-tai/');
+      // Gán dữ liệu ca hiện tại vào modal
+      document.getElementById('end-shift-name').textContent = currentShift.loai_ca.ten_ca;
+      document.getElementById('end-shift-cash-start').textContent = formatCurrency(currentShift.tien_mat_ban_dau);
+      document.getElementById('end-shift-revenue').textContent = formatCurrency(currentShift.tong_thu_hien_tai);
+      const tongLyThuyet = (currentShift.tien_mat_ban_dau || 0) + (currentShift.tong_thu_hien_tai || 0);
+      document.getElementById('end-shift-theoretical-total').textContent = formatCurrency(tongLyThuyet);
+      document.getElementById('end-shift-actual-cash').value = tongLyThuyet;
+      new bootstrap.Modal(document.getElementById('endShiftModal')).show();
+    } catch (err) {
+      alert('Không thể tải dữ liệu ca hiện tại. Vui lòng thử lại!');
+    }
+  });
+  ketThucCaBtn.dataset.bound = 'true'; // tránh gắn nhiều lần
+}
+
+        
+          loadDebtList(false);
+
+        } catch (error) {
+          caLamViecInfo.innerHTML = `
+            <div class="alert alert-warning py-2 px-3 mb-0 d-flex align-items-center gap-3">
+              <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              <span class="fw-semibold">Chưa bắt đầu ca làm việc!</span>
+              <button class="btn btn-primary btn-sm ms-auto" id="manual-start-shift-btn">
+                <i class="bi bi-play-fill"></i>
+                <span>Bắt Đầu Ca</span>
+              </button>
+            </div>
+          `;
+          ketThucCaBtn.classList.add('d-none');
+          debtCountBtn.disabled = true;
+          document.getElementById('manual-start-shift-btn')?.addEventListener('click', openStartShiftModal);
+
+          if (!startShiftModalEl.classList.contains('show')) {
+            openStartShiftModal();
+          }
+        }
+      }
+
+      // === XỬ LÝ NÚT KẾT THÚC CA ===
+const endShiftModalEl = document.getElementById('endShiftModal');
+const endShiftModal = endShiftModalEl ? new bootstrap.Modal(endShiftModalEl) : null;
+const endShiftForm = document.getElementById('endShiftForm');
+
+if (ketThucCaBtn) {
+  ketThucCaBtn.addEventListener('click', async () => {
+    try {
+      const currentShift = await fetchData('/ca/hien-tai/');
+      // Đổ dữ liệu vào modal
+      document.getElementById('end-shift-name').textContent = currentShift.loai_ca.ten_ca;
+      document.getElementById('end-shift-cash-start').textContent = formatCurrency(currentShift.tien_mat_ban_dau);
+      document.getElementById('end-shift-revenue').textContent = formatCurrency(currentShift.tong_thu_hien_tai);
+      const theoretical = currentShift.tien_mat_ban_dau + currentShift.tong_thu_hien_tai;
+      document.getElementById('end-shift-theoretical-total').textContent = formatCurrency(theoretical);
+      document.getElementById('end-shift-actual-cash').value = theoretical;
+      if (endShiftModal) endShiftModal.show();
+    } catch (err) {
+      alert('Không thể tải dữ liệu ca hiện tại. Vui lòng kiểm tra lại!');
+    }
+  });
+}
+
+// === GỬI FORM CHỐT CA ===
+if (endShiftForm) {
+  endShiftForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const actualCash = parseFloat(document.getElementById('end-shift-actual-cash').value) || 0;
+    try {
+      const result = await postData('/ca/ket-thuc/', { tien_mat_thuc_te: actualCash });
+      alert('Đã kết thúc ca thành công!');
+      window.location.href = '/logout/';
+    } catch (error) {
+      const errDiv = document.getElementById('end-shift-error');
+      errDiv.textContent = `Lỗi khi chốt ca: ${error.message}`;
+      errDiv.classList.remove('d-none');
+    }
+  });
+}
+
+
+      async function payDebt(orderId) {
+        const orderCard = document.querySelector(`.pay-debt-btn[data-id="${orderId}"]`).closest('.card');
+        const totalText = orderCard.querySelector('.fs-5').textContent;
+
+        if (!confirm(`Xác nhận đã thu tiền Order #${orderId} (${totalText})?\n\nHành động này không thể hoàn tác.`)) return;
+
+        const btn = orderCard.querySelector('.pay-debt-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span><span class="ms-2">Đang xử lý...</span>';
+
+        try {
+          const result = await postData(`/order/${orderId}/pay-debt/`, {});
+          alert(result.success);
+          await loadDebtList(true);
+          updateCaInfo();
+        } catch(error) {
+          alert(`Lỗi khi xác nhận thanh toán: ${error.message}`);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check-circle-fill"></i><span>Xác Nhận Đã Thu Tiền</span>';
+        }
+      }
+
+      // submit start shift
+      const startShiftFormEl = document.getElementById('startShiftForm');
+      if (startShiftFormEl) {
+        startShiftFormEl.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const errorDiv = document.getElementById('start-shift-error');
+          errorDiv.classList.add('d-none');
+          const data = {
+            loai_ca_id: document.getElementById('loai_ca_id').value,
+            tien_mat_ban_dau: document.getElementById('tien_mat_ban_dau').value
+          };
+
+          if (!data.loai_ca_id) {
+            errorDiv.textContent = 'Vui lòng chọn một ca làm việc.';
+            errorDiv.classList.remove('d-none');
+            return;
+          }
+
+          try {
+            const result = await postData('/ca/bat-dau/', data);
             alert(`Đã bắt đầu ${result.loai_ca.ten_ca} thành công!`);
             location.reload();
-        } catch (error) {
+          } catch (error) {
             errorDiv.textContent = `Lỗi: ${error.message}`;
             errorDiv.classList.remove('d-none');
-        }
-    });
-}
-// --- KẾT THÚC XỬ LÝ START SHIFT MODAL ---
-        
-        document.getElementById('debtOffcanvas').addEventListener('shown.bs.offcanvas', () => loadDebtList(true)); 
-        
-        debtListContainer.addEventListener('click', (e) => {
-            const btn = e.target.closest('.pay-debt-btn');
-            if (btn) payDebt(btn.dataset.id);
+          }
         });
-        
-        setInterval(() => loadDebtList(false), 60000);
+      }
 
-        updateCaInfo();
-        setInterval(updateCaInfo, 30000);
+      document.getElementById('debtOffcanvas').addEventListener('shown.bs.offcanvas', () => loadDebtList(true));
+      debtListContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.pay-debt-btn');
+        if (btn) payDebt(btn.dataset.id);
+      });
+
+      setInterval(() => loadDebtList(false), 60000);
+
+      updateCaInfo();
+      setInterval(updateCaInfo, 30000);
     });
-</script>
 
-<script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    // Gửi form Kết thúc ca
+const endShiftForm = document.getElementById('endShiftForm');
+if (endShiftForm) {
+  endShiftForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const actualCash = parseFloat(document.getElementById('end-shift-actual-cash').value) || 0;
+    const errDiv = document.getElementById('end-shift-error');
+    errDiv.classList.add('d-none');
+    try {
+      await postData('/ca/ket-thuc/', { tien_mat_thuc_te: actualCash });
+      alert('Đã kết thúc ca thành công!');
+      window.location.href = '/logout/';
+    } catch (error) {
+      errDiv.textContent = `Lỗi khi kết thúc ca: ${error.message}`;
+      errDiv.classList.remove('d-none');
+    }
+  });
+}
 
-    {% block extra_js %}{% endblock %}
-    <!-- THÊM MODAL NÀY VÀO CUỐI POS_BASE.HTML, TRƯỚC ENDBODY/ENDHTML -->
-<div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  </script>
+
+  <!-- api_client + bootstrap bundle -->
+  <script src="http://127.0.0.1:9000{% static 'js/api_client.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% block extra_js %}{% endblock %}
+  <div class="modal fade" id="endShiftModal" tabindex="-1" aria-labelledby="endShiftModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form id="endShiftForm">

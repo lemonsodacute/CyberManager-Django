@@ -7,6 +7,8 @@ urlpatterns = [
     # URL cho các trang giao diện người dùng (HTML)
     path('', views.pos_view, name='pos-view'), 
     path('order/', views.order_view, name='order-view'),
+    path('machine-map/', views.machine_map_view, name='machine-map-view'),
+
 
     path('retail/', views.retail_order_view, name='retail-order-view'),
      path('inventory/', views.inventory_view, name='inventory-view'),
