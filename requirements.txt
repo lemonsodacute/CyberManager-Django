@@ -1,0 +1,9 @@
+Django>=5.2,<5.3
+djangorestframework>=3.15,<4
+django-jazzmin>=3,<4
+channels>=4,<5
+channels-redis>=4,<5
+daphne>=4,<5
+django-apscheduler>=0.7,<1
+mysqlclient>=2.2,<3
+redis>=5,<7
